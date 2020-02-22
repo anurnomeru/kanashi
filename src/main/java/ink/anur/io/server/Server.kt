@@ -56,6 +56,8 @@ abstract class Server(private val port: Int, val shutDownHooker: ShutDownHooker)
                 if (!future.isSuccess) {
                     logger.error("监听端口 {} 失败！项目启动失败！", port)
                     exitProcess(1)
+                } else {
+                    logger.info("协调服务器启动成功，监听端口 {}", port)
                 }
             }
 
