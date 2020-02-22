@@ -20,7 +20,7 @@ import kotlin.system.exitProcess
  */
 abstract class Server(private val port: Int, val shutDownHooker: ShutDownHooker) {
 
-    private val logger = LoggerFactory.getLogger(ShutDownHooker::class.java)
+    private val logger = LoggerFactory.getLogger(Server::class.java)
 
     abstract fun channelPipelineConsumer(channelPipeline: ChannelPipeline): ChannelPipeline
 
