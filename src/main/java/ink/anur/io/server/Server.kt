@@ -1,0 +1,79 @@
+package ink.anur.io.server
+
+import ink.anur.io.common.ErrorHandler
+import ink.anur.io.common.ShutDownHooker
+import io.netty.bootstrap.ServerBootstrap
+import io.netty.channel.ChannelInitializer
+import io.netty.channel.ChannelOption
+import io.netty.channel.ChannelPipeline
+import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.socket.SocketChannel
+import io.netty.channel.socket.nio.NioServerSocketChannel
+import org.slf4j.LoggerFactory
+import kotlin.system.exitProcess
+
+/**
+ * Created by Anur IjuoKaruKas on 2020/2/22
+ *
+ * 作为 server 端的抽象父类，暴露了可定制的 channelPipelineConsumer，
+ * 接入了打印错误的 ErrorHandler，注册了 shutDownHooker 可供停止此server
+ */
+abstract class Server(private val port: Int, val shutDownHooker: ShutDownHooker) {
+
+    private val logger = LoggerFactory.getLogger(ShutDownHooker::class.java)
+
+    abstract fun channelPipelineConsumer(channelPipeline: ChannelPipeline): ChannelPipeline
+
+    /**
+     * 停止这个 server
+     */
+    fun shutDown() {
+        shutDownHooker.shutdown()
+    }
+
+    /**
+     * 启动这个 server
+     */
+    fun start() {
+        val group = NioEventLoopGroup()
+
+        try {
+            val serverBootstrap = ServerBootstrap()
+            serverBootstrap.group(group)
+                .channel(NioServerSocketChannel::class.java)
+                .childHandler(object : ChannelInitializer<SocketChannel>() {
+
+                    override fun initChannel(socketChannel: SocketChannel) {
+                        channelPipelineConsumer(socketChannel.pipeline()).addLast(ErrorHandler())
+                    }
+                })
+                // 保持连接
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+
+            val f = serverBootstrap.bind(port)
+
+            f.addListener { future ->
+                if (!future.isSuccess) {
+                    logger.error("监听端口 {} 失败！项目启动失败！", port)
+                    exitProcess(1)
+                }
+            }
+
+            shutDownHooker.shutDownRegister { group.shutdownGracefully() }
+
+            f.channel()
+                .closeFuture()
+                .sync()
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        } finally {
+            try {
+                group.shutdownGracefully()
+                    .sync()
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+            }
+
+        }
+    }
+}
