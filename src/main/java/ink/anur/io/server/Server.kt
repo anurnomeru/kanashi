@@ -18,7 +18,7 @@ import kotlin.system.exitProcess
  * 作为 server 端的抽象父类，暴露了可定制的 channelPipelineConsumer，
  * 接入了打印错误的 ErrorHandler，注册了 shutDownHooker 可供停止此server
  */
-abstract class Server(private val port: Int, val shutDownHooker: ShutDownHooker) {
+abstract class Server(private val port: Int, private val shutDownHooker: ShutDownHooker) {
 
     private val logger = LoggerFactory.getLogger(Server::class.java)
 

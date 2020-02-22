@@ -32,7 +32,7 @@ class ShutDownHooker(val shutDownMsg: String) {
      */
     @Synchronized
     fun shutdown() {
-        logger.debug(shutDownMsg)
+        logger.info(shutDownMsg)
         shutDown = true
         shutDownConsumer.invoke()
     }

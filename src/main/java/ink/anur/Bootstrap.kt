@@ -14,8 +14,15 @@ object Bootstrap {
     fun main(args: Array<String>) {
         CoordinateServerOperator.start()
 
+        var i = 0
+
         while (RUNNING) {
+            i++
             Thread.sleep(1000)
+
+            if (i == 10) {
+                CoordinateServerOperator.shutDown()
+            }
         }
     }
 }

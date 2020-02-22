@@ -25,6 +25,13 @@ object CoordinateServerOperator : KanashiRunnable() {
             sdh, { _, _ -> }, {})
     }
 
+    /**
+     * 停止 server
+     */
+    fun shutDown() {
+        coordinateServer.shutDown()
+    }
+
     override fun run() {
         logger.info("协调服务器正在启动...")
         coordinateServer.start()
