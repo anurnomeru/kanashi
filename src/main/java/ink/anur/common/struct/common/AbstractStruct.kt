@@ -1,4 +1,4 @@
-package ink.anur.common.struct
+package ink.anur.common.struct.common
 
 import ink.anur.common.struct.enumerate.OperationTypeEnum
 import ink.anur.exception.ByteBufferValidationException
