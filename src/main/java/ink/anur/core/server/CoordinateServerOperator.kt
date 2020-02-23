@@ -5,7 +5,7 @@ import ink.anur.common.Shutdownable
 import ink.anur.common.pool.DriverPool
 import ink.anur.common.struct.common.AbstractStruct
 import ink.anur.common.struct.enumerate.OperationTypeEnum
-import ink.anur.core.server.struct.CoordinateRequest
+import ink.anur.core.struct.CoordinateRequest
 import ink.anur.io.common.ShutDownHooker
 import ink.anur.io.server.CoordinateServer
 import org.slf4j.LoggerFactory
@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Created by Anur IjuoKaruKas on 2020/2/22
  *
- * 协调服务器主逻辑入口
+ * 集群内通讯、协调服务器操作类服务端，负责协调相关的业务
  */
 object CoordinateServerOperator : KanashiRunnable(), Shutdownable {
 

@@ -1,4 +1,4 @@
-package ink.anur.core.server.struct
+package ink.anur.core.struct
 
 import ink.anur.common.struct.enumerate.OperationTypeEnum
 import io.netty.channel.Channel

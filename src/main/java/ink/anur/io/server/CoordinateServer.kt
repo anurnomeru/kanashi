@@ -13,7 +13,8 @@ import java.nio.ByteBuffer
  * 通用的 Server，提供了 ByteBuffer 的消费入口
  * 以及 pipeline 的定制入口
  */
-class CoordinateServer(port: Int, shutDownHooker: ShutDownHooker,
+class CoordinateServer(port: Int,
+                       shutDownHooker: ShutDownHooker,
                        private val howToConsumeByteBuffer: (ChannelHandlerContext, ByteBuffer) -> Unit,
                        private val howToConsumePipeline: (ChannelPipeline) -> Unit)
     : Server(port, shutDownHooker) {
