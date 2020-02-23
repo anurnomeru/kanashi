@@ -1,15 +1,12 @@
 package ink.anur.config
 
-import com.anur.config.common.ConfigHelper
-import com.anur.config.common.ConfigurationEnum
-import com.anur.core.coordinate.model.kanashiNode
-import com.anur.exception.ApplicationConfigException
-import com.anur.exception.kanashiException
-import com.anur.util.ChannelManager
+import com.google.inject.Inject
 import ink.anur.config.common.ConfigHelper
 import ink.anur.config.common.ConfigurationEnum
 import ink.anur.core.struct.KanashiNode
 import ink.anur.exception.ApplicationConfigException
+import ink.anur.io.common.channel.ChannelHolder
+import ink.anur.io.common.channel.ChannelService
 
 /**
  * Created by Anur IjuoKaruKas on 2019/7/5
@@ -20,10 +17,12 @@ object InetSocketAddressConfiguration : ConfigHelper() {
 
     private var me: KanashiNode? = null
 
+    private var channelManager: ChannelService? = null
+
     fun init(serverName: String?) {
         val name = serverName ?: getConfig(ConfigurationEnum.SERVER_NAME) { unChange -> unChange } as String
-        if (name == ChannelManager.CoordinateLeaderSign) {
-            throw ApplicationConfigException(" 'Leader' 为关键词，节点不能命名为这个")
+        if (name == ChannelHolder.COORDINATE_LEADE_SIGN) {
+            throw ApplicationConfigException(" 'LEADER' 为关键词，节点不能命名为这个关键词")
         }
         me = getNode(name)
 
@@ -33,7 +32,7 @@ object InetSocketAddressConfiguration : ConfigHelper() {
     }
 
     fun getServerElectionPort(): Int {
-        return me!!.electionPort
+        return me!!.servicePort
     }
 
     fun getServerCoordinatePort(): Int {

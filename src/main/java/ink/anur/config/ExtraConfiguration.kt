@@ -1,7 +1,7 @@
 package ink.anur.config
 
-import com.anur.config.common.ConfigHelper
-import com.anur.config.common.ConfigurationEnum
+import ink.anur.config.common.ConfigHelper
+import ink.anur.config.common.ConfigurationEnum
 
 /**
  * Created by Anur IjuoKaruKas on 2019/7/14

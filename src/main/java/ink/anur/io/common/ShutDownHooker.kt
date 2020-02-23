@@ -11,7 +11,7 @@ import javax.annotation.concurrent.ThreadSafe
 @ThreadSafe
 class ShutDownHooker(val shutDownMsg: String) {
 
-    private val logger = LoggerFactory.getLogger(ShutDownHooker::class.java)
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     @Volatile
     private var shutDown: Boolean = false

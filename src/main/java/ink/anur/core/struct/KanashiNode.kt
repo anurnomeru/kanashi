@@ -1,7 +1,9 @@
 package ink.anur.core.struct
 
+import ink.anur.config.InetSocketAddressConfiguration
 
-class KanashiNode(val serverName: String, val host: String, val electionPort: Int, val coordinatePort: Int) {
+
+class KanashiNode(val serverName: String, val host: String, val servicePort: Int, val coordinatePort: Int) {
 
     companion object {
         val NOT_EXIST = KanashiNode("", "", 0, 0)
@@ -22,7 +24,7 @@ class KanashiNode(val serverName: String, val host: String, val electionPort: In
 
         if (serverName != other.serverName) return false
         if (host != other.host) return false
-        if (electionPort != other.electionPort) return false
+        if (servicePort != other.servicePort) return false
         if (coordinatePort != other.coordinatePort) return false
         return true
     }
@@ -30,8 +32,13 @@ class KanashiNode(val serverName: String, val host: String, val electionPort: In
     override fun hashCode(): Int {
         var result = serverName.hashCode()
         result = 31 * result + host.hashCode()
-        result = 31 * result + electionPort
+        result = 31 * result + servicePort
         result = 31 * result + coordinatePort
         return result
     }
+
+    override fun toString(): String {
+        return "KanashiNode(serverName='$serverName', host='$host', servicePort=$servicePort, coordinatePort=$coordinatePort)"
+    }
+
 }
