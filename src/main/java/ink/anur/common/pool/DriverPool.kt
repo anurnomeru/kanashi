@@ -14,13 +14,13 @@ import java.util.concurrent.TimeUnit
  *
  * 只需要对外暴露这个池子即可
  */
-class HandlerPool<T> private constructor(private val clazz: Class<T>,
-                                         private val poolSize: Int,
-                                         private val consumeInternal: Long,
-                                         private val timeUnit: TimeUnit,
-                                         private val howToConsumeItem: (T) -> Unit,
-                                         private val howToConsumeNull: () -> Unit,
-                                         private val initLatch: CountDownLatch) : Shutdownable {
+class DriverPool<T> private constructor(private val clazz: Class<T>,
+                                        private val poolSize: Int,
+                                        private val consumeInternal: Long,
+                                        private val timeUnit: TimeUnit,
+                                        private val howToConsumeItem: (T) -> Unit,
+                                        private val howToConsumeNull: () -> Unit,
+                                        private val initLatch: CountDownLatch) : Shutdownable {
 
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java)
@@ -40,7 +40,7 @@ class HandlerPool<T> private constructor(private val clazz: Class<T>,
                     throw DuplicateHandlerPoolException("class $clazz is already register in Handler pool")
                 }
                 val initLatch = CountDownLatch(poolSize)
-                HANDLER_POOLS[clazz] = HandlerPool(clazz, poolSize, consumeInternal, timeUnit, howToConsumeItem, howToConsumeNull, initLatch)
+                HANDLER_POOLS[clazz] = DriverPool(clazz, poolSize, consumeInternal, timeUnit, howToConsumeItem, howToConsumeNull, initLatch)
                 initLatch.countDown()
                 logger.info("初始化 [$clazz] 处理池成功，共有 $poolSize 个请求池被创建")
             }
@@ -56,9 +56,9 @@ class HandlerPool<T> private constructor(private val clazz: Class<T>,
         /**
          * 获取某个消费池
          */
-        private fun <T> getPool(clazz: Class<T>): HandlerPool<T> {
+        private fun <T> getPool(clazz: Class<T>): DriverPool<T> {
             val any = HANDLER_POOLS[clazz] ?: throw NoSuchHandlerPoolException("class $clazz has not register in Handler pool")
-            return any as HandlerPool<T>
+            return any as DriverPool<T>
         }
     }
 
@@ -110,7 +110,7 @@ class HandlerPool<T> private constructor(private val clazz: Class<T>,
         override fun run() {
             initLatch.await()
             while (true) {
-                val consume = HandlerPool.getPool(clazz).poll(consumeInternal, timeUnit)
+                val consume = DriverPool.getPool(clazz).poll(consumeInternal, timeUnit)
                 consume?.also { howToConsumeItem(it) } ?: howToConsumeNull.invoke()
                 if (shutdown) break
             }

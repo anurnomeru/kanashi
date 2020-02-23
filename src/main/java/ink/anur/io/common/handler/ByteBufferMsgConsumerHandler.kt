@@ -1,4 +1,4 @@
-package ink.anur.io.common
+package ink.anur.io.common.handler
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler

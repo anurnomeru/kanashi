@@ -1,4 +1,4 @@
-package ink.anur.io.common
+package ink.anur.io.common.handler
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext

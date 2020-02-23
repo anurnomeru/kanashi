@@ -1,6 +1,6 @@
 package ink.anur.io.server
 
-import ink.anur.io.common.ErrorHandler
+import ink.anur.io.common.handler.ErrorHandler
 import ink.anur.io.common.ShutDownHooker
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelInitializer
@@ -18,10 +18,13 @@ import kotlin.system.exitProcess
  * 作为 server 端的抽象父类，暴露了可定制的 channelPipelineConsumer，
  * 接入了打印错误的 ErrorHandler，注册了 shutDownHooker 可供停止此server
  */
-abstract class Server(private val port: Int,private val shutDownHooker: ShutDownHooker) {
+abstract class Server(private val port: Int, private val shutDownHooker: ShutDownHooker) {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
+    /**
+     * 暴露可定制的 channelPipelineConsumer
+     */
     abstract fun channelPipelineConsumer(channelPipeline: ChannelPipeline): ChannelPipeline
 
     /**

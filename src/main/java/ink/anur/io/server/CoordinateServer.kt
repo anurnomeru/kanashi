@@ -1,7 +1,7 @@
 package ink.anur.io.server
 
-import ink.anur.io.common.ByteBufferMsgConsumerHandler
-import ink.anur.io.common.KanashiDecoder
+import ink.anur.io.common.handler.ByteBufferMsgConsumerHandler
+import ink.anur.io.common.handler.KanashiDecoder
 import ink.anur.io.common.ShutDownHooker
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPipeline

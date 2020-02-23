@@ -2,14 +2,12 @@ package ink.anur.core.server
 
 import ink.anur.common.KanashiRunnable
 import ink.anur.common.Shutdownable
-import ink.anur.common.pool.HandlerPool
+import ink.anur.common.pool.DriverPool
 import ink.anur.common.struct.common.AbstractStruct
 import ink.anur.common.struct.enumerate.OperationTypeEnum
 import ink.anur.core.server.struct.CoordinateRequest
 import ink.anur.io.common.ShutDownHooker
 import ink.anur.io.server.CoordinateServer
-import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelInboundHandlerAdapter
 import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
@@ -30,7 +28,7 @@ object CoordinateServerOperator : KanashiRunnable(), Shutdownable {
     init {
         val sdh = ShutDownHooker("终止协调服务器的套接字接口 8080 的监听！")
 
-        HandlerPool.register(CoordinateRequest.javaClass,
+        DriverPool.register(CoordinateRequest.javaClass,
             8,
             300,
             TimeUnit.MILLISECONDS,
@@ -52,7 +50,7 @@ object CoordinateServerOperator : KanashiRunnable(), Shutdownable {
                 }
 
                 val typeEnum = OperationTypeEnum.parseByByteSign(sign)
-                HandlerPool.offer(CoordinateRequest(msg, typeEnum, ctx.channel()))
+                DriverPool.offer(CoordinateRequest(msg, typeEnum, ctx.channel()))
             },
             {})
     }
