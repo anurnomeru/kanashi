@@ -1,7 +1,7 @@
 package ink.anur
 
 import ink.anur.config.BootstrapConfiguration
-import ink.anur.core.server.CoordinateServerOperator
+import ink.anur.core.server.CoordinateServerOperatorService
 import ink.anur.inject.Nigate
 
 /**
@@ -27,7 +27,7 @@ object Bootstrap {
             Thread.sleep(1000)
 
             if (i == 10) {
-                Nigate.getBeanByClass(CoordinateServerOperator::class.java).shutDown()
+                Nigate.getBeanByClass(CoordinateServerOperatorService::class.java).shutDown()
             }
         }
     }
