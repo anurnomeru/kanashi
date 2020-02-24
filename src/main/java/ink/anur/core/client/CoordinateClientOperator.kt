@@ -31,7 +31,6 @@ class CoordinateClientOperator(private val kanashiNode: KanashiNode) : KanashiRu
                 synchronized(CoordinateClientOperator::class.java) {
                     if (kanashiNode != INSTANCE?.kanashiNode) {
                         INSTANCE?.shutDown()
-
                         INSTANCE = CoordinateClientOperator(kanashiNode)
                         INSTANCE?.name = "CoordinateClientOperator - [$kanashiNode]"
                         INSTANCE?.start()

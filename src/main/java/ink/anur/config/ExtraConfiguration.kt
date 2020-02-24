@@ -2,17 +2,15 @@ package ink.anur.config
 
 import ink.anur.config.common.ConfigHelper
 import ink.anur.config.common.ConfigurationEnum
+import ink.anur.inject.NigateBean
 
 /**
  * Created by Anur IjuoKaruKas on 2019/7/14
  */
-object ExtraConfiguration : ConfigHelper() {
+@NigateBean
+class ExtraConfiguration : ConfigHelper() {
 
-    fun isDebug(): Boolean {
-        return CoordinateConfiguration.getConfig(ConfigurationEnum.DEBUG_MODE) { "enable" == it } as Boolean
-    }
+    fun isDebug(): Boolean = getConfig(ConfigurationEnum.DEBUG_MODE) { "enable" == it } as Boolean
 
-    fun neverReElectAfterHasLeader(): Boolean {
-        return CoordinateConfiguration.getConfig(ConfigurationEnum.REELECT) { "true" == it } as Boolean
-    }
+    fun neverReElectAfterHasLeader(): Boolean = getConfig(ConfigurationEnum.REELECT) { "true" == it } as Boolean
 }

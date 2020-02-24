@@ -1,12 +1,14 @@
 package ink.anur.core.server
 
-import com.google.inject.Inject
 import ink.anur.common.KanashiRunnable
 import ink.anur.common.Shutdownable
 import ink.anur.common.pool.DriverPool
 import ink.anur.common.struct.common.AbstractStruct
 import ink.anur.common.struct.enumerate.OperationTypeEnum
 import ink.anur.core.struct.CoordinateRequest
+import ink.anur.inject.NigateBean
+import ink.anur.inject.NigateInject
+import ink.anur.inject.PostConstruct
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.io.common.ShutDownHooker
 import ink.anur.io.server.CoordinateServer
@@ -18,10 +20,11 @@ import java.util.concurrent.TimeUnit
  *
  * 集群内通讯、协调服务器操作类服务端，负责协调相关的业务
  */
-object CoordinateServerOperator : KanashiRunnable(), Shutdownable {
+@NigateBean
+class CoordinateServerOperator : KanashiRunnable(), Shutdownable {
 
-    @Inject
-    private var channelManager: ChannelService? = null
+    @NigateInject
+    private lateinit var channelService: ChannelService
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -29,6 +32,9 @@ object CoordinateServerOperator : KanashiRunnable(), Shutdownable {
      * 协调服务端
      */
     private var coordinateServer: CoordinateServer
+
+    @PostConstruct
+    private fun init() = this.start()
 
     init {
         val sdh = ShutDownHooker("终止协调服务器的套接字接口 8080 的监听！")
@@ -78,7 +84,6 @@ object CoordinateServerOperator : KanashiRunnable(), Shutdownable {
     }
 
     override fun run() {
-        val channelHolder = channelManager!!.getChannelHolder(ChannelService.ChannelType.COORDINATE)
         logger.info("协调服务器正在启动...")
         coordinateServer.start()
     }

@@ -1,6 +1,8 @@
 package ink.anur
 
+import ink.anur.config.BootstrapConfiguration
 import ink.anur.core.server.CoordinateServerOperator
+import ink.anur.inject.Nigate
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/22
@@ -12,7 +14,11 @@ object Bootstrap {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        CoordinateServerOperator.start()
+        // 保存jvm参数
+        BootstrapConfiguration.init(args)
+        // 初始化 bean管理
+        Nigate
+
 
         var i = 0
 
@@ -21,7 +27,7 @@ object Bootstrap {
             Thread.sleep(1000)
 
             if (i == 10) {
-                CoordinateServerOperator.shutDown()
+                Nigate.getBeanByClass(CoordinateServerOperator::class.java).shutDown()
             }
         }
     }

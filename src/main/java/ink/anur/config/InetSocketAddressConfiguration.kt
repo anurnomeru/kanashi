@@ -1,26 +1,29 @@
 package ink.anur.config
 
-import com.google.inject.Inject
 import ink.anur.config.common.ConfigHelper
 import ink.anur.config.common.ConfigurationEnum
 import ink.anur.core.struct.KanashiNode
 import ink.anur.exception.ApplicationConfigException
+import ink.anur.inject.NigateBean
+import ink.anur.inject.PostConstruct
 import ink.anur.io.common.channel.ChannelHolder
-import ink.anur.io.common.channel.ChannelService
+import org.slf4j.LoggerFactory
 
 /**
  * Created by Anur IjuoKaruKas on 2019/7/5
  *
  * 网络相关配置，都可以从这里获取
  */
-object InetSocketAddressConfiguration : ConfigHelper() {
+@NigateBean
+class InetSocketAddressConfiguration : ConfigHelper() {
 
-    private var me: KanashiNode? = null
+    private lateinit var me: KanashiNode
 
-    private var channelManager: ChannelService? = null
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
-    fun init(serverName: String?) {
-        val name = serverName ?: getConfig(ConfigurationEnum.SERVER_NAME) { unChange -> unChange } as String
+    @PostConstruct
+    private fun init() {
+        val name = BootstrapConfiguration.get(BootstrapConfiguration.SERVER_NAME) ?: getConfig(ConfigurationEnum.SERVER_NAME) { unChange -> unChange } as String
         if (name == ChannelHolder.COORDINATE_LEADE_SIGN) {
             throw ApplicationConfigException(" 'LEADER' 为关键词，节点不能命名为这个关键词")
         }
@@ -29,18 +32,19 @@ object InetSocketAddressConfiguration : ConfigHelper() {
         if (me == KanashiNode.NOT_EXIST) {
             throw ApplicationConfigException("服务名未正确配置，或者该服务不存在于服务配置列表中")
         }
+        logger.info("current node is $me")
     }
 
     fun getServerElectionPort(): Int {
-        return me!!.servicePort
+        return me.servicePort
     }
 
     fun getServerCoordinatePort(): Int {
-        return me!!.coordinatePort
+        return me.coordinatePort
     }
 
     fun getServerName(): String {
-        return me!!.serverName
+        return me.serverName
     }
 
     fun getCluster(): List<KanashiNode> {
