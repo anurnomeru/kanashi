@@ -2,10 +2,20 @@ package ink.anur.core.client
 
 import ink.anur.common.KanashiRunnable
 import ink.anur.common.Shutdownable
+import ink.anur.common.pool.DriverPool
+import ink.anur.common.struct.common.AbstractStruct
+import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.core.msg.service.RegisterHandlerService
+import ink.anur.core.server.CoordinateServerOperatorService
+import ink.anur.core.struct.CoordinateRequest
 import ink.anur.core.struct.KanashiNode
 import ink.anur.io.client.CoordinateClient
 import ink.anur.io.common.ShutDownHooker
+import ink.anur.io.common.handler.AutoRegistryHandler
+import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.ChannelPipeline
 import org.slf4j.LoggerFactory
+import java.nio.ByteBuffer
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/23
@@ -16,8 +26,26 @@ class CoordinateClientOperator(val kanashiNode: KanashiNode) : KanashiRunnable()
 
     private val serverShutDownHooker = ShutDownHooker("终止与协调节点 $kanashiNode 的连接")
 
+    /**
+     * CoordinateServerOperator 消费逻辑
+     * 这里直接将解码后的 msg 丢入 HandlerPool
+     */
+    private val CLIENT_MSG_CONSUMER: (ChannelHandlerContext, ByteBuffer) -> Unit = { ctx, msg ->
+        var sign = 0
+        try {
+            sign = msg.getInt(AbstractStruct.TypeOffset)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        val typeEnum = OperationTypeEnum.parseByByteSign(sign)
+        DriverPool.offer(CoordinateRequest(msg, typeEnum, ctx.channel()))
+    }
+
+    private val CLIENT_PIPELINE_CONSUME: (ChannelPipeline) -> Unit = { it.addFirst(AutoRegistryHandler(kanashiNode,)) }
+
     private val coordinateClient = CoordinateClient(kanashiNode.serverName, kanashiNode.host,
-        kanashiNode.coordinatePort, this.serverShutDownHooker, { _, _ -> }, {})
+        kanashiNode.coordinatePort, this.serverShutDownHooker, CLIENT_MSG_CONSUMER, {})
 
     override fun run() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
