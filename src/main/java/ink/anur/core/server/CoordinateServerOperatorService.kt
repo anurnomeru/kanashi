@@ -5,9 +5,11 @@ import ink.anur.common.Shutdownable
 import ink.anur.common.pool.DriverPool
 import ink.anur.common.struct.common.AbstractStruct
 import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.core.msg.core.MsgCenterService
 import ink.anur.core.struct.CoordinateRequest
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateBean
+import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.io.common.ShutDownHooker
@@ -28,6 +30,9 @@ import java.util.concurrent.TimeUnit
 class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
+
+    @NigateInject
+    private lateinit var msgCenterService: MsgCenterService
 
     /**
      * 协调服务端
@@ -74,8 +79,10 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
             8,
             300,
             TimeUnit.MILLISECONDS,
-            {}, //TODO
-            {}//TODO
+            {
+                msgCenterService.receive(it.msg, it.typeEnum, it.channel)
+            },
+            null
         )
 
         this.coordinateServer = CoordinateServer(8080,

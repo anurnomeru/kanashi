@@ -18,8 +18,8 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
                                         private val poolSize: Int,
                                         private val consumeInternal: Long,
                                         private val timeUnit: TimeUnit,
-                                        private val howToConsumeItem: (T) -> Unit,
-                                        private val howToConsumeNull: () -> Unit,
+                                        private val howToConsumeItem: ((T) -> Unit)?,
+                                        private val howToConsumeNull: (() -> Unit)?,
                                         private val initLatch: CountDownLatch) : Shutdownable {
 
     companion object {
@@ -33,8 +33,8 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
                          poolSize: Int,
                          consumeInternal: Long,
                          timeUnit: TimeUnit,
-                         howToConsumeItem: (T) -> Unit,
-                         howToConsumeNull: () -> Unit) {
+                         howToConsumeItem: ((T) -> Unit)?,
+                         howToConsumeNull: (() -> Unit)?) {
             synchronized(clazz) {
                 if (HANDLER_POOLS[clazz] != null) {
                     throw DuplicateHandlerPoolException("class $clazz is already register in Handler pool")
@@ -99,8 +99,8 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
         private val clazz: Class<T>,
         private val consumeInternal: Long,
         private val timeUnit: TimeUnit,
-        private val howToConsumeItem: (T) -> Unit,
-        private val howToConsumeNull: () -> Unit,
+        private val howToConsumeItem: ((T) -> Unit)?,
+        private val howToConsumeNull: (() -> Unit)?,
         private val initLatch: CountDownLatch
     ) : Runnable, Shutdownable, KanashiRunnable() {
 
@@ -111,7 +111,7 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
             initLatch.await()
             while (true) {
                 val consume = DriverPool.getPool(clazz).poll(consumeInternal, timeUnit)
-                consume?.also { howToConsumeItem(it) } ?: howToConsumeNull.invoke()
+                consume?.also { howToConsumeItem?.invoke(it) } ?: howToConsumeNull?.invoke()
                 if (shutdown) break
             }
         }

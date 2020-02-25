@@ -83,63 +83,68 @@ class MsgCenterService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 接收到消息如何处理
      */
-    fun receive(msg: ByteBuffer, operationTypeEnum: OperationTypeEnum, channel: Channel) {
-        val requestTimestampCurrent = msg.getLong(AbstractTimedStruct.TimestampOffset)
-        val serverName = channelService.getChannelHolder(ChannelService.ChannelType.COORDINATE).getChannelName(channel)
+    fun receive(msg: ByteBuffer, operationTypeEnum: OperationTypeEnum, channel: Channel?) {
 
-        // serverName 是不会为空的，但是有一种情况例外，便是服务还未注册时 这里做特殊处理
-        when {
-            /*
-             * 业务先验的条件判断
-             */
+        if (channel == null) {
+            logger.error("????????????????????????????????????")
+        } else {
+            val requestTimestampCurrent = msg.getLong(AbstractTimedStruct.TimestampOffset)
+            val serverName = channelService.getChannelHolder(ChannelService.ChannelType.COORDINATE).getChannelName(channel)
+
+            // serverName 是不会为空的，但是有一种情况例外，便是服务还未注册时 这里做特殊处理
+            when {
+                /*
+                 * 业务先验的条件判断
+                 */
 //            operationTypeEnum == OperationTypeEnum.REGISTER -> LeaderApisHandler.handleRegisterRequest(msg, channel)
-            serverName == null -> logger.error("没有注册却发来了信息，猜想是过期的消息，或者出现了BUG！")
-            writeLockSupplierCompel {
-                var changed = false
-                receiveLog.compute(serverName) { _, timestampMap ->
-                    (timestampMap ?: mutableMapOf()).also {
-                        it.compute(operationTypeEnum) { _, timestampBefore ->
-                            changed = (timestampBefore == null || requestTimestampCurrent > timestampBefore)
-                            if (changed) requestTimestampCurrent else timestampBefore
+                serverName == null -> logger.error("没有注册却发来了信息，猜想是过期的消息，或者出现了BUG！")
+                writeLockSupplierCompel {
+                    var changed = false
+                    receiveLog.compute(serverName) { _, timestampMap ->
+                        (timestampMap ?: mutableMapOf()).also {
+                            it.compute(operationTypeEnum) { _, timestampBefore ->
+                                changed = (timestampBefore == null || requestTimestampCurrent > timestampBefore)
+                                if (changed) requestTimestampCurrent else timestampBefore
+                            }
                         }
                     }
-                }
-                changed
-            } -> try {
-                val requestMapping = requestMappingRegister[operationTypeEnum]
-                if (requestMapping != null) {
-                    requestMapping.handleRequest(serverName, msg, channel)// 收到正常的请求
-                } else {
+                    changed
+                } -> try {
+                    val requestMapping = requestMappingRegister[operationTypeEnum]
+                    if (requestMapping != null) {
+                        requestMapping.handleRequest(serverName, msg, channel)// 收到正常的请求
+                    } else {
 
-                    /*
-                     *  默认请求处理，也就是 response 处理
-                     * response 的处理非常简单：
-                     *
-                     * 1、触发 complete
-                     * 2、移除 MAPPING
-                     */
-                    val requestType = responseRequestRegister[operationTypeEnum]!!
-                    logger.trace("收到来自节点 {} 关于 {} 的 response", serverName, requestType.name)
+                        /*
+                         *  默认请求处理，也就是 response 处理
+                         * response 的处理非常简单：
+                         *
+                         * 1、触发 complete
+                         * 2、移除 MAPPING
+                         */
+                        val requestType = responseRequestRegister[operationTypeEnum]!!
+                        logger.trace("收到来自节点 {} 关于 {} 的 response", serverName, requestType.name)
 
-                    if (StringUtil.isNullOrEmpty(serverName)) {
-                        throw NetWorkException("收到了来自已断开连接节点 $serverName 关于 ${requestType.name} 的无效 response")
+                        if (StringUtil.isNullOrEmpty(serverName)) {
+                            throw NetWorkException("收到了来自已断开连接节点 $serverName 关于 ${requestType.name} 的无效 response")
+                        }
+
+                        readLockSupplier { getting(inFlight, serverName, requestType) }?.complete(msg)
+                        writeLocker {
+                            removing(inFlight, serverName, requestType)?.complete()
+                            removing(reSendTask, serverName, requestType)
+                        }
                     }
 
-                    readLockSupplier { getting(inFlight, serverName, requestType) }?.complete(msg)
+                } catch (e: Exception) {
+                    logger.warn("在处理来自节点 {} 的 {} 请求时出现异常，可能原因 {}", serverName, operationTypeEnum, e.message)
                     writeLocker {
-                        removing(inFlight, serverName, requestType)?.complete()
-                        removing(reSendTask, serverName, requestType)
+                        receiveLog.compute(serverName) { _, timestampMap ->
+                            (timestampMap ?: mutableMapOf()).also { it.remove(operationTypeEnum) }
+                        }
                     }
+                    e.printStackTrace()
                 }
-
-            } catch (e: Exception) {
-                logger.warn("在处理来自节点 {} 的 {} 请求时出现异常，可能原因 {}", serverName, operationTypeEnum, e.message)
-                writeLocker {
-                    receiveLog.compute(serverName) { _, timestampMap ->
-                        (timestampMap ?: mutableMapOf()).also { it.remove(operationTypeEnum) }
-                    }
-                }
-                e.printStackTrace()
             }
         }
     }

@@ -48,10 +48,17 @@ class CoordinateClientOperator(val kanashiNode: KanashiNode) : KanashiRunnable()
         kanashiNode.coordinatePort, this.serverShutDownHooker, CLIENT_MSG_CONSUMER, CLIENT_PIPELINE_CONSUME)
 
     override fun run() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if (serverShutDownHooker.isShutDown()) {
+            println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
+            println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
+            println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
+            println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
+            println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
+        }
+        coordinateClient.start()
     }
 
     override fun shutDown() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        serverShutDownHooker.shutdown()
     }
 }
