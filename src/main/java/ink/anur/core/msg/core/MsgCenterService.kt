@@ -65,8 +65,19 @@ class MsgCenterService : ReentrantReadWriteLocker(), Resetable {
     @Volatile
     private var reSendTask = mutableMapOf<String, MutableMap<OperationTypeEnum, TimedTask?>>()
 
+    init {
+        responseRequestRegister[OperationTypeEnum.REGISTER_RESPONSE] = OperationTypeEnum.REGISTER
+    }
+
     override fun reset() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    /**
+     * 注册 RequestMapping
+     */
+    fun registerRequestMapping(typeEnum: OperationTypeEnum, requestMapping: RequestMapping) {
+        requestMappingRegister[typeEnum] = requestMapping
     }
 
     /**
@@ -114,10 +125,10 @@ class MsgCenterService : ReentrantReadWriteLocker(), Resetable {
                         throw NetWorkException("收到了来自已断开连接节点 $serverName 关于 ${requestType.name} 的无效 response")
                     }
 
-                    readLockSupplier { getting(inFlight, serverName, operationTypeEnum) }?.complete(msg)
+                    readLockSupplier { getting(inFlight, serverName, requestType) }?.complete(msg)
                     writeLocker {
-                        removing(inFlight, serverName, operationTypeEnum)?.complete()
-                        removing(reSendTask, serverName, operationTypeEnum)
+                        removing(inFlight, serverName, requestType)?.complete()
+                        removing(reSendTask, serverName, requestType)
                     }
                 }
 
@@ -136,7 +147,7 @@ class MsgCenterService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue
      */
-    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor?): Boolean {
+    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor? = null): Boolean {
         val typeEnum = msg.getOperationTypeEnum()
         return if (getting(inFlight, serverName, typeEnum) != null) {
             logger.debug("尝试创建发送到节点 {} 的 {} 任务失败，上次的指令还未收到 response", serverName, typeEnum.name)

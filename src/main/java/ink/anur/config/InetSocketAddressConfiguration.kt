@@ -35,15 +35,15 @@ class InetSocketAddressConfiguration : ConfigHelper() {
         logger.info("current node is $me")
     }
 
-    fun getServerElectionPort(): Int {
+    fun getLocalServerElectionPort(): Int {
         return me.servicePort
     }
 
-    fun getServerCoordinatePort(): Int {
+    fun getLocalServerCoordinatePort(): Int {
         return me.coordinatePort
     }
 
-    fun getServerName(): String {
+    fun getLocalServerName(): String {
         return me.serverName
     }
 

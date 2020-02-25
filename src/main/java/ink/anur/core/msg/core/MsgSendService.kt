@@ -44,7 +44,7 @@ class MsgSendService {
      * 向某个服务发送东西~
      */
     fun doSend(serverName: String, body: AbstractStruct) {
-        if (inetSocketAddressConfiguration.getServerName() == serverName) {
+        if (inetSocketAddressConfiguration.getLocalServerName() == serverName) {
             return
         }
 

@@ -18,7 +18,7 @@ class LogConfiguration : ConfigHelper() {
 
     private var relativelyPath: String = getConfig(ConfigurationEnum.LOG_BASE_PATH) { it } as String
 
-    fun getBaseDir(): String = relativelyPath + "/" + inetSocketAddressConfiguration.getServerName()
+    fun getBaseDir(): String = relativelyPath + "/" + inetSocketAddressConfiguration.getLocalServerName()
 
     fun getIndexInterval(): Int = getConfig(ConfigurationEnum.LOG_INDEX_INTERVAL) { Integer.valueOf(it) } as Int
 

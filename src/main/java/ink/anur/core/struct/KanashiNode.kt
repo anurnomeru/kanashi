@@ -14,7 +14,7 @@ class KanashiNode(val serverName: String, val host: String, val servicePort: Int
      * 是否是本地节点
      */
     fun isLocalNode(): Boolean {
-        return this.serverName == Nigate.getBeanByClass(InetSocketAddressConfiguration::class.java).getServerName()
+        return this.serverName == Nigate.getBeanByClass(InetSocketAddressConfiguration::class.java).getLocalServerName()
     }
 
     override fun equals(other: Any?): Boolean {
