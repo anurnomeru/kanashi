@@ -8,7 +8,7 @@ import ink.anur.common.struct.enumerate.OperationTypeEnum
 import ink.anur.core.struct.CoordinateRequest
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateBean
-import ink.anur.inject.PostConstruct
+import ink.anur.inject.NigatePostConstruct
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.io.common.ShutDownHooker
 import ink.anur.io.server.CoordinateServer
@@ -64,7 +64,7 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
         }
     }
 
-    @PostConstruct
+    @NigatePostConstruct
     private fun init() = this.start()
 
     init {

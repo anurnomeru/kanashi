@@ -41,5 +41,4 @@ class KanashiNode(val serverName: String, val host: String, val servicePort: Int
     override fun toString(): String {
         return "KanashiNode(serverName='$serverName', host='$host', servicePort=$servicePort, coordinatePort=$coordinatePort)"
     }
-
 }

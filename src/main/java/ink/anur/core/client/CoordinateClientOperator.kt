@@ -42,10 +42,10 @@ class CoordinateClientOperator(val kanashiNode: KanashiNode) : KanashiRunnable()
         DriverPool.offer(CoordinateRequest(msg, typeEnum, ctx.channel()))
     }
 
-    private val CLIENT_PIPELINE_CONSUME: (ChannelPipeline) -> Unit = { it.addFirst(AutoRegistryHandler(kanashiNode,)) }
+    private val CLIENT_PIPELINE_CONSUME: (ChannelPipeline) -> Unit = { it.addFirst(AutoRegistryHandler(kanashiNode)) }
 
     private val coordinateClient = CoordinateClient(kanashiNode.serverName, kanashiNode.host,
-        kanashiNode.coordinatePort, this.serverShutDownHooker, CLIENT_MSG_CONSUMER, {})
+        kanashiNode.coordinatePort, this.serverShutDownHooker, CLIENT_MSG_CONSUMER, CLIENT_PIPELINE_CONSUME)
 
     override fun run() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.

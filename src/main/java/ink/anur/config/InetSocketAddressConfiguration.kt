@@ -5,7 +5,7 @@ import ink.anur.config.common.ConfigurationEnum
 import ink.anur.core.struct.KanashiNode
 import ink.anur.exception.ApplicationConfigException
 import ink.anur.inject.NigateBean
-import ink.anur.inject.PostConstruct
+import ink.anur.inject.NigatePostConstruct
 import ink.anur.io.common.channel.ChannelHolder
 import org.slf4j.LoggerFactory
 
@@ -21,7 +21,7 @@ class InetSocketAddressConfiguration : ConfigHelper() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    @PostConstruct
+    @NigatePostConstruct
     private fun init() {
         val name = BootstrapConfiguration.get(BootstrapConfiguration.SERVER_NAME) ?: getConfig(ConfigurationEnum.SERVER_NAME) { unChange -> unChange } as String
         if (name == ChannelHolder.COORDINATE_LEADE_SIGN) {

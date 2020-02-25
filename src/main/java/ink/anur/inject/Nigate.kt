@@ -1,10 +1,9 @@
 package ink.anur.inject
 
+import ink.anur.exception.KanashiException
 import ink.anur.exception.NoSuchBeanException
 import org.slf4j.LoggerFactory
 import java.io.File
-import kotlin.jvm.internal.ClassReference
-import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.isAccessible
@@ -25,6 +24,8 @@ object Nigate {
 
     private val BEAN_MAPPING = mutableMapOf<String, Any>()
 
+    private var OVER_REGISTER: Boolean = false
+
     init {
         val scans = mutableSetOf<Class<*>>()
         doScan(scans, File(defaultClassPath))
@@ -33,6 +34,7 @@ object Nigate {
         for (clazz in scans) {
             register(clazz.newInstance(), clazz.simpleName)
         }
+        OVER_REGISTER = true
         logger.info("Nigate ==> Register complete")
 
         logger.info("Nigate ==> Injecting..")
@@ -43,7 +45,7 @@ object Nigate {
 
         logger.info("Nigate ==> Invoking postConstruct..")
         for (bean in BEAN_MAPPING.values) {
-            postConstruct(bean)
+            postConstruct(bean, true)
         }
         logger.info("Nigate ==> Invoke postConstruct complete")
     }
@@ -61,10 +63,17 @@ object Nigate {
         logger.debug("bean named [$actualName] is managed by Nigate")
     }
 
+    fun initInject(injected: Any) {
+        if (!OVER_REGISTER) {
+            throw KanashiException("暂时不支持在初始化完成前进行构造注入！")
+        }
+        inject(injected)
+    }
+
     /**
      * 为某个bean注入成员变量
      */
-    fun inject(injected: Any) {
+    private fun inject(injected: Any) {
         for (kProperty in injected::class.declaredMemberProperties) {
             for (annotation in kProperty.annotations) {
                 if (annotation.annotationClass == NigateInject::class) {
@@ -77,18 +86,19 @@ object Nigate {
         }
     }
 
-    fun postConstruct(bean: Any) {
+    fun postConstruct(bean: Any, startUp: Boolean) {
         for (memberFunction in bean::class.memberFunctions) {
             for (annotation in memberFunction.annotations) {
-                if (annotation.annotationClass == PostConstruct::class) {
+                if (annotation.annotationClass == NigatePostConstruct::class) {
                     try {
                         memberFunction.isAccessible = true
                         memberFunction.call(bean)
                     } catch (e: Exception) {
                         logger.error("class [${bean::class}] invoke post construct method [${memberFunction.name}] error : ${e.message}")
-                        exitProcess(1)
+                        if (startUp) {
+                            exitProcess(1)
+                        }
                     }
-                    break
                 }
             }
         }
