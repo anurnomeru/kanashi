@@ -10,8 +10,6 @@ import io.netty.channel.Channel
  */
 class EmptyStruct : AbstractStruct() {
 
-    companion object {}
-
     override fun writeIntoChannel(channel: Channel) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

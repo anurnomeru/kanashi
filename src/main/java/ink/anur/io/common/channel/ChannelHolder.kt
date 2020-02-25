@@ -28,19 +28,16 @@ class ChannelHolder : ReentrantReadWriteLocker() {
     /**
      * 如果还没连接上服务，是会返回空的
      */
-    fun getChannel(serverName: String): Channel = this.readLockSupplier {
+    fun getChannel(serverName: String): Channel? = this.readLockSupplier {
         serverChannelMap[serverName]
-            ?: throw NoSuchChannelException("No such channel name $serverName connected")
-    }!!
+    }
 
     /**
      * 如果还没连接上服务，是会返回空的
      */
-    fun getChannelName(channel: Channel): String = this.readLockSupplier {
+    fun getChannelName(channel: Channel): String? = this.readLockSupplier {
         channelServerMap[channel]
-            ?: throw NoSuchChannelException("No such channel $channel connected")
-    }!!
-
+    }
 
     /**
      * 向 channelManager 注册服务

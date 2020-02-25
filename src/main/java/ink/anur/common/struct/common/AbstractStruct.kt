@@ -9,6 +9,12 @@ import java.nio.ByteBuffer
 /**
  * Created by Anur IjuoKaruKas on 2020/2/22
  *
+ * 一个 基础的数据 由以下部分组成：
+ *
+ * 　4　   +   4    + ...（子类自由扩展）
+ * CRC32  +  type  + ...（子类自由扩展）
+ *
+ * 所有的指令都满足 4位CRC + 4位类型
  */
 abstract class AbstractStruct {
 

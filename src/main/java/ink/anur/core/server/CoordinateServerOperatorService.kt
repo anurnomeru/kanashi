@@ -8,7 +8,6 @@ import ink.anur.common.struct.enumerate.OperationTypeEnum
 import ink.anur.core.struct.CoordinateRequest
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateBean
-import ink.anur.inject.NigateInject
 import ink.anur.inject.PostConstruct
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.io.common.ShutDownHooker
@@ -27,9 +26,6 @@ import java.util.concurrent.TimeUnit
  */
 @NigateBean
 class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
-
-    @NigateInject
-    private lateinit var channelService: ChannelService
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
