@@ -27,8 +27,6 @@ import java.nio.ByteBuffer
 @NigateBean
 class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
 
-    private val logger = LoggerFactory.getLogger(this::class.java)
-
     @NigateInject
     private lateinit var channelService: ChannelService
 
@@ -37,6 +35,8 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
 
     @NigateInject
     private lateinit var msgSendService: CoordinateSenderService
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     /**
      * 此 map 用于保存接收到的信息的时间戳，如果收到旧的请求，则不作处理

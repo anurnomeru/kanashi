@@ -17,15 +17,15 @@ import java.util.concurrent.locks.ReentrantLock
 @NigateBean
 class CoordinateSenderService {
 
-    private val logger = LoggerFactory.getLogger(this::class.java)
-
-    private val LOCKER_MAPPING = HashMap<String, ReentrantLock>()
-
     @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
 
     @NigateInject
     private lateinit var channelService: ChannelService
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
+    private val LOCKER_MAPPING = HashMap<String, ReentrantLock>()
 
     /**
      * 在向同一个服务发送东西时需要加锁

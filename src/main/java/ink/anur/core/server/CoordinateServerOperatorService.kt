@@ -29,10 +29,10 @@ import java.util.concurrent.TimeUnit
 @NigateBean
 class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
 
-    private val logger = LoggerFactory.getLogger(this::class.java)
-
     @NigateInject
     private lateinit var msgCenterService: CoordinateMessageService
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     /**
      * 协调服务端
