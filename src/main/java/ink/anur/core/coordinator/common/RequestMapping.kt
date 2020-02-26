@@ -1,4 +1,4 @@
-package ink.anur.core.msg.common
+package ink.anur.core.coordinator.common
 
 import ink.anur.common.struct.enumerate.OperationTypeEnum
 import io.netty.channel.Channel

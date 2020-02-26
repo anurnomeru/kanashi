@@ -1,4 +1,4 @@
-package ink.anur.core.msg.common
+package ink.anur.core.coordinator.common
 
 import ink.anur.common.KanashiExecutors
 import ink.anur.core.rentrant.ReentrantReadWriteLocker

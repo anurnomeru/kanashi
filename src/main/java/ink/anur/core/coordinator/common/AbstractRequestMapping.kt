@@ -1,6 +1,6 @@
-package ink.anur.core.msg.common
+package ink.anur.core.coordinator.common
 
-import ink.anur.core.msg.core.MsgCenterService
+import ink.anur.core.coordinator.core.CoordinateMessageService
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigatePostConstruct
 
@@ -13,7 +13,7 @@ abstract class AbstractRequestMapping : RequestMapping {
 
     @NigatePostConstruct
     fun init() {
-        val msgCenterService = Nigate.getBeanByClass(MsgCenterService::class.java)
+        val msgCenterService = Nigate.getBeanByClass(CoordinateMessageService::class.java)
         msgCenterService.registerRequestMapping(this.typeSupport(), this)
     }
 }

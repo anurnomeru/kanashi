@@ -1,11 +1,11 @@
-package ink.anur.core.msg.service
+package ink.anur.core.coordinator.service
 
 import ink.anur.common.struct.Register
 import ink.anur.common.struct.RegisterResponse
 import ink.anur.common.struct.enumerate.OperationTypeEnum
 import ink.anur.config.InetSocketAddressConfiguration
-import ink.anur.core.msg.common.AbstractRequestMapping
-import ink.anur.core.msg.core.MsgCenterService
+import ink.anur.core.coordinator.common.AbstractRequestMapping
+import ink.anur.core.coordinator.core.CoordinateMessageService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
@@ -27,7 +27,7 @@ class RegisterHandlerService : AbstractRequestMapping() {
     private lateinit var channelService: ChannelService
 
     @NigateInject
-    private lateinit var msgCenterService: MsgCenterService
+    private lateinit var msgCenterService: CoordinateMessageService
 
     @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration

@@ -2,9 +2,7 @@ package ink.anur.io.common.handler
 
 import ink.anur.common.struct.Register
 import ink.anur.config.InetSocketAddressConfiguration
-import ink.anur.core.msg.common.RequestExtProcessor
-import ink.anur.core.msg.core.MsgCenterService
-import ink.anur.core.msg.core.MsgSendService
+import ink.anur.core.coordinator.core.CoordinateMessageService
 import ink.anur.core.struct.KanashiNode
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
@@ -12,7 +10,6 @@ import ink.anur.io.common.channel.ChannelService
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import org.slf4j.LoggerFactory
-import java.nio.ByteBuffer
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/25
@@ -30,7 +27,7 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
 
     @NigateInject
-    private lateinit var msgCenterService: MsgCenterService
+    private lateinit var msgCenterService: CoordinateMessageService
 
     init {
         Nigate.initInject(this)

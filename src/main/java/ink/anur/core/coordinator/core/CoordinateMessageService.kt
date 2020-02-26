@@ -1,12 +1,12 @@
-package ink.anur.core.msg.core
+package ink.anur.core.coordinator.core
 
 import ink.anur.common.Resetable
 import ink.anur.common.struct.common.AbstractStruct
 import ink.anur.common.struct.common.AbstractTimedStruct
 import ink.anur.common.struct.enumerate.OperationTypeEnum
 import ink.anur.config.CoordinateConfiguration
-import ink.anur.core.msg.common.RequestExtProcessor
-import ink.anur.core.msg.common.RequestMapping
+import ink.anur.core.coordinator.common.RequestExtProcessor
+import ink.anur.core.coordinator.common.RequestMapping
 import ink.anur.core.rentrant.ReentrantReadWriteLocker
 import ink.anur.exception.NetWorkException
 import ink.anur.inject.NigateBean
@@ -25,7 +25,7 @@ import java.nio.ByteBuffer
  * 消息控制中心，核心核心核心部件
  */
 @NigateBean
-class MsgCenterService : ReentrantReadWriteLocker(), Resetable {
+class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -36,7 +36,7 @@ class MsgCenterService : ReentrantReadWriteLocker(), Resetable {
     private lateinit var coordinateConfiguration: CoordinateConfiguration
 
     @NigateInject
-    private lateinit var msgSendService: MsgSendService
+    private lateinit var msgSendService: CoordinateSenderService
 
     /**
      * 此 map 用于保存接收到的信息的时间戳，如果收到旧的请求，则不作处理

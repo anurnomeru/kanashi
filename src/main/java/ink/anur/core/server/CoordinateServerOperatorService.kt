@@ -5,7 +5,7 @@ import ink.anur.common.Shutdownable
 import ink.anur.common.pool.DriverPool
 import ink.anur.common.struct.common.AbstractStruct
 import ink.anur.common.struct.enumerate.OperationTypeEnum
-import ink.anur.core.msg.core.MsgCenterService
+import ink.anur.core.coordinator.core.CoordinateMessageService
 import ink.anur.core.struct.CoordinateRequest
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateBean
@@ -32,7 +32,7 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     @NigateInject
-    private lateinit var msgCenterService: MsgCenterService
+    private lateinit var msgCenterService: CoordinateMessageService
 
     /**
      * 协调服务端

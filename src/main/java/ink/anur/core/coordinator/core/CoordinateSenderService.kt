@@ -1,4 +1,4 @@
-package ink.anur.core.msg.core
+package ink.anur.core.coordinator.core
 
 import ink.anur.common.struct.common.AbstractStruct
 import ink.anur.config.InetSocketAddressConfiguration
@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock
  * Created by Anur IjuoKaruKas on 2020/2/25
  */
 @NigateBean
-class MsgSendService {
+class CoordinateSenderService {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
