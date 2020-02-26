@@ -16,10 +16,8 @@ import java.nio.charset.Charset
 open class Register : AbstractTimedStruct {
 
     companion object {
-        val SizeOffset = TimestampOffset + TimestampLength
-
+        val SizeOffset = OriginMessageOverhead
         val SizeLength = 4
-
         val ContentOffset = SizeOffset + SizeLength
     }
 

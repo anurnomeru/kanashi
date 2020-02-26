@@ -19,7 +19,7 @@ import java.nio.ByteBuffer
  * 专门用于处理注册请求
  */
 @NigateBean
-class RegisterService : AbstractRequestMapping() {
+class RegisterHandlerService : AbstractRequestMapping() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 

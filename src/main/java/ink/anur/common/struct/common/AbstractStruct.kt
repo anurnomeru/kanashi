@@ -26,6 +26,21 @@ abstract class AbstractStruct {
         val CrcLength = 4
         val TypeOffset = CrcOffset + CrcLength
         val TypeLength = 4
+
+
+        val truely: Byte = 1
+    }
+
+    fun translateToByte(boolean: Boolean): Byte {
+        return if (boolean) {
+            1
+        } else {
+            0
+        }
+    }
+
+    fun translateToBool(byte: Byte): Boolean {
+        return byte == truely
     }
 
     // =================================================================

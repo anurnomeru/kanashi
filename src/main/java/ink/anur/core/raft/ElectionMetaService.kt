@@ -8,6 +8,7 @@ import ink.anur.inject.NigateInject
 import ink.anur.util.TimeUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import javax.annotation.PostConstruct
 
 /**
  * Created by Anur IjuoKaruKas on 2019/7/8
@@ -20,8 +21,20 @@ class ElectionMetaService {
     @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
 
+    @NigateInject
+    private lateinit var generationAndOffsetService: GenerationAndOffsetService
 
     private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+
+    /**
+     * 启动后将之前保存的 GAO 进度重新加载回内存
+     */
+    @PostConstruct
+    private fun init() {
+        val initialGAO = generationAndOffsetService.getInitialGAO()
+        this.generation = initialGAO.generation
+        this.offset = initialGAO.offset
+    }
 
     /**
      * 该投票箱的世代信息，如果一直进行选举，一直能达到 [.ELECTION_TIMEOUT_MS]，而选不出 Leader ，也需要15年，generation才会不够用，如果

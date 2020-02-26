@@ -3,6 +3,7 @@ package ink.anur.common.struct.enumerate
 import ink.anur.common.struct.EmptyStruct
 import ink.anur.common.struct.Register
 import ink.anur.common.struct.RegisterResponse
+import ink.anur.common.struct.Voting
 import ink.anur.common.struct.common.AbstractStruct
 import ink.anur.exception.KanashiException
 import java.util.HashMap
@@ -26,6 +27,11 @@ enum class OperationTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStr
      * 协调从节点向主节点注册 的回复
      */
     REGISTER_RESPONSE(10001, RegisterResponse::class.java),
+
+    /**
+     * 进行投票
+     */
+    VOTING(10002, Voting::class.java),
     ;
 
     companion object {

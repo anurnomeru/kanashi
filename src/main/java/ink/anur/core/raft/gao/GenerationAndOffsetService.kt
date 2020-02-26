@@ -11,7 +11,7 @@ class GenerationAndOffsetService {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    fun getInitialGao(): GenerationAndOffset {
+    fun getInitialGAO(): GenerationAndOffset {
         return GenerationAndOffset(1, 1)
     }
 }
