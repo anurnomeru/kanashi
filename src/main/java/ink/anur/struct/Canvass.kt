@@ -28,7 +28,7 @@ class Canvass : AbstractTimedStruct {
         this.generation = generation
 
         val byteBuffer = ByteBuffer.allocate(Capacity)
-        init(byteBuffer, OperationTypeEnum.VOTING)
+        init(byteBuffer, OperationTypeEnum.CANVASS)
 
         byteBuffer.putLong(generation)
         byteBuffer.flip()

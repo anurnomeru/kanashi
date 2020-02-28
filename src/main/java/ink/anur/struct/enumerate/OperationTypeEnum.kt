@@ -6,6 +6,8 @@ import ink.anur.struct.RegisterResponse
 import ink.anur.struct.Voting
 import ink.anur.struct.common.AbstractStruct
 import ink.anur.exception.KanashiException
+import ink.anur.struct.Canvass
+import ink.anur.struct.HeartBeat
 import java.util.HashMap
 
 /**
@@ -19,6 +21,11 @@ enum class OperationTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStr
     EMPTY_STRUCT(-1, EmptyStruct::class.java),
 
     /**
+     * 心跳
+     */
+    HEAT_BEAT(9999, HeartBeat::class.java),
+
+    /**
      * 协调从节点向主节点注册
      */
     REGISTER(10000, Register::class.java),
@@ -29,10 +36,14 @@ enum class OperationTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStr
     REGISTER_RESPONSE(10001, RegisterResponse::class.java),
 
     /**
+     * 进行拉票
+     */
+    CANVASS(10002, Canvass::class.java),
+
+    /**
      * 进行投票
      */
-    VOTING(10002, Voting::class.java),
-    ;
+    VOTING(10003, Voting::class.java);
 
     companion object {
         private val byteSignMap = HashMap<Int, OperationTypeEnum>()

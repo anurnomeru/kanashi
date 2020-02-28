@@ -48,8 +48,6 @@ class CoordinateSenderService {
             return
         }
 
-        // 避免同个 channel 发生多线程问题
-
         val lock = getLock(serverName)
         lock.lock()
 

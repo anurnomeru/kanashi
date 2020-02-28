@@ -6,6 +6,8 @@ import ink.anur.core.raft.gao.GenerationAndOffsetService
 import ink.anur.core.struct.KanashiNode
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.inject.NigatePostConstruct
+import ink.anur.struct.HeartBeat
 import ink.anur.util.TimeUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -30,7 +32,7 @@ class ElectionMetaService {
     /**
      * 启动后将之前保存的 GAO 进度重新加载回内存
      */
-    @PostConstruct
+    @NigatePostConstruct
     private fun init() {
         val initialGAO = generationAndOffsetService.getInitialGAO()
         this.generation = initialGAO.generation
@@ -116,7 +118,7 @@ class ElectionMetaService {
     /**
      * 心跳内容
      */
-    val heartBeat: RaftHeartBeat = RaftHeartBeat(inetSocketAddressConfiguration.getLocalServerName())
+    var heartBeat: HeartBeat? = null
 
     /**
      * 仅用于统计选主用了多长时间
@@ -194,6 +196,7 @@ class ElectionMetaService {
 
         leader = inetSocketAddressConfiguration.getLocalServerName()
         raftRole = RaftRole.LEADER
+        heartBeat = HeartBeat(generation)
 //        electionStateChanged(true) // todo
     }
 }

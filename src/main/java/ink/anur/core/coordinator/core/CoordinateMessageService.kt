@@ -151,8 +151,6 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
 
     /**
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue
-     *
-     * TODO 发现没有连接要触发连接
      */
     fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor? = null): Boolean {
         val typeEnum = msg.getOperationTypeEnum()
@@ -165,7 +163,12 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
                 computing(inFlight, serverName, typeEnum, requestProcessor)
                 removing(reSendTask, serverName, typeEnum)?.cancel()
             }
-            sendImpl(serverName, msg, typeEnum, requestProcessor)
+            try {
+                sendImpl(serverName, msg, typeEnum, requestProcessor)
+            } catch (e: Exception) {
+                logger.error("向节点 $serverName 发送类型为 $typeEnum 的消息失败，原因： ${e.message}")
+                return false
+            }
             true
         }
     }
@@ -175,7 +178,7 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
      */
     private fun sendImpl(serverName: String, command: AbstractStruct, operationTypeEnum: OperationTypeEnum, requestProcessor: RequestExtProcessor?) {
         if (requestProcessor == null || !requestProcessor.isComplete())
-            if (requestProcessor?.isComplete() == false) {
+            if (requestProcessor == null || !requestProcessor.isComplete()) {
                 msgSendService.doSend(serverName, command)
             }
 

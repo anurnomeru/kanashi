@@ -10,6 +10,8 @@ import ink.anur.core.raft.gao.GenerationAndOffsetService
 import ink.anur.core.rentrant.ReentrantLocker
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.inject.NigatePostConstruct
+import ink.anur.io.common.channel.ChannelService
 import ink.anur.timewheel.TimedTask
 import ink.anur.timewheel.Timer
 import ink.anur.util.TimeUtil
@@ -34,9 +36,6 @@ class RaftCenterController : KanashiRunnable() {
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
 
     @NigateInject
-    private lateinit var generationAndOffsetService: GenerationAndOffsetService
-
-    @NigateInject
     private lateinit var electionMetaService: ElectionMetaService
 
     @NigateInject
@@ -59,7 +58,7 @@ class RaftCenterController : KanashiRunnable() {
      */
     private var taskMap = ConcurrentHashMap<TaskEnum, TimedTask>()
 
-    @PostConstruct
+    @NigatePostConstruct
     private fun init() {
         logger.info("初始化选举控制器 ElectOperator，本节点为 {}", inetSocketAddressConfiguration.getLocalServerName())
         this.name = "RaftCenterController"
@@ -71,8 +70,8 @@ class RaftCenterController : KanashiRunnable() {
     }
 
     override fun run() {
-        logger.debug("初始化选举控制器 启动中")
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        logger.info("初始化选举控制器 启动中...")
+        eden(electionMetaService.generation + 1, "选举控制器启动")
     }
 
     /**
@@ -177,7 +176,6 @@ class RaftCenterController : KanashiRunnable() {
             this.initHeartBeatTask()
         }
     }
-
 
 
     /**
@@ -313,26 +311,21 @@ class RaftCenterController : KanashiRunnable() {
      */
     private fun initHeartBeatTask() {
         electionMetaService.clusters!!
-            .forEach { hanabiNode ->
-                if (!hanabiNode.isLocalNode()) {
-//                    // 确保和其他选举服务器保持连接
-//                    ElectClientOperator.getInstance(hanabiNode)
-//                        .tryStartWhileDisconnected()
-
-                    // 向其他节点发送拉票请求
-                    Optional.ofNullable(ChannelManager.getInstance(ChannelType.ELECT)
-                        .getChannel(hanabiNode.getServerName()))
-                        .ifPresent({ channel ->
-                            //                            logger.debug("正向节点 {} [{}:{}] 发送世代 {} 的心跳...", hanabiNode.getServerName(), hanabiNode.getHost(), hanabiNode.getElectionPort(), meta.getGeneration());
-                            channel.writeAndFlush(ElectCoder.encodeToByteBuf(ElectProtocolEnum.HEART_BEAT, meta.getHeartBeat()))
-                        })
+            .forEach { kanashiNode ->
+                if (!kanashiNode.isLocalNode()) {
+                    msgCenterService.send(kanashiNode.serverName, electionMetaService.heartBeat!!)
                 }
             }
 
-        val timedTask = TimedTask(HEART_BEAT_MS, ???({ this.initHeartBeatTask() }))
-        Timer.getInstance()
-            .addTask(timedTask)
-        taskMap[TaskEnum.HEART_BEAT] = timedTask
+        val timedTask = TimedTask(HEART_BEAT_MS) { initHeartBeatTask() }
+
+        reentrantLocker.lockSupplier {
+            if (electionMetaService.isLeader()) {
+                Timer.getInstance()
+                    .addTask(timedTask)
+                taskMap[TaskEnum.HEART_BEAT] = timedTask
+            }
+        }
     }
 
     /**
@@ -345,7 +338,7 @@ class RaftCenterController : KanashiRunnable() {
             }
 
             reentrantLocker.lockSupplier {
-                if (electionMetaService.isCandidate()) {// 只有节点为候选者才可以投票
+                if (electionMetaService.isCandidate()) {// 只有节点为候选者才可以拉票
                     electionMetaService.clusters!!
                         .forEach { kanashiNode ->
                             // 如果还没收到这个节点的选票，就继续发

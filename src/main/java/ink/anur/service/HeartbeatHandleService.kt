@@ -2,6 +2,7 @@ package ink.anur.service
 
 import ink.anur.struct.enumerate.OperationTypeEnum
 import ink.anur.core.coordinator.common.AbstractRequestMapping
+import ink.anur.inject.NigateBean
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 
@@ -10,9 +11,10 @@ import java.nio.ByteBuffer
  *
  * 专门处理心跳的处理器
  */
+@NigateBean
 class HeartbeatHandleService : AbstractRequestMapping() {
     override fun typeSupport(): OperationTypeEnum {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return OperationTypeEnum.HEAT_BEAT
     }
 
     override fun handleRequest(fromServer: String, msg: ByteBuffer, channel: Channel) {
