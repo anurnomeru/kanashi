@@ -17,7 +17,8 @@ class CoordinateClientService {
     private val CONNECT_MAPPING: MutableMap<KanashiNode, CoordinateClientOperator> = mutableMapOf()
 
     @Synchronized
-    fun getCoordinateClient(kanashiNode: KanashiNode): CoordinateClientOperator {
+    fun connect(kanashiNode: KanashiNode): CoordinateClientOperator {
+        logger.info("正在发起与协调节点 $kanashiNode 的连接...")
         var coordinateClientOperator = CONNECT_MAPPING[kanashiNode]
         if (coordinateClientOperator == null) {
             coordinateClientOperator = CoordinateClientOperator(kanashiNode)

@@ -5,6 +5,7 @@ import ink.anur.struct.Canvass
 import ink.anur.struct.Voting
 import ink.anur.config.ElectConfiguration
 import ink.anur.config.InetSocketAddressConfiguration
+import ink.anur.core.coordinator.common.RequestExtProcessor
 import ink.anur.core.coordinator.core.CoordinateMessageService
 import ink.anur.core.raft.gao.GenerationAndOffsetService
 import ink.anur.core.rentrant.ReentrantLocker
@@ -313,7 +314,7 @@ class RaftCenterController : KanashiRunnable() {
         electionMetaService.clusters!!
             .forEach { kanashiNode ->
                 if (!kanashiNode.isLocalNode()) {
-                    msgCenterService.send(kanashiNode.serverName, electionMetaService.heartBeat!!)
+                    msgCenterService.send(kanashiNode.serverName, electionMetaService.heartBeat!!, RequestExtProcessor())
                 }
             }
 
@@ -345,7 +346,7 @@ class RaftCenterController : KanashiRunnable() {
                             if (electionMetaService.box[kanashiNode.serverName] == null) {
 
                                 logger.debug("正向节点 {} [{}:{}] 发送世代 {} 的拉票请求...", kanashiNode.serverName, kanashiNode.host, kanashiNode.coordinatePort, electionMetaService.generation)
-                                val succeed = msgCenterService.send(kanashiNode.serverName, canvass)
+                                val succeed = msgCenterService.send(kanashiNode.serverName, canvass, RequestExtProcessor())
                                 if (!succeed) {
                                     logger.error("向节点发送拉票请求失败！可能是由于无法连接目标节点 {} [{}:{}] ，定时任务将继续尝试向此节点发送拉票请求", kanashiNode.serverName, kanashiNode.host, kanashiNode.coordinatePort)
                                     val timedTask = TimedTask(delayMs) {

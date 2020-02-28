@@ -3,6 +3,7 @@ package ink.anur.core.server
 import ink.anur.common.KanashiRunnable
 import ink.anur.common.Shutdownable
 import ink.anur.common.pool.DriverPool
+import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.struct.common.AbstractStruct
 import ink.anur.struct.enumerate.OperationTypeEnum
 import ink.anur.core.coordinator.core.CoordinateMessageService
@@ -32,12 +33,15 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
     @NigateInject
     private lateinit var msgCenterService: CoordinateMessageService
 
+    @NigateInject
+    private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
+
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     /**
      * 协调服务端
      */
-    private var coordinateServer: CoordinateServer
+    private lateinit var coordinateServer: CoordinateServer
 
     /**
      * CoordinateServerOperator 消费逻辑
@@ -70,9 +74,7 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
     }
 
     @NigatePostConstruct
-    private fun init() = this.start()
-
-    init {
+    private fun init() {
         val sdh = ShutDownHooker("终止协调服务器的套接字接口 8080 的监听！")
 
         DriverPool.register(CoordinateRequest::class.java,
@@ -85,10 +87,11 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
             null
         )
 
-        this.coordinateServer = CoordinateServer(8080,
+        this.coordinateServer = CoordinateServer(inetSocketAddressConfiguration.getLocalServerCoordinatePort(),
             sdh,
             SERVER_MSG_CONSUMER,
             SERVER_PIPELINE_CONSUME)
+        this.start()
     }
 
 

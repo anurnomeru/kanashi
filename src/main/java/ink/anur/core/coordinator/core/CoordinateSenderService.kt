@@ -2,7 +2,10 @@ package ink.anur.core.coordinator.core
 
 import ink.anur.struct.common.AbstractStruct
 import ink.anur.config.InetSocketAddressConfiguration
+import ink.anur.core.client.CoordinateClientService
+import ink.anur.core.struct.KanashiNode
 import ink.anur.exception.NetWorkException
+import ink.anur.exception.UnKnownNodeException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
@@ -22,6 +25,9 @@ class CoordinateSenderService {
 
     @NigateInject
     private lateinit var channelService: ChannelService
+
+    @NigateInject
+    private lateinit var coordinateClientService: CoordinateClientService
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -53,16 +59,25 @@ class CoordinateSenderService {
 
         try {
             val channel = channelService.getChannelHolder(ChannelService.ChannelType.COORDINATE).getChannel(serverName)
+
+            if (channel == null) {
+                val node = inetSocketAddressConfiguration.getNode(serverName)
+                if (node == KanashiNode.NOT_EXIST) {
+                    throw UnKnownNodeException("无法在配置文件中找到节点 $serverName，故无法主动连接该节点")
+                }
+                coordinateClientService.connect(node)
+            }
+
             logger.trace("正向节点发送 [$serverName] 关于 ${body.getOperationTypeEnum()} 的 request，大小为 ${body.totalSize()} bytes。")
 
             if (channel == null) {
-                throw NetWorkException("与节点 [$serverName] 的连接已经断开，无法发送！")
+                throw NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
             }
             channel.write(Unpooled.copyInt(body.totalSize()))
             body.writeIntoChannel(channel)
             channel.flush()
         } catch (t: Throwable) {
-            logger.error("向节点发送 [$serverName] 关于 ${body.getOperationTypeEnum()} 的 request 失败： ${t.message}")
+            logger.error("向节点发送 [$serverName] 关于 ${body.getOperationTypeEnum()} 的请求失败： ${t.message}")
             throw t
         }
     }

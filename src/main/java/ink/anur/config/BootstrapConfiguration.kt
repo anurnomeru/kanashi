@@ -10,9 +10,12 @@ object BootstrapConfiguration {
     val SERVER_NAME = "server_name"
 
     fun init(args: Array<String>) {
+
+        var paramCount = 0
         for (arg in args) {
             val split = arg.split(":")
-            ARGS[split[0]] = split[1]
+            ARGS[split[paramCount]] = split[paramCount + 1]
+            paramCount += 2
         }
     }
 

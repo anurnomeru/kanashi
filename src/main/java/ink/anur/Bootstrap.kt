@@ -25,10 +25,6 @@ object Bootstrap {
         while (RUNNING) {
             i++
             Thread.sleep(1000)
-
-            if (i == 10) {
-                Nigate.getBeanByClass(CoordinateServerOperatorService::class.java).shutDown()
-            }
         }
     }
 }

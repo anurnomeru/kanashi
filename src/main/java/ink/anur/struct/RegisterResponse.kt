@@ -11,45 +11,22 @@ import java.nio.charset.Charset
 /**
  * Created by Anur IjuoKaruKas on 2020/2/24
  *
- * 注册的 response
+ * 注册的 response 里面是空的 只是回复一下
  */
 open class RegisterResponse : AbstractTimedStruct {
 
     companion object {
         val SizeOffset = OriginMessageOverhead
-        val SizeLength = 4
-        val ContentOffset = SizeOffset + SizeLength
     }
 
-    private var serverName: String
-
-    constructor(serverName: String) {
-        this.serverName = serverName
-
-        val bytes = serverName.toByteArray(Charset.defaultCharset())
-        val size = bytes.size
-        val byteBuffer = ByteBuffer.allocate(ContentOffset + size)
+    constructor() {
+        val byteBuffer = ByteBuffer.allocate(SizeOffset)
         init(byteBuffer, OperationTypeEnum.REGISTER_RESPONSE)
-
-        byteBuffer.putInt(size)
-        byteBuffer.put(bytes)
         byteBuffer.flip()
     }
 
     constructor(byteBuffer: ByteBuffer) {
         buffer = byteBuffer
-        val size = byteBuffer.getInt(SizeOffset)
-
-        byteBuffer.position(ContentOffset)
-        val bytes = ByteArray(size)
-        byteBuffer.get(bytes)
-        this.serverName = String(bytes)
-
-        byteBuffer.rewind()
-    }
-
-    fun getServerName(): String {
-        return serverName
     }
 
     override fun writeIntoChannel(channel: Channel) {

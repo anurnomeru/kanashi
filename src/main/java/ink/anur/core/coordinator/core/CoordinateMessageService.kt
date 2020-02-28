@@ -12,6 +12,7 @@ import ink.anur.exception.NetWorkException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
+import ink.anur.service.RegisterHandleService
 import ink.anur.timewheel.TimedTask
 import ink.anur.timewheel.Timer
 import io.netty.channel.Channel
@@ -35,6 +36,9 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
 
     @NigateInject
     private lateinit var msgSendService: CoordinateSenderService
+
+    @NigateInject
+    private lateinit var registerHandleService: RegisterHandleService
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -93,11 +97,7 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
 
             // serverName 是不会为空的，但是有一种情况例外，便是服务还未注册时 这里做特殊处理
             when {
-                /*
-                 * 业务先验的条件判断
-                 */
-//            operationTypeEnum == OperationTypeEnum.REGISTER -> LeaderApisHandler.handleRegisterRequest(msg, channel)
-                serverName == null -> logger.error("没有注册却发来了信息，猜想是过期的消息，或者出现了BUG！")
+                serverName == null -> registerHandleService.handleRequest("", msg, channel)
                 writeLockSupplierCompel {
                     var changed = false
                     receiveLog.compute(serverName) { _, timestampMap ->
@@ -152,7 +152,7 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue
      */
-    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor? = null): Boolean {
+    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor): Boolean {
         val typeEnum = msg.getOperationTypeEnum()
         return if (getting(inFlight, serverName, typeEnum) != null) {
             logger.debug("尝试创建发送到节点 {} 的 {} 任务失败，上次的指令还未收到 response", serverName, typeEnum.name)
@@ -166,7 +166,6 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
             try {
                 sendImpl(serverName, msg, typeEnum, requestProcessor)
             } catch (e: Exception) {
-                logger.error("向节点 $serverName 发送类型为 $typeEnum 的消息失败，原因： ${e.message}")
                 return false
             }
             true
@@ -176,13 +175,11 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 真正发送消息的方法，内置了重发机制
      */
-    private fun sendImpl(serverName: String, command: AbstractStruct, operationTypeEnum: OperationTypeEnum, requestProcessor: RequestExtProcessor?) {
-        if (requestProcessor == null || !requestProcessor.isComplete())
-            if (requestProcessor == null || !requestProcessor.isComplete()) {
-                msgSendService.doSend(serverName, command)
-            }
-
-        if (requestProcessor == null) { // 是不需要回复的类型，直接移除所有任务，发出去了就完事了
+    private fun sendImpl(serverName: String, command: AbstractStruct, operationTypeEnum: OperationTypeEnum, requestProcessor: RequestExtProcessor) {
+        if (!requestProcessor.isComplete()) {
+            msgSendService.doSend(serverName, command)
+        }
+        if (!requestProcessor.sendUntilReceiveResponse) { // 是不需要回复的类型，直接移除所有任务，发出去了就完事了
             writeLocker {
                 removing(inFlight, serverName, operationTypeEnum)?.complete()
                 removing(reSendTask, serverName, operationTypeEnum)?.cancel()
