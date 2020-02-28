@@ -17,13 +17,13 @@ open class ReentrantLocker {
     /**
      * 提供一个统一的锁入口
      */
-    fun <T> lockSupplier(supplier: Supplier<T>): T? {
+    fun <T> lockSupplier(supplier: () -> T?): T? {
         reentrantLock.newCondition()
 
-        val t: T
+        val t: T?
         try {
             reentrantLock.lock()
-            t = supplier.get()
+            t = supplier.invoke()
         } finally {
             reentrantLock.unlock()
         }
@@ -33,11 +33,11 @@ open class ReentrantLocker {
     /**
      * 提供一个统一的锁入口
      */
-    fun <T> lockSupplierCompel(supplier: Supplier<T>): T {
+    fun <T> lockSupplierCompel(supplier: () -> T): T {
         val t: T
         try {
             reentrantLock.lock()
-            t = supplier.get()
+            t = supplier.invoke()
         } finally {
             reentrantLock.unlock()
         }

@@ -1,7 +1,7 @@
-package ink.anur.common.struct
+package ink.anur.struct
 
-import ink.anur.common.struct.common.AbstractTimedStruct
-import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.common.AbstractTimedStruct
+import ink.anur.struct.enumerate.OperationTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.util.internal.StringUtil
@@ -11,9 +11,9 @@ import java.nio.charset.Charset
 /**
  * Created by Anur IjuoKaruKas on 2020/2/24
  *
- * 用于协调节点向 Leader 注册自己
+ * 注册的 response
  */
-open class Register : AbstractTimedStruct {
+open class RegisterResponse : AbstractTimedStruct {
 
     companion object {
         val SizeOffset = OriginMessageOverhead
@@ -29,7 +29,7 @@ open class Register : AbstractTimedStruct {
         val bytes = serverName.toByteArray(Charset.defaultCharset())
         val size = bytes.size
         val byteBuffer = ByteBuffer.allocate(ContentOffset + size)
-        init(byteBuffer, OperationTypeEnum.REGISTER)
+        init(byteBuffer, OperationTypeEnum.REGISTER_RESPONSE)
 
         byteBuffer.putInt(size)
         byteBuffer.put(bytes)

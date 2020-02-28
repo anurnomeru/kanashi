@@ -1,6 +1,6 @@
 package ink.anur.core.coordinator.common
 
-import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.OperationTypeEnum
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 

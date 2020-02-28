@@ -1,6 +1,6 @@
 package ink.anur.io.common.handler
 
-import ink.anur.common.struct.Register
+import ink.anur.struct.Register
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.coordinator.core.CoordinateMessageService
 import ink.anur.core.struct.KanashiNode

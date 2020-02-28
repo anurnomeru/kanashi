@@ -3,8 +3,8 @@ package ink.anur.core.client
 import ink.anur.common.KanashiRunnable
 import ink.anur.common.Shutdownable
 import ink.anur.common.pool.DriverPool
-import ink.anur.common.struct.common.AbstractStruct
-import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.common.AbstractStruct
+import ink.anur.struct.enumerate.OperationTypeEnum
 import ink.anur.core.struct.CoordinateRequest
 import ink.anur.core.struct.KanashiNode
 import ink.anur.io.client.CoordinateClient

@@ -1,6 +1,6 @@
 package ink.anur.core.coordinator.core
 
-import ink.anur.common.struct.common.AbstractStruct
+import ink.anur.struct.common.AbstractStruct
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.exception.NetWorkException
 import ink.anur.inject.NigateBean

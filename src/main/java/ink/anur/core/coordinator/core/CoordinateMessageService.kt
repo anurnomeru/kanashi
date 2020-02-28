@@ -1,9 +1,9 @@
 package ink.anur.core.coordinator.core
 
 import ink.anur.common.Resetable
-import ink.anur.common.struct.common.AbstractStruct
-import ink.anur.common.struct.common.AbstractTimedStruct
-import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.common.AbstractStruct
+import ink.anur.struct.common.AbstractTimedStruct
+import ink.anur.struct.enumerate.OperationTypeEnum
 import ink.anur.config.CoordinateConfiguration
 import ink.anur.core.coordinator.common.RequestExtProcessor
 import ink.anur.core.coordinator.common.RequestMapping
@@ -151,6 +151,8 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
 
     /**
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue
+     *
+     * TODO 发现没有连接要触发连接
      */
     fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor? = null): Boolean {
         val typeEnum = msg.getOperationTypeEnum()

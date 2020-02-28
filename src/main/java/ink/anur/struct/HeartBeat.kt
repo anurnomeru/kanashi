@@ -1,15 +1,12 @@
-package ink.anur.common.struct
+package ink.anur.struct
 
-import ink.anur.common.struct.common.AbstractStruct
+import ink.anur.struct.common.AbstractTimedStruct
 import io.netty.channel.Channel
 
 /**
- * Created by Anur IjuoKaruKas on 2020/2/22
- *
- * 空的实现
+ * Created by Anur IjuoKaruKas on 2020/2/28
  */
-class EmptyStruct : AbstractStruct() {
-
+class HeartBeat: AbstractTimedStruct() {
     override fun writeIntoChannel(channel: Channel) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

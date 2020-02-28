@@ -1,8 +1,8 @@
-package ink.anur.core.coordinator.service
+package ink.anur.service
 
-import ink.anur.common.struct.Register
-import ink.anur.common.struct.RegisterResponse
-import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.Register
+import ink.anur.struct.RegisterResponse
+import ink.anur.struct.enumerate.OperationTypeEnum
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.coordinator.common.AbstractRequestMapping
 import ink.anur.core.coordinator.core.CoordinateMessageService
@@ -19,7 +19,7 @@ import java.nio.ByteBuffer
  * 专门用于处理注册请求
  */
 @NigateBean
-class RegisterHandlerService : AbstractRequestMapping() {
+class RegisterHandleService : AbstractRequestMapping() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 

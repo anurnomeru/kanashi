@@ -1,7 +1,7 @@
-package ink.anur.common.struct
+package ink.anur.struct
 
-import ink.anur.common.struct.common.AbstractTimedStruct
-import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.common.AbstractTimedStruct
+import ink.anur.struct.enumerate.OperationTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import java.nio.ByteBuffer

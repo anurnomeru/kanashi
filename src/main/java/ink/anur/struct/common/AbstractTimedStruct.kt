@@ -1,6 +1,6 @@
-package ink.anur.common.struct.common
+package ink.anur.struct.common
 
-import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.OperationTypeEnum
 import java.nio.ByteBuffer
 
 /**

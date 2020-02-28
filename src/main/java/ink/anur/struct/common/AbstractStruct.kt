@@ -1,6 +1,6 @@
-package ink.anur.common.struct.common
+package ink.anur.struct.common
 
-import ink.anur.common.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.OperationTypeEnum
 import ink.anur.exception.ByteBufferValidationException
 import ink.anur.util.ByteBufferUtil
 import io.netty.channel.Channel

@@ -1,5 +1,6 @@
 package ink.anur.core.raft
 
+import ink.anur.struct.Voting
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.raft.gao.GenerationAndOffsetService
 import ink.anur.core.struct.KanashiNode
@@ -36,6 +37,27 @@ class ElectionMetaService {
         this.offset = initialGAO.offset
     }
 
+    @Synchronized
+    fun eden(newGen: Long) {
+        // 0、更新集群信息
+        this.clusters = inetSocketAddressConfiguration.getCluster()
+        this.quorum = clusters!!.size / 2 + 1
+        logger.debug("更新集群节点信息")
+
+        // 1、成为follower
+        this.becomeFollower()
+
+        // 2、重置 ElectMeta 变量
+        logger.debug("更新世代：旧世代 {} => 新世代 {}", generation, newGen)
+        this.generation = newGen
+        this.offset = 0L
+        this.voteRecord = null
+        this.box.clear()
+        this.leader = null
+
+//        meta.electionStateChanged(false) // todo
+    }
+
     /**
      * 该投票箱的世代信息，如果一直进行选举，一直能达到 [.ELECTION_TIMEOUT_MS]，而选不出 Leader ，也需要15年，generation才会不够用，如果
      * generation 的初始值设置为 Long.Min （现在是0，则可以撑30年，所以完全呆胶布）
@@ -48,12 +70,6 @@ class ElectionMetaService {
      */
     @Volatile
     var leader: String? = null
-
-    /**
-     * 是否 Leader
-     */
-    @Volatile
-    var isLeader = false
 
     /**
      * 流水号，用于生成 id，集群内每一次由 Leader 发起的关键操作都会生成一个id [.genOperationId] ()}，其中就需要自增 offset 号
@@ -71,7 +87,7 @@ class ElectionMetaService {
      * 投票给了谁的投票记录
      */
     @Volatile
-    var voteRecord: RaftVote? = null
+    var voteRecord: Voting? = null
 
     /**
      * 缓存一份集群信息，因为集群信息是可能变化的，我们要保证在一次选举中，集群信息是不变的
@@ -90,7 +106,6 @@ class ElectionMetaService {
      */
     @Volatile
     var raftRole: RaftRole = RaftRole.FOLLOWER
-
 
     /**
      * 选举是否已经进行完
@@ -120,6 +135,10 @@ class ElectionMetaService {
     @Synchronized
     fun offsetIncr(): Long = ++offset
 
+    fun isFollower() = raftRole == RaftRole.FOLLOWER
+    fun isCandidate() = raftRole == RaftRole.CANDIDATE
+    fun isLeader() = raftRole == RaftRole.LEADER
+
 //    /**
 //     * 当集群选举状态变更时调用
 //     */
@@ -143,7 +162,6 @@ class ElectionMetaService {
         return if (raftRole == RaftRole.FOLLOWER) {
             logger.info("本节点角色由 {} 变更为 {}", raftRole, RaftRole.CANDIDATE)
             raftRole = RaftRole.CANDIDATE
-            isLeader = false
 //            electionStateChanged(false) todo
             true
         } else {
@@ -160,7 +178,6 @@ class ElectionMetaService {
         if (raftRole !== RaftRole.FOLLOWER) {
             logger.info("本节点角色由 {} 变更为 {}", raftRole, RaftRole.FOLLOWER)
             raftRole = RaftRole.FOLLOWER
-            isLeader = false
         }
     }
 
@@ -175,9 +192,8 @@ class ElectionMetaService {
         logger.info("本节点 {} 在世代 {} 角色由 {} 变更为 {} 选举耗时 {} ms，并开始向其他节点发送心跳包 ......",
             inetSocketAddressConfiguration.getLocalServerName(), generation, raftRole, RaftRole.LEADER, becomeLeaderCostTime)
 
-        raftRole = RaftRole.LEADER
         leader = inetSocketAddressConfiguration.getLocalServerName()
-        isLeader = true
+        raftRole = RaftRole.LEADER
 //        electionStateChanged(true) // todo
     }
 }

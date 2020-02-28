@@ -37,6 +37,16 @@ public class TimedTask {
         this.cancel = false;
     }
 
+    public TimedTask(int delayMs, Runnable task) {
+        this.delayMs = delayMs;
+        this.task = task;
+        this.bucket = null;
+        this.next = null;
+        this.pre = null;
+        this.expireTimestamp = System.currentTimeMillis() + delayMs;
+        this.cancel = false;
+    }
+
     public void cancel() {
         cancel = true;
     }

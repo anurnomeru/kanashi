@@ -1,10 +1,10 @@
-package ink.anur.common.struct.enumerate
+package ink.anur.struct.enumerate
 
-import ink.anur.common.struct.EmptyStruct
-import ink.anur.common.struct.Register
-import ink.anur.common.struct.RegisterResponse
-import ink.anur.common.struct.Voting
-import ink.anur.common.struct.common.AbstractStruct
+import ink.anur.struct.EmptyStruct
+import ink.anur.struct.Register
+import ink.anur.struct.RegisterResponse
+import ink.anur.struct.Voting
+import ink.anur.struct.common.AbstractStruct
 import ink.anur.exception.KanashiException
 import java.util.HashMap
 
