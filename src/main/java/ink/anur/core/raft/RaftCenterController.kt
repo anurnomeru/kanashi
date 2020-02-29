@@ -17,6 +17,7 @@ import ink.anur.util.TimeUtil
 import org.slf4j.LoggerFactory
 import java.util.Random
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.log
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/26
@@ -369,7 +370,12 @@ class RaftCenterController : KanashiRunnable() {
                             if (electionMetaService.box[kanashiNode.serverName] == null) {
                                 logger.debug("正向节点 {} [{}:{}] 发送世代 {} 的拉票请求...", kanashiNode.serverName, kanashiNode.host, kanashiNode.coordinatePort, electionMetaService.generation)
                             }
+
+                            msgCenterService.send(kanashiNode.serverName,
+                                Canvass(electionMetaService.generation))
                         }
+
+                    logger.debug("zzzzzzzzzzzzzzzzzz")
 
                     val timedTask = TimedTask(VOTES_BACK_OFF_MS, Runnable {
                         // 拉票续约（如果没有得到其他节点的回应，就继续发 voteTask）

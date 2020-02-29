@@ -28,6 +28,6 @@ class CoordinateClient(
             .addLast(ErrorHandler()).also(howToConsumePipeline)
 
     override fun howToRestart() {
-        CoordinateClient(serverName, host, port, shutDownHooker, howToConsumeByteBuffer, howToConsumePipeline)
+        CoordinateClient(serverName, host, port, shutDownHooker, howToConsumeByteBuffer, howToConsumePipeline).start()
     }
 }

@@ -49,9 +49,9 @@ class CoordinateSenderService {
     /**
      * 向某个服务发送东西~
      */
-    fun doSend(serverName: String, body: AbstractStruct) {
+    fun doSend(serverName: String, body: AbstractStruct): Throwable? {
         if (inetSocketAddressConfiguration.getLocalServerName() == serverName) {
-            return
+            return null
         }
 
         val lock = getLock(serverName)
@@ -63,7 +63,7 @@ class CoordinateSenderService {
             if (channel == null) {
                 val node = inetSocketAddressConfiguration.getNode(serverName)
                 if (node == KanashiNode.NOT_EXIST) {
-                    throw UnKnownNodeException("无法在配置文件中找到节点 $serverName，故无法主动连接该节点")
+                    return UnKnownNodeException("无法在配置文件中找到节点 $serverName，故无法主动连接该节点")
                 }
                 coordinateClientService.connect(node)
             }
@@ -71,14 +71,16 @@ class CoordinateSenderService {
             logger.trace("正向节点发送 [$serverName] 关于 ${body.getOperationTypeEnum()} 的 request，大小为 ${body.totalSize()} bytes。")
 
             if (channel == null) {
-                throw NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
+                return NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
             }
             channel.write(Unpooled.copyInt(body.totalSize()))
             body.writeIntoChannel(channel)
             channel.flush()
         } catch (t: Throwable) {
             logger.error("向节点发送 [$serverName] 关于 ${body.getOperationTypeEnum()} 的请求失败： ${t.message}")
-            throw t
+            return t
         }
+
+        return null
     }
 }

@@ -163,11 +163,8 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
                 computing(inFlight, serverName, typeEnum, requestProcessor)
                 removing(reSendTask, serverName, typeEnum)?.cancel()
             }
-            try {
-                sendImpl(serverName, msg, typeEnum, requestProcessor)
-            } catch (e: Exception) {
-                return false
-            }
+            sendImpl(serverName, msg, typeEnum, requestProcessor)
+                ?.let { logger.error("向节点 $serverName 发送 $typeEnum 请求失败! ${it.cause?.let { c -> "[原因：$c]" } ?: ""} ${it.message?.let { c -> "[msg：$c]" } ?: ""}") }
             true
         }
     }
@@ -175,9 +172,10 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 真正发送消息的方法，内置了重发机制
      */
-    private fun sendImpl(serverName: String, command: AbstractStruct, operationTypeEnum: OperationTypeEnum, requestProcessor: RequestExtProcessor) {
+    private fun sendImpl(serverName: String, command: AbstractStruct, operationTypeEnum: OperationTypeEnum, requestProcessor: RequestExtProcessor): Throwable? {
+        var throwable: Throwable? = null
         if (!requestProcessor.isComplete()) {
-            msgSendService.doSend(serverName, command)
+            throwable = msgSendService.doSend(serverName, command)
         }
         if (!requestProcessor.sendUntilReceiveResponse) { // 是不需要回复的类型，直接移除所有任务，发出去了就完事了
             writeLocker {
@@ -194,6 +192,8 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
                     .addTask(task)
             }
         }
+
+        return throwable
     }
 
     /**
