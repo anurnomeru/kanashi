@@ -9,7 +9,7 @@ import javax.annotation.concurrent.ThreadSafe
  * 可注册结束事件的钩子
  */
 @ThreadSafe
-class ShutDownHooker(val shutDownMsg: String) {
+class ShutDownHooker(val shutDownMsg: String? = null) {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -32,7 +32,7 @@ class ShutDownHooker(val shutDownMsg: String) {
      */
     @Synchronized
     fun shutdown() {
-        logger.info(shutDownMsg)
+        shutDownMsg?.let { logger.info(it) }
         shutDown = true
         shutDownConsumer.invoke()
     }

@@ -1,22 +1,34 @@
 package ink.anur.timewheel;
 
+import javax.annotation.Nullable;
+import ink.anur.io.common.ShutDownHooker;
+import kotlin.jvm.Synchronized;
+
 /**
  * Created by Anur IjuoKaruKas on 2018/10/16
- *
+ * <p>
  * 需要延迟执行的任务，放在槽 {@link Bucket} 里面
  */
 public class TimedTask {
 
-    /** 延迟多久执行时间 */
+    /**
+     * 延迟多久执行时间
+     */
     private long delayMs;
 
-    /** 过期时间戳 */
+    /**
+     * 过期时间戳
+     */
     private long expireTimestamp;
 
-    /** 任务 */
+    /**
+     * 任务
+     */
     private Runnable task;
 
-    /** 是否被取消 */
+    /**
+     * 是否被取消
+     */
     private volatile boolean cancel;
 
     protected Bucket bucket;
@@ -26,6 +38,8 @@ public class TimedTask {
     protected TimedTask pre;
 
     public String desc;
+
+    private ShutDownHooker sdh = new ShutDownHooker();
 
     public TimedTask(long delayMs, Runnable task) {
         this.delayMs = delayMs;
@@ -37,17 +51,8 @@ public class TimedTask {
         this.cancel = false;
     }
 
-    public TimedTask(int delayMs, Runnable task) {
-        this.delayMs = delayMs;
-        this.task = task;
-        this.bucket = null;
-        this.next = null;
-        this.pre = null;
-        this.expireTimestamp = System.currentTimeMillis() + delayMs;
-        this.cancel = false;
-    }
-
     public void cancel() {
+        sdh.shutdown();
         cancel = true;
     }
 
@@ -65,6 +70,10 @@ public class TimedTask {
 
     public long getExpireTimestamp() {
         return expireTimestamp;
+    }
+
+    public ShutDownHooker getSdh() {
+        return sdh;
     }
 
     @Override

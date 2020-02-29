@@ -95,6 +95,7 @@ object Nigate {
                         memberFunction.call(bean)
                     } catch (e: Exception) {
                         logger.error("class [${bean::class}] invoke post construct method [${memberFunction.name}] error : ${e.message}")
+                        e.printStackTrace()
                         if (startUp) {
                             exitProcess(1)
                         }

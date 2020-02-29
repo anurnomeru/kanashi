@@ -10,9 +10,9 @@ import ink.anur.inject.NigateBean
 @NigateBean
 class ElectConfiguration : ConfigHelper() {
 
-    fun getElectionTimeoutMs(): Int = getConfig(ConfigurationEnum.ELECT_ELECTION_TIMEOUT_MS) { Integer.valueOf(it) } as Int
+    fun getElectionTimeoutMs(): Long = (getConfig(ConfigurationEnum.ELECT_ELECTION_TIMEOUT_MS) { it } as String).toLong()
 
-    fun getVotesBackOffMs(): Int = getConfig(ConfigurationEnum.ELECT_VOTES_BACK_OFF_MS) { Integer.valueOf(it) } as Int
+    fun getVotesBackOffMs(): Long = (getConfig(ConfigurationEnum.ELECT_VOTES_BACK_OFF_MS) { it } as String).toLong()
 
-    fun getHeartBeatMs(): Int = getConfig(ConfigurationEnum.ELECT_HEART_BEAT_MS) { Integer.valueOf(it) } as Int
+    fun getHeartBeatMs(): Long = (getConfig(ConfigurationEnum.ELECT_HEART_BEAT_MS) { it } as String).toLong()
 }

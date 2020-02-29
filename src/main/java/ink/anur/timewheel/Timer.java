@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import ink.anur.common.KanashiExecutors;
+import ink.anur.io.common.ShutDownHooker;
 
 /**
  * Created by Anur IjuoKaruKas on 2018/10/17
@@ -41,9 +42,6 @@ public class Timer {
      * 新建一个Timer，同时新建一个时间轮
      */
     private Timer() {
-        //        workerThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactoryBuilder().setPriority(5)
-        //                                                                                       .setNameFormat("TimeWheelWorker")
-        //                                                                                       .build());
         bossThreadPool = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder().setPriority(10)
                                                                                    .setNameFormat("TimeWheelBoss")
                                                                                    .build());
@@ -56,13 +54,26 @@ public class Timer {
         });
     }
 
+    private static ThreadLocal<ShutDownHooker> sdh = new ThreadLocal<>();
+
+    public static boolean isShutDown() {
+        return sdh.get() != null
+            && sdh.get()
+                  .isShutDown();
+    }
+
     /**
      * 将任务添加到时间轮
      */
     public void addTask(TimedTask timedTask) {
         if (!timeWheel.addTask(timedTask)) {
             if (!timedTask.isCancel()) {
-                KanashiExecutors.INSTANCE.execute(timedTask.getTask());
+                KanashiExecutors.INSTANCE.execute(() -> {
+                    sdh.set(timedTask.getSdh());
+                    timedTask.getTask()
+                             .run();
+                    sdh.remove();
+                });
             }
         }
     }
