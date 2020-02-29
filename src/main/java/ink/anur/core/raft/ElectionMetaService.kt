@@ -89,7 +89,7 @@ class ElectionMetaService {
      * 投票给了谁的投票记录
      */
     @Volatile
-    var voteRecord: Voting? = null
+    var voteRecord: String? = null
 
     /**
      * 缓存一份集群信息，因为集群信息是可能变化的，我们要保证在一次选举中，集群信息是不变的

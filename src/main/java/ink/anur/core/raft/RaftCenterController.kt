@@ -1,7 +1,5 @@
 package ink.anur.core.raft
 
-import ch.qos.logback.core.hook.DelayingShutdownHook
-import ch.qos.logback.core.joran.action.ShutdownHookAction
 import ink.anur.common.KanashiRunnable
 import ink.anur.config.ElectConfiguration
 import ink.anur.config.InetSocketAddressConfiguration
@@ -11,7 +9,6 @@ import ink.anur.core.rentrant.ReentrantLocker
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
-import ink.anur.io.common.ShutDownHooker
 import ink.anur.struct.Canvass
 import ink.anur.struct.Voting
 import ink.anur.timewheel.TimedTask
@@ -195,10 +192,10 @@ class RaftCenterController : KanashiRunnable() {
             val votes = Voting(true, false, electionMetaService.generation, electionMetaService.generation)
 
             // 给自己投票箱投票
-            this.receiveVotesResponse(inetSocketAddressConfiguration.getLocalServerName(), votes)
+            this.receiveVote(inetSocketAddressConfiguration.getLocalServerName(), votes)
 
             // 记录一下，自己给自己投了票
-            electionMetaService.voteRecord = votes
+            electionMetaService.voteRecord = inetSocketAddressConfiguration.getLocalServerName()
 
             // 开启拉票任务
 
@@ -215,9 +212,39 @@ class RaftCenterController : KanashiRunnable() {
     }
 
     /**
+     * 某个节点来请求本节点给他投票了，只有当世代大于当前世代，才有投票一说，其他情况都是失败的
+     *
+     * 返回结果
+     *
+     * 为true代表接受投票成功。
+     * 为false代表已经给其他节点投过票了，
+     */
+    fun receiveCanvass(serverName: String, canvass: Canvass) {
+        reentrantLocker.lockSupplier {
+            logger.debug("收到节点 {} 的拉票请求，其世代为 {}", serverName, canvass.generation)
+            when {
+                canvass.generation < electionMetaService.generation -> {
+                    logger.debug("拒绝来自 $serverName 的拉票请求，其世代 ${canvass.generation} 小于当前世代 ${electionMetaService.generation}")
+                    return@lockSupplier
+                }
+                electionMetaService.voteRecord != null -> logger.debug("拒绝来自 $serverName 的拉票请求，在世代 ${electionMetaService.generation} 本节点已投票给 => ${electionMetaService.voteRecord} 节点")
+                else -> electionMetaService.voteRecord = serverName// 代表投票成功了
+            }
+
+            val agreed = electionMetaService.voteRecord == serverName
+
+            if (agreed) {
+                logger.debug("投票记录更新成功：在世代 ${canvass.generation}，本节点投票给 => ${serverName} 节点")
+            }
+
+            msgCenterService.send(serverName, Voting(agreed, electionMetaService.isLeader(), canvass.generation, electionMetaService.generation))
+        }
+    }
+
+    /**
      * 给当前节点的投票箱投票
      */
-    fun receiveVotesResponse(serverName: String, voting: Voting) {
+    fun receiveVote(serverName: String, voting: Voting) {
         reentrantLocker.lockSupplier {
 
             // 已经有过回包了，无需再处理
@@ -311,7 +338,7 @@ class RaftCenterController : KanashiRunnable() {
         electionMetaService.clusters!!
             .forEach { kanashiNode ->
                 if (!kanashiNode.isLocalNode()) {
-                    msgCenterService.send(kanashiNode.serverName, electionMetaService.heartBeat!!, RequestExtProcessor())
+                    msgCenterService.send(kanashiNode.serverName, electionMetaService.heartBeat!!)
                 }
             }
 

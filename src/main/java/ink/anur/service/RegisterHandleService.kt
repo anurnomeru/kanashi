@@ -1,16 +1,14 @@
 package ink.anur.service
 
-import ink.anur.struct.Register
-import ink.anur.struct.RegisterResponse
-import ink.anur.struct.enumerate.OperationTypeEnum
-import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.coordinator.common.AbstractRequestMapping
-import ink.anur.core.coordinator.common.RequestExtProcessor
 import ink.anur.core.coordinator.core.CoordinateMessageService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
+import ink.anur.struct.Register
+import ink.anur.struct.RegisterResponse
 import ink.anur.struct.common.AbstractStruct
+import ink.anur.struct.enumerate.OperationTypeEnum
 import io.netty.channel.Channel
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
@@ -31,8 +29,6 @@ class RegisterHandleService : AbstractRequestMapping() {
     @NigateInject
     private lateinit var msgCenterService: CoordinateMessageService
 
-    @NigateInject
-    private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
 
     override fun typeSupport(): OperationTypeEnum = OperationTypeEnum.REGISTER
 
@@ -55,6 +51,6 @@ class RegisterHandleService : AbstractRequestMapping() {
             .getChannelHolder(ChannelService.ChannelType.COORDINATE)
             .register(register.getServerName(), channel)
         logger.info("协调节点 {} 已注册到本节点", register.getServerName())
-        msgCenterService.send(fromServer, RegisterResponse(), RequestExtProcessor())
+        msgCenterService.send(fromServer, RegisterResponse())
     }
 }

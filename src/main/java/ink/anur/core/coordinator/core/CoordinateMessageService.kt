@@ -152,7 +152,7 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue
      */
-    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor): Boolean {
+    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor = RequestExtProcessor()): Boolean {
         val typeEnum = msg.getOperationTypeEnum()
         return if (getting(inFlight, serverName, typeEnum) != null) {
             logger.debug("尝试创建发送到节点 {} 的 {} 任务失败，上次的指令还未收到 response", serverName, typeEnum.name)

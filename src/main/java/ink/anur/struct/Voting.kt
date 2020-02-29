@@ -45,22 +45,6 @@ class Voting : AbstractTimedStruct {
      */
     var generation: Long = 0
 
-    constructor(agreed: Boolean, fromLeaderNode: Boolean, askVoteGeneration: Long, generation: Long) {
-        this.agreed = agreed
-        this.fromLeaderNode = fromLeaderNode
-        this.askVoteGeneration = askVoteGeneration
-        this.generation = generation
-
-        val byteBuffer = ByteBuffer.allocate(Capacity)
-        init(byteBuffer, OperationTypeEnum.VOTING)
-
-        byteBuffer.put(translateToByte(agreed))
-        byteBuffer.put(translateToByte(fromLeaderNode))
-        byteBuffer.putLong(askVoteGeneration)
-        byteBuffer.putLong(generation)
-        byteBuffer.flip()
-    }
-
     constructor(byteBuffer: ByteBuffer) {
         byteBuffer.mark()
         byteBuffer.position(AgreedSignOffset)
@@ -70,6 +54,22 @@ class Voting : AbstractTimedStruct {
         this.askVoteGeneration = byteBuffer.getLong()
         this.generation = byteBuffer.getLong()
         buffer!!.reset()
+    }
+
+    constructor(agreed: Boolean, fromLeaderNode: Boolean, canvassGeneration: Long, voteGeneration: Long) {
+        this.agreed = agreed
+        this.fromLeaderNode = fromLeaderNode
+        this.askVoteGeneration = canvassGeneration
+        this.generation = voteGeneration
+
+        val byteBuffer = ByteBuffer.allocate(Capacity)
+        init(byteBuffer, OperationTypeEnum.VOTING)
+
+        byteBuffer.put(translateToByte(agreed))
+        byteBuffer.put(translateToByte(fromLeaderNode))
+        byteBuffer.putLong(canvassGeneration)
+        byteBuffer.putLong(voteGeneration)
+        byteBuffer.flip()
     }
 
     override fun writeIntoChannel(channel: Channel) {
