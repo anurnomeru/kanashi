@@ -266,8 +266,7 @@ class RaftCenterController : KanashiRunnable() {
 
             if (voting.fromLeaderNode) {
                 logger.info("来自节点 {} 的投票应答表明其身份为 Leader，本轮拉票结束。", serverName)
-                this.receiveHeatBeat(serverName, voting.generation,
-                    String.format("收到来自 Leader 节点的投票应答，自动将其视为来自 Leader %s 世代 %s 节点的心跳包", serverName, voting.generation))
+                this.receiveHeatBeat(serverName, voting.generation)
             }
 
             if (electionMetaService.generation > voting.askVoteGeneration) {// 如果选票的世代小于当前世代，投票无效
@@ -300,11 +299,10 @@ class RaftCenterController : KanashiRunnable() {
         }
     }
 
-    fun receiveHeatBeat(leaderServerName: String, generation: Long, msg: String): Boolean {
+    fun receiveHeatBeat(leaderServerName: String, generation: Long): Boolean {
         return reentrantLocker.lockSupplierCompel {
             var needToSendHeartBeatInfection = true
             // 世代大于当前世代
-            logger.info(msg)
             if (generation >= electionMetaService.generation) {
                 needToSendHeartBeatInfection = false
 

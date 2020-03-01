@@ -26,6 +26,6 @@ class HeartbeatHandleService : AbstractRequestMapping() {
 
     override fun handleRequest(fromServer: String, msg: ByteBuffer, channel: Channel) {
         val heartbeat = HeartBeat(msg)
-        raftCenterController.receiveHeatBeat(fromServer, heartbeat.generation, "收到了来自世代 ${heartbeat.generation} Leader $fromServer 的心跳")
+        raftCenterController.receiveHeatBeat(fromServer, heartbeat.generation)
     }
 }
