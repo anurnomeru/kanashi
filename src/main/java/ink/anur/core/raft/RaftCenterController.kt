@@ -3,8 +3,7 @@ package ink.anur.core.raft
 import ink.anur.common.KanashiRunnable
 import ink.anur.config.ElectConfiguration
 import ink.anur.config.InetSocketAddressConfiguration
-import ink.anur.core.coordinator.common.RequestExtProcessor
-import ink.anur.core.coordinator.core.CoordinateMessageService
+import ink.anur.core.coordinator.core.CoordinateCentreService
 import ink.anur.core.rentrant.ReentrantLocker
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
@@ -17,7 +16,6 @@ import ink.anur.util.TimeUtil
 import org.slf4j.LoggerFactory
 import java.util.Random
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.log
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/26
@@ -37,7 +35,7 @@ class RaftCenterController : KanashiRunnable() {
     private lateinit var electionMetaService: ElectionMetaService
 
     @NigateInject
-    private lateinit var msgCenterService: CoordinateMessageService
+    private lateinit var msgCenterService: CoordinateCentreService
 
     private var ELECTION_TIMEOUT_MS: Long = -1L
 
@@ -374,8 +372,6 @@ class RaftCenterController : KanashiRunnable() {
                             msgCenterService.send(kanashiNode.serverName,
                                 Canvass(electionMetaService.generation))
                         }
-
-                    logger.debug("zzzzzzzzzzzzzzzzzz")
 
                     val timedTask = TimedTask(VOTES_BACK_OFF_MS, Runnable {
                         // 拉票续约（如果没有得到其他节点的回应，就继续发 voteTask）

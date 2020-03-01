@@ -18,9 +18,9 @@ class CoordinateClientService {
 
     @Synchronized
     fun connect(kanashiNode: KanashiNode): CoordinateClientOperator {
-        logger.info("正在发起与协调节点 $kanashiNode 的连接...")
         var coordinateClientOperator = CONNECT_MAPPING[kanashiNode]
         if (coordinateClientOperator == null) {
+            logger.info("正在发起与协调节点 $kanashiNode 的连接...")
             coordinateClientOperator = CoordinateClientOperator(kanashiNode)
             CONNECT_MAPPING[kanashiNode] = coordinateClientOperator
             coordinateClientOperator.start()

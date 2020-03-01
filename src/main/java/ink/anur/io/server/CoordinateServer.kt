@@ -1,11 +1,10 @@
 package ink.anur.io.server
 
-import ink.anur.io.common.handler.ByteBufferMsgConsumerHandler
-import ink.anur.io.common.handler.KanashiDecoder
 import ink.anur.io.common.ShutDownHooker
-import io.netty.channel.ChannelHandlerContext
+import ink.anur.io.common.handler.CoordinateDriverPoolHandler
+import ink.anur.io.common.handler.ErrorHandler
+import ink.anur.io.common.handler.KanashiDecoder
 import io.netty.channel.ChannelPipeline
-import java.nio.ByteBuffer
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/22
@@ -15,9 +14,14 @@ import java.nio.ByteBuffer
  */
 class CoordinateServer(port: Int,
                        shutDownHooker: ShutDownHooker,
-                       private val howToConsumeByteBuffer: (ChannelHandlerContext, ByteBuffer) -> Unit,
                        private val howToConsumePipeline: (ChannelPipeline) -> Unit)
     : Server(port, shutDownHooker) {
-    override fun channelPipelineConsumer(channelPipeline: ChannelPipeline): ChannelPipeline =
-        channelPipeline.also { it.addLast(KanashiDecoder()).addLast(ByteBufferMsgConsumerHandler(howToConsumeByteBuffer)) }.also { howToConsumePipeline }
+    override fun channelPipelineConsumer(channelPipeline: ChannelPipeline): ChannelPipeline {
+        channelPipeline
+            .addLast(KanashiDecoder())
+            .addLast(CoordinateDriverPoolHandler())
+            .addLast(ErrorHandler())
+        howToConsumePipeline.invoke(channelPipeline)
+        return channelPipeline
+    }
 }

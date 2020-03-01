@@ -19,7 +19,6 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
                                         private val consumeInternal: Long,
                                         private val timeUnit: TimeUnit,
                                         private val howToConsumeItem: ((T) -> Unit)?,
-                                        private val howToConsumeNull: (() -> Unit)?,
                                         private val initLatch: CountDownLatch) : Shutdownable {
 
     companion object {
@@ -33,14 +32,13 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
                          poolSize: Int,
                          consumeInternal: Long,
                          timeUnit: TimeUnit,
-                         howToConsumeItem: ((T) -> Unit)?,
-                         howToConsumeNull: (() -> Unit)?) {
+                         howToConsumeItem: ((T) -> Unit)?) {
             synchronized(clazz) {
                 if (HANDLER_POOLS[clazz] != null) {
                     throw DuplicateHandlerPoolException("class $clazz is already register in Handler pool")
                 }
-                val initLatch = CountDownLatch(poolSize)
-                HANDLER_POOLS[clazz] = DriverPool(clazz, poolSize, consumeInternal, timeUnit, howToConsumeItem, howToConsumeNull, initLatch)
+                val initLatch = CountDownLatch(1)
+                HANDLER_POOLS[clazz] = DriverPool(clazz, poolSize, consumeInternal, timeUnit, howToConsumeItem, initLatch)
                 initLatch.countDown()
                 logger.info("初始化 [$clazz] 处理池成功，共有 $poolSize 个请求池被创建")
             }
@@ -68,7 +66,7 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
 
     init {
         for (i in 0 until poolSize) {
-            PoolHandler(clazz, consumeInternal, timeUnit, howToConsumeItem, howToConsumeNull, initLatch).let { ph ->
+            PoolHandler(clazz, consumeInternal, timeUnit, howToConsumeItem, initLatch).let { ph ->
                 ph.name = "HandlePool - [$clazz] - $i"
                 ph.start()
                 handlers.add(ph)
@@ -100,7 +98,6 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
         private val consumeInternal: Long,
         private val timeUnit: TimeUnit,
         private val howToConsumeItem: ((T) -> Unit)?,
-        private val howToConsumeNull: (() -> Unit)?,
         private val initLatch: CountDownLatch
     ) : Runnable, Shutdownable, KanashiRunnable() {
 
@@ -111,7 +108,7 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
             initLatch.await()
             while (true) {
                 val consume = DriverPool.getPool(clazz).poll(consumeInternal, timeUnit)
-                consume?.also { howToConsumeItem?.invoke(it) } ?: howToConsumeNull?.invoke()
+                consume?.also { howToConsumeItem?.invoke(it) }
                 if (shutdown) break
             }
         }

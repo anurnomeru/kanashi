@@ -3,7 +3,7 @@ package ink.anur.io.common.handler
 import ink.anur.struct.Register
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.coordinator.common.RequestExtProcessor
-import ink.anur.core.coordinator.core.CoordinateMessageService
+import ink.anur.core.coordinator.core.CoordinateCentreService
 import ink.anur.core.struct.KanashiNode
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
@@ -28,7 +28,7 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
 
     @NigateInject
-    private lateinit var msgCenterService: CoordinateMessageService
+    private lateinit var msgCenterService: CoordinateCentreService
 
     init {
         Nigate.initInject(this)
@@ -37,8 +37,9 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
     override fun channelActive(ctx: ChannelHandlerContext?) {
         super.channelActive(ctx)
         val register = Register(inetSocketAddressConfiguration.getLocalServerName())
+        logger.info("正在向协调器节点 ${node.serverName} [${node.host}:${node.coordinatePort}] 发送注册请求")
+        channelService.getChannelHolder(ChannelService.ChannelType.COORDINATE).register(node.serverName, ctx!!.channel())
         msgCenterService.send(node.serverName, register, RequestExtProcessor(true, {
-            channelService.getChannelHolder(ChannelService.ChannelType.COORDINATE).register(node.serverName, ctx!!.channel())
             logger.info("与协调器 节点 ${node.serverName} [${node.host}:${node.coordinatePort}] 的连接已建立")
         }))
 

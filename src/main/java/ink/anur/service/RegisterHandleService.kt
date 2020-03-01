@@ -1,7 +1,7 @@
 package ink.anur.service
 
 import ink.anur.core.coordinator.common.AbstractRequestMapping
-import ink.anur.core.coordinator.core.CoordinateMessageService
+import ink.anur.core.coordinator.core.CoordinateCentreService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
@@ -27,7 +27,7 @@ class RegisterHandleService : AbstractRequestMapping() {
     private lateinit var channelService: ChannelService
 
     @NigateInject
-    private lateinit var msgCenterService: CoordinateMessageService
+    private lateinit var msgCenterService: CoordinateCentreService
 
 
     override fun typeSupport(): OperationTypeEnum = OperationTypeEnum.REGISTER

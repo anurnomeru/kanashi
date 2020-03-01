@@ -4,9 +4,7 @@ import ink.anur.common.KanashiRunnable
 import ink.anur.common.Shutdownable
 import ink.anur.common.pool.DriverPool
 import ink.anur.config.InetSocketAddressConfiguration
-import ink.anur.struct.common.AbstractStruct
-import ink.anur.struct.enumerate.OperationTypeEnum
-import ink.anur.core.coordinator.core.CoordinateMessageService
+import ink.anur.core.coordinator.core.CoordinateCentreService
 import ink.anur.core.struct.CoordinateRequest
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateBean
@@ -19,7 +17,6 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelPipeline
 import org.slf4j.LoggerFactory
-import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
 /**
@@ -31,7 +28,7 @@ import java.util.concurrent.TimeUnit
 class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
 
     @NigateInject
-    private lateinit var msgCenterService: CoordinateMessageService
+    private lateinit var msgCenterService: CoordinateCentreService
 
     @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
@@ -42,22 +39,6 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
      * 协调服务端
      */
     private lateinit var coordinateServer: CoordinateServer
-
-    /**
-     * CoordinateServerOperator 消费逻辑
-     * 这里直接将解码后的 msg 丢入 HandlerPool
-     */
-    private val SERVER_MSG_CONSUMER: (ChannelHandlerContext, ByteBuffer) -> Unit = { ctx, msg ->
-        var sign = 0
-        try {
-            sign = msg.getInt(AbstractStruct.TypeOffset)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
-        val typeEnum = OperationTypeEnum.parseByByteSign(sign)
-        DriverPool.offer(CoordinateRequest(msg, typeEnum, ctx.channel()))
-    }
 
     private val SERVER_PIPELINE_CONSUME: (ChannelPipeline) -> Unit = { it.addFirst(UnRegister()) }
 
@@ -75,21 +56,18 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
 
     @NigatePostConstruct
     private fun init() {
-        val sdh = ShutDownHooker("终止协调服务器的套接字接口 8080 的监听！")
+        val sdh = ShutDownHooker("终止协调服务器的套接字接口 ${inetSocketAddressConfiguration.getLocalServerCoordinatePort()} 的监听！")
 
         DriverPool.register(CoordinateRequest::class.java,
             8,
             300,
-            TimeUnit.MILLISECONDS,
-            {
-                msgCenterService.receive(it.msg, it.typeEnum, it.channel)
-            },
-            null
-        )
+            TimeUnit.MILLISECONDS
+        ) {
+            msgCenterService.receive(it.msg, it.typeEnum, it.channel)
+        }
 
         this.coordinateServer = CoordinateServer(inetSocketAddressConfiguration.getLocalServerCoordinatePort(),
             sdh,
-            SERVER_MSG_CONSUMER,
             SERVER_PIPELINE_CONSUME)
         this.start()
     }

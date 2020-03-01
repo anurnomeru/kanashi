@@ -46,6 +46,7 @@ class Voting : AbstractTimedStruct {
     var generation: Long = 0
 
     constructor(byteBuffer: ByteBuffer) {
+        buffer = byteBuffer
         byteBuffer.mark()
         byteBuffer.position(AgreedSignOffset)
 

@@ -2,6 +2,7 @@ package ink.anur.io.common.handler
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
+import org.slf4j.LoggerFactory
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/22
@@ -10,7 +11,9 @@ import io.netty.channel.ChannelInboundHandlerAdapter
  */
 class ErrorHandler : ChannelInboundHandlerAdapter() {
 
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
     override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
-        cause?.printStackTrace()
+        cause?.let {   logger.error("管道中出现了异常",it) }
     }
 }

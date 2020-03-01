@@ -26,7 +26,7 @@ import java.nio.ByteBuffer
  * 消息控制中心，核心核心核心部件
  */
 @NigateBean
-class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
+class CoordinateCentreService : ReentrantReadWriteLocker(), Resetable {
 
     @NigateInject
     private lateinit var channelService: ChannelService
@@ -137,13 +137,12 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
                     }
 
                 } catch (e: Exception) {
-                    logger.warn("在处理来自节点 {} 的 {} 请求时出现异常，可能原因 {}", serverName, operationTypeEnum, e.message)
+                    logger.error("在处理来自节点 $serverName 的 $operationTypeEnum 请求时出现异常", e)
                     writeLocker {
                         receiveLog.compute(serverName) { _, timestampMap ->
                             (timestampMap ?: mutableMapOf()).also { it.remove(operationTypeEnum) }
                         }
                     }
-                    e.printStackTrace()
                 }
             }
         }
@@ -152,10 +151,10 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue
      */
-    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor = RequestExtProcessor()): Boolean {
+    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor = RequestExtProcessor(), keepError: Boolean = false): Boolean {
         val typeEnum = msg.getOperationTypeEnum()
         return if (getting(inFlight, serverName, typeEnum) != null) {
-            logger.debug("尝试创建发送到节点 {} 的 {} 任务失败，上次的指令还未收到 response", serverName, typeEnum.name)
+            logger.debug("尝试创建发送到节点 $serverName 的 $typeEnum 任务失败，上次的指令还未收到 response")
             false
         } else {
             writeLocker {
@@ -163,8 +162,10 @@ class CoordinateMessageService : ReentrantReadWriteLocker(), Resetable {
                 computing(inFlight, serverName, typeEnum, requestProcessor)
                 removing(reSendTask, serverName, typeEnum)?.cancel()
             }
-            sendImpl(serverName, msg, typeEnum, requestProcessor)
-                ?.let { logger.error("向节点 $serverName 发送 $typeEnum 请求失败! ${it.cause?.let { c -> "[原因：$c]" } ?: ""} ${it.message?.let { c -> "[msg：$c]" } ?: ""}") }
+            val error = sendImpl(serverName, msg, typeEnum, requestProcessor)
+            if (keepError && error != null) {
+                logger.error("尝试发送到节点 $serverName 的 $typeEnum 任务失败", error)
+            }
             true
         }
     }

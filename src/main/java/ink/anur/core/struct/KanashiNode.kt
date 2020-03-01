@@ -4,7 +4,7 @@ import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.inject.Nigate
 
 
-class KanashiNode(val serverName: String, val host: String, val servicePort: Int, val coordinatePort: Int) {
+class KanashiNode(val serverName: String, val host: String, val coordinatePort: Int, val servicePort: Int) {
 
     companion object {
         val NOT_EXIST = KanashiNode("", "", 0, 0)

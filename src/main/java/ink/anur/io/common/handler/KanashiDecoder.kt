@@ -13,7 +13,8 @@ import java.nio.ByteBuffer
 class KanashiDecoder : ByteToMessageDecoder() {
     override fun decode(ctx: ChannelHandlerContext?, buffer: ByteBuf?, list: MutableList<Any>) {
         if (ctx != null && buffer != null) {
-            decode(ctx, buffer)?.let { list.add(it) }
+            decode(ctx, buffer)
+                ?.let { list.add(it) }
         }
     }
 

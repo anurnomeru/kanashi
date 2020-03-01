@@ -65,7 +65,7 @@ abstract class ReConnectableClient(private val serverName: String, private val h
                     override fun initChannel(socketChannel: SocketChannel) {
                         channelPipelineConsumer(
                             socketChannel.pipeline()
-                                .addLast(ReconnectHandler(serverName, reconnectLatch))).addLast(ErrorHandler()) // 引入重连机制
+                                .addLast(ReconnectHandler(serverName, reconnectLatch))) // 引入重连机制
                     }
                 })
 

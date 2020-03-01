@@ -47,7 +47,7 @@ abstract class Server(private val port: Int, private val shutDownHooker: ShutDow
                 .childHandler(object : ChannelInitializer<SocketChannel>() {
 
                     override fun initChannel(socketChannel: SocketChannel) {
-                        channelPipelineConsumer(socketChannel.pipeline()).addLast(ErrorHandler())
+                        channelPipelineConsumer(socketChannel.pipeline())
                     }
                 })
                 // 保持连接

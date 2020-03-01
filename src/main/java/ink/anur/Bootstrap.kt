@@ -3,6 +3,7 @@ package ink.anur
 import ink.anur.config.BootstrapConfiguration
 import ink.anur.core.server.CoordinateServerOperatorService
 import ink.anur.inject.Nigate
+import ink.anur.struct.Voting
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/22

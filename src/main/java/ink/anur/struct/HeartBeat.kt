@@ -33,6 +33,7 @@ class HeartBeat : AbstractTimedStruct {
     }
 
     constructor(byteBuffer: ByteBuffer) {
+        buffer = byteBuffer
         byteBuffer.mark()
         byteBuffer.position(GenerationOffset)
 
