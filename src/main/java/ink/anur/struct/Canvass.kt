@@ -24,7 +24,7 @@ class Canvass : AbstractTimedStruct {
      */
     var generation: Long = 0
 
-    constructor( generation: Long) {
+    constructor(generation: Long) {
         this.generation = generation
 
         val byteBuffer = ByteBuffer.allocate(Capacity)

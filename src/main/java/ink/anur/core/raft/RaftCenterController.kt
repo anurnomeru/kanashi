@@ -220,6 +220,8 @@ class RaftCenterController : KanashiRunnable() {
      */
     fun receiveCanvass(serverName: String, canvass: Canvass) {
         reentrantLocker.lockSupplier {
+            eden(canvass.generation, "收到了来自 $serverName 世代更高的请求，故触发 EDEN")
+
             logger.debug("收到节点 {} 的拉票请求，其世代为 {}", serverName, canvass.generation)
             when {
                 canvass.generation < electionMetaService.generation -> {
@@ -245,6 +247,7 @@ class RaftCenterController : KanashiRunnable() {
      */
     fun receiveVote(serverName: String, voting: Voting) {
         reentrantLocker.lockSupplier {
+            eden(voting.generation, "收到了来自 $serverName 世代更高的请求，故触发 EDEN")
 
             // 已经有过回包了，无需再处理
             if (electionMetaService.box[serverName] != null) {
@@ -302,11 +305,9 @@ class RaftCenterController : KanashiRunnable() {
                 logger.trace(msg)
 
                 if (electionMetaService.leader == null) {
-
+                    eden(generation, "收到了来自 $leaderServerName 世代更高的请求，故触发 EDEN")
                     logger.info("集群中，节点 {} 已经成功在世代 {} 上位成为 Leader，本节点将成为 Follower，直到与 Leader 的网络通讯出现问题", leaderServerName, generation)
 
-                    // 取消所有任务
-                    this.cancelAllTask()
 
                     // 如果是leader。则先触发集群无效
 //                    if (electionMetaService.isLeader()) {
