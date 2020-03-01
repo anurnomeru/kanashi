@@ -153,6 +153,7 @@ class CoordinateCentreService : ReentrantReadWriteLocker(), Resetable {
      */
     fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor = RequestExtProcessor(), keepError: Boolean = false): Boolean {
         val typeEnum = msg.getOperationTypeEnum()
+
         return if (getting(inFlight, serverName, typeEnum) != null) {
             logger.debug("尝试创建发送到节点 $serverName 的 $typeEnum 任务失败，上次的指令还未收到 response")
             false

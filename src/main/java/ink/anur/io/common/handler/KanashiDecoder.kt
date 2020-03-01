@@ -1,5 +1,7 @@
 package ink.anur.io.common.handler
 
+import ink.anur.struct.common.AbstractStruct
+import ink.anur.struct.enumerate.OperationTypeEnum
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
@@ -26,37 +28,17 @@ class KanashiDecoder : ByteToMessageDecoder() {
         val maybeLength = buffer.readInt()
         val remain = buffer.readableBytes()
 
-        if (remain < maybeLength) {
+        return if (remain < maybeLength) {
             buffer.resetReaderIndex()
-            return null
+            null
         } else {
-            // ver1.0 通过ByteBuffer直接去读
             val resultOne = ByteBuffer.allocate(maybeLength)
             buffer.readBytes(resultOne)
             resultOne.rewind()
-
-            //            // ver2.0 通过ByteBuf原生提供的API
-            //            // 标识此index后的已经读过了
-            //            buffer.resetReaderIndex();
-            //            buffer.readerIndex(LengthInBytes + maybeLength);
-            //
-            //            //             第一个字节是长度，和业务无关
-            //            ByteBuffer resultTwo = buffer.nioBuffer(LengthInBytes, maybeLength);
-            //
-            //            byte[] bytesFromResultOne = new byte[maybeLength];
-            //            resultOne.get(bytesFromResultOne);
-            //
-            //            byte[] bytesFromResultTwo = new byte[maybeLength];
-            //            resultTwo.get(bytesFromResultTwo);
-            //
-            //            if (!Arrays.toString(bytesFromResultOne)
-            //                       .equals(Arrays.toString(bytesFromResultTwo))) {
-            //                System.out.println();
-            //            }
-            //            resultTwo.rewind();
-            //            resultTwo.rewind();
-
-            return resultOne
+            resultOne
+            val get = resultOne.getInt(AbstractStruct.TypeOffset)
+            val parseByByteSign = OperationTypeEnum.parseByByteSign(get)
+            resultOne
         }
     }
 }

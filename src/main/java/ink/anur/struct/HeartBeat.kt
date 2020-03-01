@@ -26,7 +26,7 @@ class HeartBeat : AbstractTimedStruct {
         this.generation = generation
 
         val byteBuffer = ByteBuffer.allocate(Capacity)
-        init(byteBuffer, OperationTypeEnum.VOTING)
+        init(byteBuffer, OperationTypeEnum.HEAT_BEAT)
 
         byteBuffer.putLong(generation)
         byteBuffer.flip()
@@ -43,7 +43,6 @@ class HeartBeat : AbstractTimedStruct {
 
     override fun writeIntoChannel(channel: Channel) {
         channel.write(Unpooled.wrappedBuffer(buffer))
-        buffer!!.rewind()// 可重复写入管道
     }
 
     override fun totalSize(): Int {

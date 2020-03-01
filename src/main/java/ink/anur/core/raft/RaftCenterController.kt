@@ -9,6 +9,7 @@ import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
 import ink.anur.struct.Canvass
+import ink.anur.struct.HeartBeat
 import ink.anur.struct.Voting
 import ink.anur.timewheel.TimedTask
 import ink.anur.timewheel.Timer
@@ -86,7 +87,10 @@ class RaftCenterController : KanashiRunnable() {
                 // 1、刷新选举状态
                 electionMetaService.eden(generation)
 
-                // 2、新增成为Candidate的定时任务
+                // 2、取消所有任务
+                this.cancelAllTask()
+
+                // 3、新增成为Candidate的定时任务
                 this.becomeCandidateAndBeginElectTask(generation)
                 return@lockSupplierCompel true
             } else {
@@ -130,7 +134,7 @@ class RaftCenterController : KanashiRunnable() {
      */
     private fun updateGeneration(reason: String) {
         reentrantLocker.lockSupplier {
-            logger.debug("强制更新当前世代 {} -> {}", electionMetaService.generation, electionMetaService.generation + 1)
+            logger.debug("强制更新当前世代 {} => 新世代 {}", electionMetaService.generation, electionMetaService.generation + 1)
 
             if (!this.eden(electionMetaService.generation + 1, reason)) {
                 updateGeneration(reason)
@@ -220,7 +224,7 @@ class RaftCenterController : KanashiRunnable() {
      */
     fun receiveCanvass(serverName: String, canvass: Canvass) {
         reentrantLocker.lockSupplier {
-            eden(canvass.generation, "收到了来自 $serverName 世代更高的请求，故触发 EDEN")
+            eden(canvass.generation, "收到了来自 $serverName 世代更高的请求 [${canvass.generation}]，故触发 EDEN")
 
             logger.debug("收到节点 {} 的拉票请求，其世代为 {}", serverName, canvass.generation)
             when {
@@ -247,7 +251,7 @@ class RaftCenterController : KanashiRunnable() {
      */
     fun receiveVote(serverName: String, voting: Voting) {
         reentrantLocker.lockSupplier {
-            eden(voting.generation, "收到了来自 $serverName 世代更高的请求，故触发 EDEN")
+            eden(voting.generation, "收到了来自 $serverName 世代更高的请求 [${voting.generation}]，故触发 EDEN")
 
             // 已经有过回包了，无需再处理
             if (electionMetaService.box[serverName] != null) {
@@ -286,7 +290,7 @@ class RaftCenterController : KanashiRunnable() {
 
                 // 如果获得的选票已经大于了集群数量的一半以上，则成为leader
                 if (voteCount == electionMetaService.quorum) {
-                    logger.info("选票过半，本节点 {] 即将上位成为 leader 节点", inetSocketAddressConfiguration.getLocalServerName())
+                    logger.info("选票过半，本节点将上位成为 leader 节点")
                     this.becomeLeader()
                 }
             } else {
@@ -300,12 +304,12 @@ class RaftCenterController : KanashiRunnable() {
         return reentrantLocker.lockSupplierCompel {
             var needToSendHeartBeatInfection = true
             // 世代大于当前世代
+            logger.info(msg)
             if (generation >= electionMetaService.generation) {
                 needToSendHeartBeatInfection = false
-                logger.trace(msg)
 
                 if (electionMetaService.leader == null) {
-                    eden(generation, "收到了来自 $leaderServerName 世代更高的请求，故触发 EDEN")
+                    eden(generation, "收到了来自 $leaderServerName 世代更高的请求 [$generation]，故触发 EDEN")
                     logger.info("集群中，节点 {} 已经成功在世代 {} 上位成为 Leader，本节点将成为 Follower，直到与 Leader 的网络通讯出现问题", leaderServerName, generation)
 
 
@@ -338,7 +342,7 @@ class RaftCenterController : KanashiRunnable() {
         electionMetaService.clusters!!
             .forEach { kanashiNode ->
                 if (!kanashiNode.isLocalNode()) {
-                    msgCenterService.send(kanashiNode.serverName, electionMetaService.heartBeat!!)
+                    msgCenterService.send(kanashiNode.serverName, HeartBeat(electionMetaService.generation))
                 }
             }
 

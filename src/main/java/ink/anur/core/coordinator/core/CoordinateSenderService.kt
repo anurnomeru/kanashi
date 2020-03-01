@@ -70,7 +70,6 @@ class CoordinateSenderService {
             if (channel == null) {
                 return NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
             }
-            logger.trace("正向节点发送 [$serverName] 关于 ${body.getOperationTypeEnum()} 的 request，大小为 ${body.totalSize()} bytes。")
             channel.write(Unpooled.copyInt(body.totalSize()))
             body.writeIntoChannel(channel)
             channel.flush()
