@@ -1,10 +1,9 @@
 package ink.anur.struct
 
 import ink.anur.struct.common.AbstractTimedStruct
-import ink.anur.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
-import io.netty.util.internal.StringUtil
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
@@ -29,7 +28,7 @@ open class Register : AbstractTimedStruct {
         val bytes = serverName.toByteArray(Charset.defaultCharset())
         val size = bytes.size
         val byteBuffer = ByteBuffer.allocate(ContentOffset + size)
-        init(byteBuffer, OperationTypeEnum.REGISTER)
+        init(byteBuffer, RequestTypeEnum.REGISTER)
 
         byteBuffer.putInt(size)
         byteBuffer.put(bytes)

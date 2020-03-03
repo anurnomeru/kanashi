@@ -1,12 +1,12 @@
-package ink.anur.core.coordinator.core
+package ink.anur.core.central.core
 
 import ink.anur.common.Resetable
 import ink.anur.struct.common.AbstractStruct
 import ink.anur.struct.common.AbstractTimedStruct
-import ink.anur.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.RequestTypeEnum
 import ink.anur.config.CoordinateConfiguration
-import ink.anur.core.coordinator.common.RequestExtProcessor
-import ink.anur.core.coordinator.common.RequestMapping
+import ink.anur.core.central.common.RequestExtProcessor
+import ink.anur.core.central.common.RequestMapping
 import ink.anur.core.rentrant.ReentrantReadWriteLocker
 import ink.anur.exception.NetWorkException
 import ink.anur.inject.NigateBean
@@ -26,7 +26,7 @@ import java.nio.ByteBuffer
  * 消息控制中心，核心核心核心部件
  */
 @NigateBean
-class CoordinateCentreService : ReentrantReadWriteLocker(), Resetable {
+class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
 
     @NigateInject
     private lateinit var channelService: ChannelService
@@ -35,7 +35,7 @@ class CoordinateCentreService : ReentrantReadWriteLocker(), Resetable {
     private lateinit var coordinateConfiguration: CoordinateConfiguration
 
     @NigateInject
-    private lateinit var msgSendService: CoordinateSenderService
+    private lateinit var msgSendService: SenderService
 
     @NigateInject
     private lateinit var registerHandleService: RegisterHandleService
@@ -45,32 +45,32 @@ class CoordinateCentreService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 此 map 用于保存接收到的信息的时间戳，如果收到旧的请求，则不作处理
      */
-    private val receiveLog = mutableMapOf<String, MutableMap<OperationTypeEnum, Long?>>()
+    private val receiveLog = mutableMapOf<String, MutableMap<RequestTypeEnum, Long?>>()
 
     /**
      * 注册所有的请求应该采用什么处理的映射
      */
-    private val requestMappingRegister = mutableMapOf<OperationTypeEnum, RequestMapping>()
+    private val requestMappingRegister = mutableMapOf<RequestTypeEnum, RequestMapping>()
 
     /**
      * 注册所有请求的”回复“的映射
      */
-    private val responseRequestRegister = mutableMapOf<OperationTypeEnum, OperationTypeEnum>()
+    private val responseRequestRegister = mutableMapOf<RequestTypeEnum, RequestTypeEnum>()
 
     /**
      * 此 map 确保对一个服务发送某个消息，在收到回复之前，不可以再次对其发送消息。（有自动重发机制）
      */
     @Volatile
-    private var inFlight = mutableMapOf<String, MutableMap<OperationTypeEnum, RequestExtProcessor?>>()
+    private var inFlight = mutableMapOf<String, MutableMap<RequestTypeEnum, RequestExtProcessor?>>()
 
     /**
      * 此 map 用于重发请求
      */
     @Volatile
-    private var reSendTask = mutableMapOf<String, MutableMap<OperationTypeEnum, TimedTask?>>()
+    private var reSendTask = mutableMapOf<String, MutableMap<RequestTypeEnum, TimedTask?>>()
 
     init {
-        responseRequestRegister[OperationTypeEnum.REGISTER_RESPONSE] = OperationTypeEnum.REGISTER
+        responseRequestRegister[RequestTypeEnum.REGISTER_RESPONSE] = RequestTypeEnum.REGISTER
     }
 
     override fun reset() {
@@ -80,14 +80,14 @@ class CoordinateCentreService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 注册 RequestMapping
      */
-    fun registerRequestMapping(typeEnum: OperationTypeEnum, requestMapping: RequestMapping) {
+    fun registerRequestMapping(typeEnum: RequestTypeEnum, requestMapping: RequestMapping) {
         requestMappingRegister[typeEnum] = requestMapping
     }
 
     /**
      * 接收到消息如何处理
      */
-    fun receive(msg: ByteBuffer, operationTypeEnum: OperationTypeEnum, channel: Channel?) {
+    fun receive(msg: ByteBuffer, operationTypeEnum: RequestTypeEnum, channel: Channel?) {
 
         if (channel == null) {
             logger.error("????????????????????????????????????")
@@ -174,7 +174,7 @@ class CoordinateCentreService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 真正发送消息的方法，内置了重发机制
      */
-    private fun sendImpl(serverName: String, command: AbstractStruct, operationTypeEnum: OperationTypeEnum, requestProcessor: RequestExtProcessor): Throwable? {
+    private fun sendImpl(serverName: String, command: AbstractStruct, operationTypeEnum: RequestTypeEnum, requestProcessor: RequestExtProcessor): Throwable? {
         var throwable: Throwable? = null
         if (!requestProcessor.isComplete()) {
             throwable = msgSendService.doSend(serverName, command)
@@ -201,19 +201,19 @@ class CoordinateCentreService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 向 map -> 某 serverName 下的 typeEnum 写入 t
      */
-    private fun <T> computing(map: MutableMap<String, MutableMap<OperationTypeEnum, T?>>, serverName: String, typeEnum: OperationTypeEnum, t: T?) {
+    private fun <T> computing(map: MutableMap<String, MutableMap<RequestTypeEnum, T?>>, serverName: String, typeEnum: RequestTypeEnum, t: T?) {
         map.compute(serverName) { _, enums -> (enums ?: mutableMapOf()).also { it[typeEnum] = t } }
     }
 
     /**
      * 获取 map -> 某 serverName 下的 typeEnum 映射的 t
      */
-    private fun <T> getting(map: MutableMap<String, MutableMap<OperationTypeEnum, T?>>, serverName: String, typeEnum: OperationTypeEnum): T? = map[serverName]?.let { it[typeEnum] }
+    private fun <T> getting(map: MutableMap<String, MutableMap<RequestTypeEnum, T?>>, serverName: String, typeEnum: RequestTypeEnum): T? = map[serverName]?.let { it[typeEnum] }
 
     /**
      * 移除 map -> 某 serverName 下的 typeEnum 映射的 t
      */
-    private fun <T> removing(map: MutableMap<String, MutableMap<OperationTypeEnum, T?>>, serverName: String, typeEnum: OperationTypeEnum): T? {
+    private fun <T> removing(map: MutableMap<String, MutableMap<RequestTypeEnum, T?>>, serverName: String, typeEnum: RequestTypeEnum): T? {
         val mutableMap = map[serverName]
         return mutableMap?.remove(typeEnum)
     }

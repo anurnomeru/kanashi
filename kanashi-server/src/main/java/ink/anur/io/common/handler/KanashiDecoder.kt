@@ -1,7 +1,7 @@
 package ink.anur.io.common.handler
 
 import ink.anur.struct.common.AbstractStruct
-import ink.anur.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.RequestTypeEnum
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
@@ -37,7 +37,7 @@ class KanashiDecoder : ByteToMessageDecoder() {
             resultOne.rewind()
             resultOne
             val get = resultOne.getInt(AbstractStruct.TypeOffset)
-            val parseByByteSign = OperationTypeEnum.parseByByteSign(get)
+            val parseByByteSign = RequestTypeEnum.parseByByteSign(get)
             resultOne
         }
     }

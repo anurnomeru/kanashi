@@ -3,17 +3,17 @@ package ink.anur.struct.enumerate
 import ink.anur.struct.EmptyStruct
 import ink.anur.struct.Register
 import ink.anur.struct.RegisterResponse
-import ink.anur.struct.Voting
+import ink.anur.struct.coordinate.Voting
 import ink.anur.struct.common.AbstractStruct
 import ink.anur.exception.KanashiException
-import ink.anur.struct.Canvass
+import ink.anur.struct.coordinate.Canvass
 import ink.anur.struct.HeartBeat
 import java.util.HashMap
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/22
  */
-enum class OperationTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruct>) {
+enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruct>) {
 
     /**
      * 无类型
@@ -46,7 +46,7 @@ enum class OperationTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStr
     VOTING(10003, Voting::class.java);
 
     companion object {
-        private val byteSignMap = HashMap<Int, OperationTypeEnum>()
+        private val byteSignMap = HashMap<Int, RequestTypeEnum>()
 
         init {
             val unique = mutableSetOf<Int>()
@@ -58,6 +58,6 @@ enum class OperationTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStr
             }
         }
 
-        fun parseByByteSign(byteSign: Int): OperationTypeEnum = byteSignMap[byteSign] ?: throw UnsupportedOperationException()
+        fun parseByByteSign(byteSign: Int): RequestTypeEnum = byteSignMap[byteSign] ?: throw UnsupportedOperationException()
     }
 }

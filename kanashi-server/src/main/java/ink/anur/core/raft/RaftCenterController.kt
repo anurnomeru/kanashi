@@ -3,14 +3,14 @@ package ink.anur.core.raft
 import ink.anur.common.KanashiRunnable
 import ink.anur.config.ElectConfiguration
 import ink.anur.config.InetSocketAddressConfiguration
-import ink.anur.core.coordinator.core.CoordinateCentreService
+import ink.anur.core.central.core.RequestProcessCentreService
 import ink.anur.core.rentrant.ReentrantLocker
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
-import ink.anur.struct.Canvass
+import ink.anur.struct.coordinate.Canvass
 import ink.anur.struct.HeartBeat
-import ink.anur.struct.Voting
+import ink.anur.struct.coordinate.Voting
 import ink.anur.timewheel.TimedTask
 import ink.anur.timewheel.Timer
 import ink.anur.util.TimeUtil
@@ -36,7 +36,7 @@ class RaftCenterController : KanashiRunnable() {
     private lateinit var electionMetaService: ElectionMetaService
 
     @NigateInject
-    private lateinit var msgCenterService: CoordinateCentreService
+    private lateinit var msgCenterService: RequestProcessCentreService
 
     private var ELECTION_TIMEOUT_MS: Long = -1L
 

@@ -1,7 +1,7 @@
 package ink.anur.struct
 
 import ink.anur.struct.common.AbstractTimedStruct
-import ink.anur.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
@@ -26,7 +26,7 @@ class HeartBeat : AbstractTimedStruct {
         this.generation = generation
 
         val byteBuffer = ByteBuffer.allocate(Capacity)
-        init(byteBuffer, OperationTypeEnum.HEAT_BEAT)
+        init(byteBuffer, RequestTypeEnum.HEAT_BEAT)
 
         byteBuffer.putLong(generation)
         byteBuffer.flip()

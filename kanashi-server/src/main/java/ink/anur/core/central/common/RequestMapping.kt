@@ -1,6 +1,6 @@
-package ink.anur.core.coordinator.common
+package ink.anur.core.central.common
 
-import ink.anur.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.RequestTypeEnum
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 
@@ -14,7 +14,7 @@ interface RequestMapping {
     /**
      * 表明此路由可消费什么消息
      */
-    fun typeSupport(): OperationTypeEnum
+    fun typeSupport(): RequestTypeEnum
 
     /**
      * 如何去消费一个消息

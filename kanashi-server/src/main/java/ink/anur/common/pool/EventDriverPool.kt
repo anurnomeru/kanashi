@@ -14,12 +14,12 @@ import java.util.concurrent.TimeUnit
  *
  * 只需要对外暴露这个池子即可
  */
-class DriverPool<T> private constructor(private val clazz: Class<T>,
-                                        private val poolSize: Int,
-                                        private val consumeInternal: Long,
-                                        private val timeUnit: TimeUnit,
-                                        private val howToConsumeItem: ((T) -> Unit)?,
-                                        private val initLatch: CountDownLatch) : Shutdownable {
+class EventDriverPool<T> private constructor(private val clazz: Class<T>,
+                                             private val poolSize: Int,
+                                             private val consumeInternal: Long,
+                                             private val timeUnit: TimeUnit,
+                                             private val howToConsumeItem: ((T) -> Unit)?,
+                                             private val initLatch: CountDownLatch) : Shutdownable {
 
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java)
@@ -38,7 +38,7 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
                     throw DuplicateHandlerPoolException("class $clazz is already register in Handler pool")
                 }
                 val initLatch = CountDownLatch(1)
-                HANDLER_POOLS[clazz] = DriverPool(clazz, poolSize, consumeInternal, timeUnit, howToConsumeItem, initLatch)
+                HANDLER_POOLS[clazz] = EventDriverPool(clazz, poolSize, consumeInternal, timeUnit, howToConsumeItem, initLatch)
                 initLatch.countDown()
                 logger.info("初始化 [$clazz] 处理池成功，共有 $poolSize 个请求池被创建")
             }
@@ -54,9 +54,9 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
         /**
          * 获取某个消费池
          */
-        private fun <T> getPool(clazz: Class<T>): DriverPool<T> {
+        private fun <T> getPool(clazz: Class<T>): EventDriverPool<T> {
             val any = HANDLER_POOLS[clazz] ?: throw NoSuchHandlerPoolException("class $clazz has not register in Handler pool")
-            return any as DriverPool<T>
+            return any as EventDriverPool<T>
         }
     }
 
@@ -107,7 +107,7 @@ class DriverPool<T> private constructor(private val clazz: Class<T>,
         override fun run() {
             initLatch.await()
             while (true) {
-                val consume = DriverPool.getPool(clazz).poll(consumeInternal, timeUnit)
+                val consume = EventDriverPool.getPool(clazz).poll(consumeInternal, timeUnit)
                 consume?.also { howToConsumeItem?.invoke(it) }
                 if (shutdown) break
             }

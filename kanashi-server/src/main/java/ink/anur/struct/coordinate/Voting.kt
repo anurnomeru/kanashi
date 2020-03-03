@@ -1,7 +1,7 @@
-package ink.anur.struct
+package ink.anur.struct.coordinate
 
 import ink.anur.struct.common.AbstractTimedStruct
-import ink.anur.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
@@ -64,7 +64,7 @@ class Voting : AbstractTimedStruct {
         this.generation = voteGeneration
 
         val byteBuffer = ByteBuffer.allocate(Capacity)
-        init(byteBuffer, OperationTypeEnum.VOTING)
+        init(byteBuffer, RequestTypeEnum.VOTING)
 
         byteBuffer.put(translateToByte(agreed))
         byteBuffer.put(translateToByte(fromLeaderNode))

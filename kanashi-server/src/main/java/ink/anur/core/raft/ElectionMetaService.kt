@@ -1,6 +1,5 @@
 package ink.anur.core.raft
 
-import ink.anur.struct.Voting
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.raft.gao.GenerationAndOffsetService
 import ink.anur.core.struct.KanashiNode
@@ -11,7 +10,6 @@ import ink.anur.struct.HeartBeat
 import ink.anur.util.TimeUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import javax.annotation.PostConstruct
 
 /**
  * Created by Anur IjuoKaruKas on 2019/7/8

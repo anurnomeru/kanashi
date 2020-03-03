@@ -2,10 +2,10 @@ package ink.anur.core.server
 
 import ink.anur.common.KanashiRunnable
 import ink.anur.common.Shutdownable
-import ink.anur.common.pool.DriverPool
+import ink.anur.common.pool.EventDriverPool
 import ink.anur.config.InetSocketAddressConfiguration
-import ink.anur.core.coordinator.core.CoordinateCentreService
-import ink.anur.core.struct.CoordinateRequest
+import ink.anur.core.central.core.RequestProcessCentreService
+import ink.anur.core.struct.Request
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit
 class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
 
     @NigateInject
-    private lateinit var msgCenterService: CoordinateCentreService
+    private lateinit var msgCenterService: RequestProcessCentreService
 
     @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
@@ -58,7 +58,7 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
     private fun init() {
         val sdh = ShutDownHooker("终止协调服务器的套接字接口 ${inetSocketAddressConfiguration.getLocalServerCoordinatePort()} 的监听！")
 
-        DriverPool.register(CoordinateRequest::class.java,
+        EventDriverPool.register(Request::class.java,
             8,
             300,
             TimeUnit.MILLISECONDS

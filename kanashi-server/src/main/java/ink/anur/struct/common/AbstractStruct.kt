@@ -1,6 +1,6 @@
 package ink.anur.struct.common
 
-import ink.anur.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.RequestTypeEnum
 import ink.anur.exception.ByteBufferValidationException
 import ink.anur.util.ByteBufferUtil
 import io.netty.channel.Channel
@@ -71,8 +71,8 @@ abstract class AbstractStruct {
         return ByteBufferUtil.crc32(buffer!!.array(), buffer!!.arrayOffset() + TypeOffset, buffer!!.limit() - TypeOffset)
     }
 
-    fun getOperationTypeEnum(): OperationTypeEnum {
-        return OperationTypeEnum.parseByByteSign(buffer!!.getInt(TypeOffset))
+    fun getOperationTypeEnum(): RequestTypeEnum {
+        return RequestTypeEnum.parseByByteSign(buffer!!.getInt(TypeOffset))
     }
 
     /**

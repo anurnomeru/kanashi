@@ -1,8 +1,8 @@
 package ink.anur.io.common.handler
 
 import ink.anur.config.InetSocketAddressConfiguration
-import ink.anur.core.coordinator.common.RequestExtProcessor
-import ink.anur.core.coordinator.core.CoordinateCentreService
+import ink.anur.core.central.common.RequestExtProcessor
+import ink.anur.core.central.core.RequestProcessCentreService
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
@@ -27,7 +27,7 @@ class AutoRegistryHandler(private val serverName: String, private val host: Stri
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
 
     @NigateInject
-    private lateinit var msgCenterService: CoordinateCentreService
+    private lateinit var msgCenterService: RequestProcessCentreService
 
     init {
         Nigate.initInject(this)

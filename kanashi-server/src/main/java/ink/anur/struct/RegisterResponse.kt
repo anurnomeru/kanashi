@@ -1,12 +1,10 @@
 package ink.anur.struct
 
 import ink.anur.struct.common.AbstractTimedStruct
-import ink.anur.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
-import io.netty.util.internal.StringUtil
 import java.nio.ByteBuffer
-import java.nio.charset.Charset
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/24
@@ -21,7 +19,7 @@ open class RegisterResponse : AbstractTimedStruct {
 
     constructor() {
         val byteBuffer = ByteBuffer.allocate(SizeOffset)
-        init(byteBuffer, OperationTypeEnum.REGISTER_RESPONSE)
+        init(byteBuffer, RequestTypeEnum.REGISTER_RESPONSE)
         byteBuffer.flip()
     }
 

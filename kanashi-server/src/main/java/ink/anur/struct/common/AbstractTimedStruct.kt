@@ -1,6 +1,6 @@
 package ink.anur.struct.common
 
-import ink.anur.struct.enumerate.OperationTypeEnum
+import ink.anur.struct.enumerate.RequestTypeEnum
 import java.nio.ByteBuffer
 
 /**
@@ -16,14 +16,14 @@ abstract class AbstractTimedStruct : AbstractStruct() {
         val OriginMessageOverhead = TimestampOffset + TimestampLength
     }
 
-    fun init(byteBuffer: ByteBuffer, operationTypeEnum: OperationTypeEnum) {
+    fun init(byteBuffer: ByteBuffer, operationTypeEnum: RequestTypeEnum) {
         buffer = byteBuffer
         byteBuffer.position(TypeOffset)
         byteBuffer.putInt(operationTypeEnum.byteSign)
         byteBuffer.putLong(System.currentTimeMillis())
     }
 
-    fun init(capacity: Int, operationTypeEnum: OperationTypeEnum, then: (ByteBuffer) -> Unit) {
+    fun init(capacity: Int, operationTypeEnum: RequestTypeEnum, then: (ByteBuffer) -> Unit) {
         buffer = ByteBuffer.allocate(capacity)
         buffer!!.position(TypeOffset)
         buffer!!.putInt(operationTypeEnum.byteSign)

@@ -1,4 +1,4 @@
-package ink.anur.core.coordinator.core
+package ink.anur.core.central.core
 
 import ink.anur.struct.common.AbstractStruct
 import ink.anur.config.InetSocketAddressConfiguration
@@ -18,7 +18,7 @@ import java.util.concurrent.locks.ReentrantLock
  * Created by Anur IjuoKaruKas on 2020/2/25
  */
 @NigateBean
-class CoordinateSenderService {
+class SenderService {
 
     @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
