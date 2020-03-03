@@ -19,14 +19,13 @@ import java.nio.ByteBuffer
  *
  * 集群内通讯、协调服务器操作类客户端，负责协调相关的业务
  */
-class CoordinateClientOperator(val kanashiNode: KanashiNode) : KanashiRunnable(), Shutdownable {
+class CoordinateClientOperator(kanashiNode: KanashiNode) : KanashiRunnable(), Shutdownable {
 
     private val serverShutDownHooker = ShutDownHooker("终止与协调节点 $kanashiNode 的连接")
 
-    private val CLIENT_PIPELINE_CONSUME: (ChannelPipeline) -> Unit = { it.addFirst(AutoRegistryHandler(kanashiNode)) }
 
-    private val coordinateClient = CoordinateClient( kanashiNode.host,
-        kanashiNode.coordinatePort, this.serverShutDownHooker, CLIENT_PIPELINE_CONSUME)
+    private val coordinateClient = CoordinateClient(kanashiNode.serverName, kanashiNode.host,
+        kanashiNode.coordinatePort, this.serverShutDownHooker)
 
     override fun run() {
         if (serverShutDownHooker.isShutDown()) {
