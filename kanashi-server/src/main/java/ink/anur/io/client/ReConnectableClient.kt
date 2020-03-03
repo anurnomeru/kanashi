@@ -1,7 +1,6 @@
 package ink.anur.io.client
 
 import ink.anur.common.KanashiExecutors
-import ink.anur.io.common.handler.ErrorHandler
 import ink.anur.io.common.ShutDownHooker
 import ink.anur.io.common.handler.ReconnectHandler
 import io.netty.bootstrap.Bootstrap
@@ -18,7 +17,7 @@ import java.util.concurrent.CountDownLatch
  *
  * 可重连的客户端
  */
-abstract class ReConnectableClient(private val serverName: String, private val host: String, private val port: Int, private val shutDownHooker: ShutDownHooker) {
+abstract class ReConnectableClient(private val host: String, private val port: Int, private val shutDownHooker: ShutDownHooker) {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -44,14 +43,14 @@ abstract class ReConnectableClient(private val serverName: String, private val h
             }
 
             if (shutDownHooker.isShutDown()) {
-                logger.debug("与节点 {} [{}:{}] 的连接已被终止，无需再进行重连", serverName, host, port)
+                logger.debug("与节点 [{}:{}] 的连接已被终止，无需再进行重连", host, port)
             } else {
-                logger.trace("正在重新连接节点 {} [{}:{}] ...", serverName, host, port)
+                logger.trace("正在重新连接节点 [{}:{}] ...", host, port)
                 this.howToRestart()
             }
         }
         KanashiExecutors.execute(restartMission)
-        restartMission.name = "Client Restart [$serverName-$host:$port]"
+        restartMission.name = "Client Restart [$host:$port]"
 
         val group = NioEventLoopGroup()
 
@@ -65,7 +64,7 @@ abstract class ReConnectableClient(private val serverName: String, private val h
                     override fun initChannel(socketChannel: SocketChannel) {
                         channelPipelineConsumer(
                             socketChannel.pipeline()
-                                .addLast(ReconnectHandler(serverName, reconnectLatch))) // 引入重连机制
+                                .addLast(ReconnectHandler(reconnectLatch))) // 引入重连机制
                     }
                 })
 
@@ -73,7 +72,7 @@ abstract class ReConnectableClient(private val serverName: String, private val h
             channelFuture.addListener { future ->
                 if (!future.isSuccess) {
                     if (reconnectLatch.count == 1L) {
-                        logger.trace("连接节点 {} [{}:{}] 失败，准备进行重连 ...", serverName, host, port)
+                        logger.trace("连接节点 [{}:{}] 失败，准备进行重连 ...", host, port)
                     }
 
                     reconnectLatch.countDown()

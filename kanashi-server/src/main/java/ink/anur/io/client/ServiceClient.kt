@@ -7,11 +7,9 @@ import ink.anur.io.common.handler.KanashiDecoder
 import io.netty.channel.ChannelPipeline
 
 /**
- * Created by Anur IjuoKaruKas on 2020/2/23
- *
- * 可重连的协调 client
+ * Created by Anur IjuoKaruKas on 2020/3/3
  */
-class CoordinateClient(
+class ServiceClient(
     private val host: String,
     private val port: Int,
     private val shutDownHooker: ShutDownHooker,

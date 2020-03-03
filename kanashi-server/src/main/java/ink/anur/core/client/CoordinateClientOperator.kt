@@ -25,7 +25,7 @@ class CoordinateClientOperator(val kanashiNode: KanashiNode) : KanashiRunnable()
 
     private val CLIENT_PIPELINE_CONSUME: (ChannelPipeline) -> Unit = { it.addFirst(AutoRegistryHandler(kanashiNode)) }
 
-    private val coordinateClient = CoordinateClient(kanashiNode.serverName, kanashiNode.host,
+    private val coordinateClient = CoordinateClient( kanashiNode.host,
         kanashiNode.coordinatePort, this.serverShutDownHooker, CLIENT_PIPELINE_CONSUME)
 
     override fun run() {
