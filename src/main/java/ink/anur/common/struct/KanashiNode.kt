@@ -4,10 +4,10 @@ import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.inject.Nigate
 
 
-class KanashiNode(val serverName: String, val host: String, val coordinatePort: Int, val servicePort: Int) {
+class KanashiNode(val serverName: String, val host: String, val coordinatePort: Int) {
 
     companion object {
-        val NOT_EXIST = KanashiNode("", "", 0, 0)
+        val NOT_EXIST = KanashiNode("", "", 0)
     }
 
     /**
@@ -25,7 +25,6 @@ class KanashiNode(val serverName: String, val host: String, val coordinatePort: 
 
         if (serverName != other.serverName) return false
         if (host != other.host) return false
-        if (servicePort != other.servicePort) return false
         if (coordinatePort != other.coordinatePort) return false
         return true
     }
@@ -33,12 +32,11 @@ class KanashiNode(val serverName: String, val host: String, val coordinatePort: 
     override fun hashCode(): Int {
         var result = serverName.hashCode()
         result = 31 * result + host.hashCode()
-        result = 31 * result + servicePort
         result = 31 * result + coordinatePort
         return result
     }
 
     override fun toString(): String {
-        return "KanashiNode(serverName='$serverName', host='$host', servicePort=$servicePort, coordinatePort=$coordinatePort)"
+        return "KanashiNode(serverName='$serverName', host='$host', port='$coordinatePort')"
     }
 }

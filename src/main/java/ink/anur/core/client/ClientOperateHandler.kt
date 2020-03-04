@@ -9,7 +9,7 @@ import ink.anur.io.common.ShutDownHooker
 /**
  * Created by Anur IjuoKaruKas on 2020/2/23
  *
- * 集群内通讯、协调服务器操作类客户端，负责协调相关的业务
+ * 连接某客户端的 client
  */
 class ClientOperateHandler(kanashiNode: KanashiNode) : KanashiRunnable(), Shutdownable {
 

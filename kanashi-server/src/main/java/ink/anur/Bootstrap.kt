@@ -18,7 +18,6 @@ object Bootstrap {
         // 初始化 bean管理
         Nigate
 
-
         var i = 0
 
         while (RUNNING) {

@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
  * 集群内通讯、协调服务器操作类服务端，负责协调相关的业务
  */
 @NigateBean
-class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
+class ServerService : Shutdownable {
 
     @NigateInject
     private lateinit var msgCenterService: RequestProcessCentreService
@@ -56,7 +56,7 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
 
     @NigatePostConstruct
     private fun init() {
-        val sdh = ShutDownHooker("终止协调服务器的套接字接口 ${inetSocketAddressConfiguration.getLocalServerCoordinatePort()} 的监听！")
+        val sdh = ShutDownHooker("终止协调服务器的套接字接口 ${inetSocketAddressConfiguration.getLocalCoordinatePort()} 的监听！")
 
         EventDriverPool.register(Request::class.java,
             8,
@@ -66,19 +66,14 @@ class CoordinateServerOperatorService : KanashiRunnable(), Shutdownable {
             msgCenterService.receive(it.msg, it.typeEnum, it.channel)
         }
 
-        this.coordinateServer = CoordinateServer(inetSocketAddressConfiguration.getLocalServerCoordinatePort(),
+        this.coordinateServer = CoordinateServer(inetSocketAddressConfiguration.getLocalCoordinatePort(),
             sdh,
             SERVER_PIPELINE_CONSUME)
-        this.start()
+        coordinateServer.start()
     }
 
 
     override fun shutDown() {
         coordinateServer.shutDown()
-    }
-
-    override fun run() {
-        logger.info("协调服务器正在启动...")
-        coordinateServer.start()
     }
 }

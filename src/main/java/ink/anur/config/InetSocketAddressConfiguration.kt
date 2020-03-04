@@ -35,11 +35,7 @@ class InetSocketAddressConfiguration : ConfigHelper() {
         logger.info("current node is $me")
     }
 
-    fun getLocalServerElectionPort(): Int {
-        return me.servicePort
-    }
-
-    fun getLocalServerCoordinatePort(): Int {
+    fun getLocalCoordinatePort(): Int {
         return me.coordinatePort
     }
 
@@ -52,7 +48,7 @@ class InetSocketAddressConfiguration : ConfigHelper() {
             val serverName = pair.key
             val split = pair.value
                 .split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            KanashiNode(serverName, split[0], Integer.valueOf(split[1]), Integer.valueOf(split[2]))
+            KanashiNode(serverName, split[0], Integer.valueOf(split[1]))
         } as List<KanashiNode>
     }
 
