@@ -4,6 +4,10 @@ import ink.anur.exception.KanashiException
 import ink.anur.exception.NoSuchBeanException
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.IOException
+import java.net.JarURLConnection
+import java.net.URL
+import java.util.HashSet
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.isAccessible
@@ -18,8 +22,6 @@ import kotlin.system.exitProcess
  */
 object Nigate {
 
-    private val defaultClassPath = this.javaClass.getResource("/").path
-
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     private val BEAN_MAPPING = mutableMapOf<String, Any>()
@@ -27,8 +29,8 @@ object Nigate {
     private var OVER_REGISTER: Boolean = false
 
     init {
-        val scans = mutableSetOf<Class<*>>()
-        doScan(scans, File(defaultClassPath))
+        val start = System.currentTimeMillis()
+        val scans = doScan()
 
         logger.info("Nigate ==> Registering..")
         for (clazz in scans) {
@@ -48,6 +50,8 @@ object Nigate {
             postConstruct(bean, true)
         }
         logger.info("Nigate ==> Invoke postConstruct complete")
+
+        logger.info("Nigate Started in ${(System.currentTimeMillis() - start) / 1000f} seconds")
     }
 
     fun getBeanByName(name: String): Any = BEAN_MAPPING[name] ?: throw NoSuchBeanException("bean named $name is not managed")
@@ -105,20 +109,77 @@ object Nigate {
         }
     }
 
-    private fun doScan(scans: MutableSet<Class<*>>, file: File, packageName: String = "", start: Boolean = true) {
-        if (file.isDirectory) {
-            file.listFiles().forEach {
-                val pn = if (start) {
-                    packageName
-                } else {
-                    (packageName.takeIf { pn -> pn.isNotEmpty() }?.let { pn -> "$pn." } ?: "") + file.name
+    fun getClasses(packagePath: String): Set<Class<*>> {
+        val res = HashSet<Class<*>>()
+        val path = packagePath.replace(".", "/")
+        val resources = Thread.currentThread().contextClassLoader.getResources(path)
+
+        while (resources.hasMoreElements()) {
+            val url = resources.nextElement()
+            val protocol = url.protocol
+            if ("jar".equals(protocol, ignoreCase = true)) {
+                try {
+                    res.addAll(getJarClasses(url, packagePath))
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    return res
                 }
-                doScan(scans, it, pn, false)
+
+            } else if ("file".equals(protocol, ignoreCase = true)) {
+                res.addAll(getFileClasses(url, packagePath))
             }
-        } else if (file.name.endsWith(".class")) {
-            Class.forName(((packageName.takeIf { it.isNotEmpty() }?.let { "$it." }) ?: "") + file.name.substring(0, file.name.lastIndexOf(".")))
-                .takeIf { clazz -> clazz.annotations.let { annos -> annos.any { it.annotationClass == NigateBean::class } } }
-                ?.also { scans.add(it) }
         }
+        return res
+    }
+
+    //获取file路径下的class文件
+    private fun getFileClasses(url: URL, packagePath: String): Set<Class<*>> {
+        val res = HashSet<Class<*>>()
+        val filePath = url.file
+        val dir = File(filePath)
+        val list = dir.list() ?: return res
+        for (classPath in list) {
+            if (classPath.endsWith(".class")) {
+                try {
+                    val aClass = Class.forName("$packagePath.${classPath.replace(".class", "")}")
+                    res.add(aClass)
+                } catch (e: ClassNotFoundException) {
+                    e.printStackTrace()
+                }
+
+            } else {
+                res.addAll(getClasses("$packagePath.$classPath"))
+            }
+        }
+        return res
+    }
+
+    //使用JarURLConnection类获取路径下的所有类
+    @Throws(IOException::class)
+    private fun getJarClasses(url: URL, packagePath: String): Set<Class<*>> {
+        val res = HashSet<Class<*>>()
+        val conn = url.openConnection() as JarURLConnection
+        val jarFile = conn.jarFile
+        val entries = jarFile.entries()
+        while (entries.hasMoreElements()) {
+            val jarEntry = entries.nextElement()
+            val name = jarEntry.name
+            if (name.contains(".class") && name.replace("/".toRegex(), ".").startsWith(packagePath)) {
+                val className = name.substring(0, name.lastIndexOf(".")).replace("/", ".")
+                try {
+                    val clazz = Class.forName(className)
+                    res.add(clazz)
+                } catch (e: ClassNotFoundException) {
+                    e.printStackTrace()
+                }
+
+            }
+        }
+        return res
+    }
+
+    private fun doScan(): MutableSet<Class<*>> {
+        val classes = getClasses("ink.anur")
+        return classes.filter { clazz -> clazz.annotations.let { annos -> annos.any { it.annotationClass == NigateBean::class } } }.toMutableSet()
     }
 }

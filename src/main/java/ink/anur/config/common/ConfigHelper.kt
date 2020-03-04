@@ -16,12 +16,11 @@ open class ConfigHelper {
 
     companion object {
         @Volatile
-        private var resourceBundle: ResourceBundle = ResourceBundle.getBundle("application")
+        private var resourceBundle: ResourceBundle = ResourceBundle.getBundle("kanashi")
 
         private val readLock: Lock
         private val writeLock: Lock
         private val cache = ConcurrentHashMap<ConfigurationEnum, Any>()
-
 
         init {
             val readWriteLock = ReentrantReadWriteLock()
