@@ -1,11 +1,11 @@
 package ink.anur.service
 
-import ink.anur.struct.enumerate.RequestTypeEnum
-import ink.anur.core.central.common.AbstractRequestMapping
+import ink.anur.pojo.enumerate.RequestTypeEnum
+import ink.anur.core.common.AbstractRequestMapping
 import ink.anur.core.raft.RaftCenterController
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
-import ink.anur.struct.coordinate.Voting
+import ink.anur.pojo.coordinate.Voting
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 

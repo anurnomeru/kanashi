@@ -14,4 +14,6 @@ import java.lang.annotation.Target;
 public @interface KScheduled {
 
     String cron();
+
+    boolean mutex() default false;
 }

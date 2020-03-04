@@ -1,12 +1,12 @@
 package ink.anur.core.raft
 
+import ink.anur.common.struct.KanashiNode
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.raft.gao.GenerationAndOffsetService
-import ink.anur.core.struct.KanashiNode
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
-import ink.anur.struct.HeartBeat
+import ink.anur.pojo.HeartBeat
 import ink.anur.util.TimeUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
