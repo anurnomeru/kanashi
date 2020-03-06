@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
  * 网络相关配置，都可以从这里获取
  */
 @NigateBean
-class InetSocketAddressConfiguration : ConfigHelper() {
+class InetSocketAddressConfiguration : ConfigHelper(), InetConfig {
 
     private lateinit var me: KanashiNode
 
@@ -23,13 +23,7 @@ class InetSocketAddressConfiguration : ConfigHelper() {
 
     @NigatePostConstruct
     private fun init() {
-        val nameFromConfig: String =
-            try {
-                getConfig(ConfigurationEnum.SERVER_NAME) { it } as String
-            } catch (t: Throwable) {
-                "随便生成一个"
-            }
-
+        val nameFromConfig: String = getConfig(ConfigurationEnum.SERVER_NAME) { it } as String
         val name = BootstrapConfiguration.get(BootstrapConfiguration.SERVER_NAME) ?: nameFromConfig
         if (name == ChannelHolder.COORDINATE_LEADE_SIGN) {
             throw ApplicationConfigException(" 'LEADER' 为关键词，节点不能命名为这个关键词")
@@ -42,12 +36,16 @@ class InetSocketAddressConfiguration : ConfigHelper() {
         logger.info("current node is $me")
     }
 
-    fun getLocalCoordinatePort(): Int {
-        return me.coordinatePort
+    override fun getLocalServerName(): String {
+        return me.serverName
     }
 
-    fun getLocalServerName(): String {
-        return me.serverName
+    override fun getNode(serverName: String?): KanashiNode {
+        return getCluster().associateBy { kanashiLegal: KanashiNode -> kanashiLegal.serverName }[serverName] ?: KanashiNode.NOT_EXIST
+    }
+
+    fun getLocalCoordinatePort(): Int {
+        return me.coordinatePort
     }
 
     fun getCluster(): List<KanashiNode> {
@@ -57,9 +55,5 @@ class InetSocketAddressConfiguration : ConfigHelper() {
                 .split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             KanashiNode(serverName, split[0], Integer.valueOf(split[1]))
         } as List<KanashiNode>
-    }
-
-    fun getNode(serverName: String?): KanashiNode {
-        return getCluster().associateBy { kanashiLegal: KanashiNode -> kanashiLegal.serverName }[serverName] ?: KanashiNode.NOT_EXIST
     }
 }

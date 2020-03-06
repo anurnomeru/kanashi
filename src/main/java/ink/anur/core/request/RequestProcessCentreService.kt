@@ -1,10 +1,10 @@
 package ink.anur.core.request
 
 import ink.anur.common.Resetable
+import ink.anur.config.CoordinateConfig
 import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.common.AbstractTimedStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
-import ink.anur.config.CoordinateConfiguration
 import ink.anur.core.common.RequestExtProcessor
 import ink.anur.core.common.RequestMapping
 import ink.anur.core.response.ResponseProcessCentreService
@@ -32,8 +32,8 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
     @NigateInject
     private lateinit var channelService: ChannelService
 
-    @NigateInject
-    private lateinit var coordinateConfiguration: CoordinateConfiguration
+    @NigateInject(useLocalFirst = true)
+    private lateinit var coordinateConfig: CoordinateConfig
 
     @NigateInject
     private lateinit var msgSendService: ResponseProcessCentreService
@@ -187,7 +187,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
             }
         } else {
             if (getting(inFlight, serverName, operationTypeEnum)?.isComplete() == false) {// 如果还没收到回复，则重新拟定重发定时任务
-                val task = TimedTask(coordinateConfiguration.getFetchBackOfMs().toLong()) { sendImpl(serverName, command, operationTypeEnum, requestProcessor) }
+                val task = TimedTask(coordinateConfig.getReSendBackOfMs()) { sendImpl(serverName, command, operationTypeEnum, requestProcessor) }
                 writeLocker {
                     computing(reSendTask, serverName, operationTypeEnum, task)
                 }

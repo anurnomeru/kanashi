@@ -1,7 +1,8 @@
 package ink.anur.common.struct
 
-import ink.anur.config.InetSocketAddressConfiguration
+import ink.anur.config.InetConfig
 import ink.anur.inject.Nigate
+import ink.anur.inject.NigateInject
 
 
 class KanashiNode(val serverName: String, val host: String, val coordinatePort: Int) {
@@ -10,11 +11,19 @@ class KanashiNode(val serverName: String, val host: String, val coordinatePort: 
         val NOT_EXIST = KanashiNode("", "", 0)
     }
 
+    @NigateInject(useLocalFirst = true)
+    private var inetClass: InetConfig? = null
+
     /**
      * 是否是本地节点
      */
+    @Synchronized
     fun isLocalNode(): Boolean {
-        return this.serverName == Nigate.getBeanByClass(InetSocketAddressConfiguration::class.java).getLocalServerName()
+        if (inetClass == null) {
+            Nigate.inject(this)
+        }
+
+        return this.serverName == inetClass!!.getLocalServerName()
     }
 
     override fun equals(other: Any?): Boolean {

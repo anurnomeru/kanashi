@@ -1,6 +1,6 @@
 package ink.anur.io.common.handler
 
-import ink.anur.config.InetSocketAddressConfiguration
+import ink.anur.config.InetConfig
 import ink.anur.core.common.RequestExtProcessor
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.inject.Nigate
@@ -20,22 +20,22 @@ class AutoRegistryHandler(private val serverName: String, private val host: Stri
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    @NigateInject
-    private lateinit var channelService: ChannelService
+    @NigateInject(useLocalFirst = true)
+    private lateinit var inetConfig: InetConfig
 
     @NigateInject
-    private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
+    private lateinit var channelService: ChannelService
 
     @NigateInject
     private lateinit var msgCenterService: RequestProcessCentreService
 
     init {
-        Nigate.initInject(this)
+        Nigate.inject(this)
     }
 
     override fun channelActive(ctx: ChannelHandlerContext?) {
         super.channelActive(ctx)
-        val register = Register(inetSocketAddressConfiguration.getLocalServerName())
+        val register = Register(inetConfig.getLocalServerName())
         logger.info("正在向节点 $serverName [$host:$port] 发送注册请求")
         channelService.getChannelHolder(ChannelService.ChannelType.COORDINATE).register(serverName, ctx!!.channel())
         msgCenterService.send(serverName, register, RequestExtProcessor(true, {

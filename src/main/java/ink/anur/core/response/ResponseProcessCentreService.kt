@@ -1,8 +1,8 @@
 package ink.anur.core.response
 
 import ink.anur.common.struct.KanashiNode
+import ink.anur.config.InetConfig
 import ink.anur.pojo.common.AbstractStruct
-import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.client.ClientService
 import ink.anur.exception.NetWorkException
 import ink.anur.exception.UnKnownNodeException
@@ -20,8 +20,8 @@ import java.util.concurrent.locks.ReentrantLock
 @NigateBean
 class ResponseProcessCentreService {
 
-    @NigateInject
-    private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
+    @NigateInject(useLocalFirst = true)
+    private lateinit var inetConfig: InetConfig
 
     @NigateInject
     private lateinit var channelService: ChannelService
@@ -50,7 +50,7 @@ class ResponseProcessCentreService {
      * 向某个服务发送东西~
      */
     fun doSend(serverName: String, body: AbstractStruct): Throwable? {
-        if (inetSocketAddressConfiguration.getLocalServerName() == serverName) {
+        if (inetConfig.getLocalServerName() == serverName) {
             return null
         }
 
@@ -60,7 +60,7 @@ class ResponseProcessCentreService {
             val channel = channelService.getChannelHolder(ChannelService.ChannelType.COORDINATE).getChannel(serverName)
 
             if (channel == null) {
-                val node = inetSocketAddressConfiguration.getNode(serverName)
+                val node = inetConfig.getNode(serverName)
                 if (node == KanashiNode.NOT_EXIST) {
                     return UnKnownNodeException("无法在配置文件中找到节点 $serverName，故无法主动连接该节点")
                 }

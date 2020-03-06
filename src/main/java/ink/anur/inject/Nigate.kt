@@ -9,8 +9,6 @@ import java.io.IOException
 import java.net.JarURLConnection
 import java.net.URL
 import java.util.HashSet
-import java.util.TreeSet
-import java.util.function.BiFunction
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.isAccessible
@@ -37,7 +35,7 @@ object Nigate {
         /**
          * bean 类型与 bean 的映射，可以一对多
          */
-        private val BEAN_CLASS_MAPPING = mutableMapOf<Class<*>, TreeSet<Any>>()
+        private val BEAN_CLASS_MAPPING = mutableMapOf<Class<*>, MutableSet<Any>>()
 
         /**
          * 存储 “类” 与其 “类定义” 的映射集合
@@ -47,11 +45,20 @@ object Nigate {
         /**
          * 存储接口类与其 “实现们” 的映射集合
          */
-        private val INTERFACE_MAPPING = mutableMapOf<Class<*>, TreeSet<Class<*>>>()
+        private val INTERFACE_MAPPING = mutableMapOf<Class<*>, MutableSet<Class<*>>>()
 
-        fun autoRegister(clazz: Class<*>, anno: NigateBean, fromJar: Boolean) {
-            val name = register(clazz.newInstance(), anno.name)
-            BEAN_DEFINITION_MAPPING[name] = NigateBeanDefinition(fromJar)
+        /**
+         * 避免因为路径问题导致初始化重复扫描
+         */
+        private val initDuplicateCleaner = mutableSetOf<String>()
+
+        fun autoRegister(path: String, clazz: Class<*>, anno: NigateBean, fromJar: Boolean) {
+            if (initDuplicateCleaner.add(path)) {
+                val name = register(clazz.newInstance(), anno.name)
+                BEAN_DEFINITION_MAPPING[name] = NigateBeanDefinition(fromJar)
+            } else {
+                // ignore
+            }
         }
 
         /**
@@ -64,12 +71,16 @@ object Nigate {
             duplicate?.also { throw DuplicateBeanException("bean $clazz 存在重复注册的情况，请使用 @NigateBean(name = alias) 为其中一个起别名") }
 
             BEAN_CLASS_MAPPING.compute(bean.javaClass) { _, v ->
-                (v ?: TreeSet()).also { it.add(bean) }
+                val set = v ?: mutableSetOf()
+                set.add(bean)
+                set
             }
 
             clazz.interfaces.forEach {
                 INTERFACE_MAPPING.compute(it) { _, v ->
-                    (v ?: TreeSet()).also { s -> s.add(clazz) }
+                    val set = v ?: mutableSetOf()
+                    set.add(clazz)
+                    set
                 }
             }
             return actualName
@@ -184,9 +195,9 @@ object Nigate {
         logger.info("Nigate Started in ${(System.currentTimeMillis() - start) / 1000f} seconds")
     }
 
-    fun getBeanByName(name: String): Any = beanContainer.getBeanByName(name)
-
     fun <T> getBeanByClass(clazz: Class<T>): T = beanContainer.getBeanByClass(clazz)
+
+    fun getBeanByName(name: String): Any = beanContainer.getBeanByName(name)
 
     /**
      * 注册某个bean
@@ -196,7 +207,7 @@ object Nigate {
         logger.debug("bean named [$actualName] is managed by Nigate")
     }
 
-    fun initInject(injected: Any) {
+    fun inject(injected: Any) {
         if (!OVER_REGISTER) {
             throw KanashiException("暂时不支持在初始化完成前进行构造注入！")
         }
@@ -255,10 +266,11 @@ object Nigate {
         for (classPath in list) {
             if (classPath.endsWith(".class")) {
                 try {
-                    val aClass = Class.forName("$packagePath.${classPath.replace(".class", "")}")
+                    val path = "$packagePath.${classPath.replace(".class", "")}"
+                    val aClass = Class.forName(path)
                     for (annotation in aClass.annotations) {
                         if (annotation.annotationClass == NigateBean::class) {
-                            beanContainer.autoRegister(aClass, annotation as NigateBean, false)
+                            beanContainer.autoRegister(path, aClass, annotation as NigateBean, false)
                             res.add(aClass)
                         }
                     }
@@ -289,7 +301,7 @@ object Nigate {
                     val aClass = Class.forName(className)
                     for (annotation in aClass.annotations) {
                         if (annotation.annotationClass == NigateBean::class) {
-                            beanContainer.autoRegister(aClass, annotation as NigateBean, true)
+                            beanContainer.autoRegister(className, aClass, annotation as NigateBean, true)
                             res.add(aClass)
                         }
                     }
