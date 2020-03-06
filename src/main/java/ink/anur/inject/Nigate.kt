@@ -1,5 +1,6 @@
 package ink.anur.inject
 
+import ink.anur.exception.DuplicateBeanException
 import ink.anur.exception.KanashiException
 import ink.anur.exception.NoSuchBeanException
 import org.slf4j.LoggerFactory
@@ -23,6 +24,53 @@ import kotlin.system.exitProcess
  */
 object Nigate {
 
+    class NigateBeanContainer {
+        private val BEAN_NAME_MAPPING = mutableMapOf<String, Any>()
+        private val BEAN_CLASS_MAPPING = mutableMapOf<Class<*>, MutableList<Any>>()
+
+        /**
+         * 存储 类与其类定义 的映射集合
+         */
+        private val BEAN_DEFINITION_MAPPING = mutableMapOf<String, NigateBeanDefinition>()
+
+        /**
+         * 存储 接口类与其实现们 的映射集合
+         */
+        private val INTERFACE_MAPPING = mutableMapOf<Class<*>, MutableSet<Class<*>>>()
+
+        fun autoRegister(clazz: Class<*>, anno: NigateBean, fromJar: Boolean) {
+            register(clazz.newInstance(), anno.name)
+        }
+
+        fun register(bean: Any, alias: String? = null): String {
+            val clazz = bean.javaClass
+            val actualName = alias ?: (clazz.simpleName)
+            val duplicate = BEAN_NAME_MAPPING.putIfAbsent(actualName, bean)
+            duplicate?.also { throw DuplicateBeanException("bean $clazz 存在重复注册的情况，请使用 @NigateBean(name = alias) 为其中一个起别名") }
+
+            BEAN_CLASS_MAPPING.compute(bean.javaClass) { _, v ->
+                (v ?: mutableListOf()).also { it.add(bean) }
+            }
+
+            clazz.interfaces.forEach {
+                INTERFACE_MAPPING.compute(it) { _, v ->
+                    (v ?: mutableSetOf()).also { s -> s.add(clazz) }
+                }
+            }
+            return actualName
+        }
+
+        fun getBeanByName(name: String): Any = BEAN_NAME_MAPPING[name] ?: throw NoSuchBeanException("bean named $name is not managed")
+
+        fun <T> getBeanByClass(clazz: Class<T>): T {
+            val l = BEAN_CLASS_MAPPING[clazz] ?: throw NoSuchBeanException("bean with type $clazz is not managed")
+            if (l.size > 1) {
+                throw DuplicateBeanException("bean $clazz 存在多实例的情况，请使用 @NigateInject(name = alias) 选择注入其中的某个 bean")
+            }
+            return (l[0]) as T
+        }
+    }
+
     class NigateBeanDefinition(
         /**
          * fromJar 代表此实现是有默认的实现而且实现在继承的maven里就已经写好
@@ -31,19 +79,9 @@ object Nigate {
     )
 
     /**
-     * 存储 类与其类定义 的映射集合
+     * bean 容器
      */
-    private val BEAN_DEFINITION_MAPPING = mutableMapOf<Class<*>, NigateBeanDefinition>()
-
-    /**
-     * 存储 接口类与其实现们 的映射集合
-     */
-    private val INTERFACE_MAPPING = mutableMapOf<Class<*>, MutableSet<Class<*>>>()
-
-    /**
-     * bean 的容器们
-     */
-    private val BEAN_MAPPING = mutableMapOf<String, Any>()
+    private val beanContainer = NigateBeanContainer()
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -51,16 +89,9 @@ object Nigate {
 
     init {
         val start = System.currentTimeMillis()
+        logger.info("Nigate ==> Registering..")
         val scans = doScan()
 
-        for (scan in scans) {
-            analyzeInterfaces(scan)
-        }
-
-        logger.info("Nigate ==> Registering..")
-        for (clazz in scans) {
-            register(clazz.newInstance(), clazz.simpleName)
-        }
         OVER_REGISTER = true
         logger.info("Nigate ==> Register complete")
 
@@ -86,9 +117,8 @@ object Nigate {
     /**
      * 注册某个bean
      */
-    fun register(bean: Any, name: String? = null) {
-        val actualName = name ?: bean.javaClass.simpleName
-        BEAN_MAPPING[actualName] = bean
+    fun register(bean: Any, alias: String? = null) {
+        val actualName = beanContainer.register(bean, alias)
         logger.debug("bean named [$actualName] is managed by Nigate")
     }
 
@@ -106,6 +136,8 @@ object Nigate {
         for (kProperty in injected::class.declaredMemberProperties) {
             for (annotation in kProperty.annotations) {
                 if (annotation.annotationClass == NigateInject::class) {
+
+
                     val injection = BEAN_MAPPING[(kProperty.returnType.javaType as Class<*>).simpleName]
                     val javaField = kProperty.javaField!!
                     javaField.isAccessible = true
@@ -167,7 +199,12 @@ object Nigate {
             if (classPath.endsWith(".class")) {
                 try {
                     val aClass = Class.forName("$packagePath.${classPath.replace(".class", "")}")
-                    res.add(aClass)
+                    for (annotation in aClass.annotations) {
+                        if (annotation.annotationClass == NigateBean::class) {
+                            beanContainer.autoRegister(aClass, annotation as NigateBean)
+                            res.add(aClass)
+                        }
+                    }
                 } catch (e: ClassNotFoundException) {
                     e.printStackTrace()
                 }
@@ -192,8 +229,13 @@ object Nigate {
             if (name.contains(".class") && name.replace("/".toRegex(), ".").startsWith(packagePath)) {
                 val className = name.substring(0, name.lastIndexOf(".")).replace("/", ".")
                 try {
-                    val clazz = Class.forName(className)
-                    res.add(clazz)
+                    val aClass = Class.forName(className)
+                    for (annotation in aClass.annotations) {
+                        if (annotation.annotationClass == NigateBean::class) {
+                            beanContainer.autoRegister(aClass, annotation as NigateBean)
+                            res.add(aClass)
+                        }
+                    }
                 } catch (e: ClassNotFoundException) {
                     e.printStackTrace()
                 }
@@ -201,17 +243,6 @@ object Nigate {
             }
         }
         return res
-    }
-
-    /**
-     * 分析一个类的接口继承关系，方便注入接口
-     */
-    private fun analyzeInterfaces(clazz: Class<*>) {
-        clazz.interfaces.forEach {
-            INTERFACE_MAPPING.compute(clazz, BiFunction { _, v ->
-                (v ?: mutableSetOf()).also { s -> s.add(it) }
-            })
-        }
     }
 
     private fun doScan(): MutableSet<Class<*>> {
