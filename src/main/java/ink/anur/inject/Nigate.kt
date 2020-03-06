@@ -9,6 +9,7 @@ import java.io.IOException
 import java.net.JarURLConnection
 import java.net.URL
 import java.util.HashSet
+import java.util.TreeSet
 import java.util.function.BiFunction
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.memberFunctions
@@ -25,40 +26,67 @@ import kotlin.system.exitProcess
 object Nigate {
 
     class NigateBeanContainer {
-        private val BEAN_NAME_MAPPING = mutableMapOf<String, Any>()
-        private val BEAN_CLASS_MAPPING = mutableMapOf<Class<*>, MutableList<Any>>()
+
+        val UNDEFINE_ALIAS = "UNDEFINE"
 
         /**
-         * 存储 类与其类定义 的映射集合
+         * bean 名字与 bean 的映射，只能一对一
+         */
+        private val BEAN_NAME_MAPPING = mutableMapOf<String, Any>()
+
+        /**
+         * bean 类型与 bean 的映射，可以一对多
+         */
+        private val BEAN_CLASS_MAPPING = mutableMapOf<Class<*>, TreeSet<Any>>()
+
+        /**
+         * 存储 “类” 与其 “类定义” 的映射集合
          */
         private val BEAN_DEFINITION_MAPPING = mutableMapOf<String, NigateBeanDefinition>()
 
         /**
-         * 存储 接口类与其实现们 的映射集合
+         * 存储接口类与其 “实现们” 的映射集合
          */
-        private val INTERFACE_MAPPING = mutableMapOf<Class<*>, MutableSet<Class<*>>>()
+        private val INTERFACE_MAPPING = mutableMapOf<Class<*>, TreeSet<Class<*>>>()
 
         fun autoRegister(clazz: Class<*>, anno: NigateBean, fromJar: Boolean) {
             val name = register(clazz.newInstance(), anno.name)
             BEAN_DEFINITION_MAPPING[name] = NigateBeanDefinition(fromJar)
         }
 
+        /**
+         * 注册一个bean，优先取 alias 取不到则使用 bean 的 simpleName
+         */
         fun register(bean: Any, alias: String? = null): String {
             val clazz = bean.javaClass
-            val actualName = alias ?: (clazz.simpleName)
+            val actualName = if (alias == null || alias == UNDEFINE_ALIAS) clazz.simpleName else alias
             val duplicate = BEAN_NAME_MAPPING.putIfAbsent(actualName, bean)
             duplicate?.also { throw DuplicateBeanException("bean $clazz 存在重复注册的情况，请使用 @NigateBean(name = alias) 为其中一个起别名") }
 
             BEAN_CLASS_MAPPING.compute(bean.javaClass) { _, v ->
-                (v ?: mutableListOf()).also { it.add(bean) }
+                (v ?: TreeSet()).also { it.add(bean) }
             }
 
             clazz.interfaces.forEach {
                 INTERFACE_MAPPING.compute(it) { _, v ->
-                    (v ?: mutableSetOf()).also { s -> s.add(clazz) }
+                    (v ?: TreeSet()).also { s -> s.add(clazz) }
                 }
             }
             return actualName
+        }
+
+        private fun <T> getBeanByClassFirstThenName(clazz: Class<T>): T {
+            var result: T? = null
+            try {
+                try {
+                    result = getBeanByClass(clazz)
+                } catch (t: Throwable) {
+                    result = Nigate.getBeanByName(clazz.simpleName) as T
+                }
+            } catch (t: Throwable) {
+                throw NoSuchBeanException("无法根据类 ${clazz.simpleName} 找到唯一的 Bean 或 无法根据名字 ${clazz.simpleName} 找到指定的 Bean ")
+            }
+            return result!!
         }
 
         fun getBeanByName(name: String): Any = BEAN_NAME_MAPPING[name] ?: throw NoSuchBeanException("bean named $name is not managed")
@@ -68,20 +96,48 @@ object Nigate {
             if (l.size > 1) {
                 throw DuplicateBeanException("bean $clazz 存在多实例的情况，请使用 @NigateInject(name = alias) 选择注入其中的某个 bean")
             }
-            return (l[0]) as T
+            return (l.first()) as T
         }
 
         /**
          * 为某个bean注入成员变量
          */
-        private fun inject(injected: Any) {
+        fun inject(injected: Any) {
             for (kProperty in injected::class.declaredMemberProperties) {
                 for (annotation in kProperty.annotations) {
                     if (annotation.annotationClass == NigateInject::class) {
                         annotation as NigateInject
-                        val alias = annotation.name ?: (kProperty.returnType.javaType as Class<*>).simpleName
-                        val injection = BEAN_NAME_MAPPING[alias]
                         val javaField = kProperty.javaField!!
+
+                        val fieldName = kProperty.name
+                        val fieldClass = kProperty.returnType.javaType as Class<*>
+                        var injection: Any? = null
+                        if (annotation.name == UNDEFINE_ALIAS) {// 如果没有指定别名注入
+                            if (fieldClass.isInterface) {// 如果是 接口类型
+                                val mutableSet = INTERFACE_MAPPING[fieldClass]
+                                if (mutableSet == null) {
+                                    throw NoSuchBeanException("不存在接口类型为 $fieldClass 的 Bean！")
+                                } else {
+                                    if (mutableSet.size == 1) {// 如果只有一个实现，则注入此实现
+                                        injection = getBeanByClassFirstThenName(mutableSet.first())
+                                    } else if (annotation.useLocalFirst) {// 如果优先使用本地写的类
+                                        val localBean = mutableSet.takeIf { BEAN_DEFINITION_MAPPING[it.javaClass.simpleName]?.fromJar == false }
+                                        when {
+                                            localBean == null -> throw DuplicateBeanException("bean ${injected.javaClass} " +
+                                                " 将注入的属性 $fieldName 为接口类型，且存在多个来自【依赖】的子类实现，请改用 @NigateInject(name) 来指定别名注入")
+                                            localBean.size > 1 -> throw DuplicateBeanException("bean ${injected.javaClass} " +
+                                                " 将注入的属性 $fieldName 为接口类型，且存在多个来自【本地】的子类实现，请改用 @NigateInject(name) 来指定别名注入")
+                                            else -> injection = getBeanByClassFirstThenName(mutableSet.first())
+                                        }
+                                    }
+                                }
+                            } else {// 如果不是接口类型，直接根据类来注入
+                                injection = getBeanByClass(fieldClass)
+                            }
+                        } else {// 如果指定了别名，直接根据别名注入
+                            injection = getBeanByName(annotation.name)
+                        }
+
                         javaField.isAccessible = true
                         javaField.set(injected, injection)
                     }
@@ -110,18 +166,17 @@ object Nigate {
         val start = System.currentTimeMillis()
         logger.info("Nigate ==> Registering..")
         val scans = doScan()
-
         OVER_REGISTER = true
         logger.info("Nigate ==> Register complete")
 
         logger.info("Nigate ==> Injecting..")
-        for (bean in BEAN_MAPPING.values) {
-            inject(bean)
+        for (bean in scans) {
+            beanContainer.inject(bean)
         }
         logger.info("Nigate ==> Inject complete")
 
         logger.info("Nigate ==> Invoking postConstruct..")
-        for (bean in BEAN_MAPPING.values) {
+        for (bean in scans) {
             postConstruct(bean, true)
         }
         logger.info("Nigate ==> Invoke postConstruct complete")
@@ -129,9 +184,9 @@ object Nigate {
         logger.info("Nigate Started in ${(System.currentTimeMillis() - start) / 1000f} seconds")
     }
 
-    fun getBeanByName(name: String): Any = BEAN_MAPPING[name] ?: throw NoSuchBeanException("bean named $name is not managed")
+    fun getBeanByName(name: String): Any = beanContainer.getBeanByName(name)
 
-    fun <T> getBeanByClass(clazz: Class<T>): T = (BEAN_MAPPING[clazz.simpleName] ?: throw NoSuchBeanException("bean with type $clazz is not managed")) as T
+    fun <T> getBeanByClass(clazz: Class<T>): T = beanContainer.getBeanByClass(clazz)
 
     /**
      * 注册某个bean
@@ -145,7 +200,7 @@ object Nigate {
         if (!OVER_REGISTER) {
             throw KanashiException("暂时不支持在初始化完成前进行构造注入！")
         }
-        inject(injected)
+        beanContainer.inject(injected)
     }
 
 
