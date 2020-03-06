@@ -28,6 +28,11 @@ object Nigate {
         val UNDEFINE_ALIAS = "UNDEFINE"
 
         /**
+         * 必须完成初始注册才能做很多事情，否则直接抛出异常（在初始化阶段，<clinit> 和 <init> 使用注入会牙白！！！）
+         */
+        var over_registry: Boolean = false
+
+        /**
          * bean 名字与 bean 的映射，只能一对一
          */
         private val BEAN_NAME_MAPPING = mutableMapOf<String, Any>()
@@ -155,6 +160,10 @@ object Nigate {
                 }
             }
         }
+
+        fun getManagedBeans(): MutableCollection<Any> {
+            return BEAN_NAME_MAPPING.values
+        }
     }
 
     class NigateBeanDefinition(
@@ -171,23 +180,22 @@ object Nigate {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    private var OVER_REGISTER: Boolean = false
-
     init {
         val start = System.currentTimeMillis()
         logger.info("Nigate ==> Registering..")
-        val scans = doScan()
-        OVER_REGISTER = true
+        doScan()
+        beanContainer.over_registry = true
+        val allBeans = beanContainer.getManagedBeans()
         logger.info("Nigate ==> Register complete")
 
         logger.info("Nigate ==> Injecting..")
-        for (bean in scans) {
+        for (bean in allBeans) {
             beanContainer.inject(bean)
         }
         logger.info("Nigate ==> Inject complete")
 
         logger.info("Nigate ==> Invoking postConstruct..")
-        for (bean in scans) {
+        for (bean in allBeans) {
             postConstruct(bean, true)
         }
         logger.info("Nigate ==> Invoke postConstruct complete")
@@ -208,7 +216,7 @@ object Nigate {
     }
 
     fun inject(injected: Any) {
-        if (!OVER_REGISTER) {
+        if (!beanContainer.over_registry) {
             throw KanashiException("暂时不支持在初始化完成前进行构造注入！")
         }
         beanContainer.inject(injected)
@@ -314,8 +322,7 @@ object Nigate {
         return res
     }
 
-    private fun doScan(): MutableSet<Class<*>> {
-        val classes = getClasses("ink.anur")
-        return classes.filter { clazz -> clazz.annotations.let { annos -> annos.any { it.annotationClass == NigateBean::class } } }.toMutableSet()
+    private fun doScan() {
+        getClasses("ink.anur")
     }
 }
