@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "kanashi")
 public class KanashiConfig {
 
+    private Long reSendBackOffMs = 30L;
     private String host;
     private Integer port;
 
@@ -27,5 +28,13 @@ public class KanashiConfig {
 
     public void setPort(Integer port) {
         this.port = port;
+    }
+
+    public Long getReSendBackOffMs() {
+        return reSendBackOffMs;
+    }
+
+    public void setReSendBackOffMs(Long reSendBackOffMs) {
+        this.reSendBackOffMs = reSendBackOffMs;
     }
 }
