@@ -16,9 +16,9 @@ class LogConfiguration : ConfigHelper() {
     @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
 
-    private var relativelyPath: String = getConfig(ConfigurationEnum.LOG_BASE_PATH) { it } as String
+    fun relativelyPath(): String = getConfig(ConfigurationEnum.LOG_BASE_PATH) { it } as String
 
-    fun getBaseDir(): String = relativelyPath + "/" + inetSocketAddressConfiguration.getLocalServerName()
+    fun getBaseDir(): String = relativelyPath() + "/" + inetSocketAddressConfiguration.getLocalServerName()
 
     fun getIndexInterval(): Int = getConfig(ConfigurationEnum.LOG_INDEX_INTERVAL) { Integer.valueOf(it) } as Int
 

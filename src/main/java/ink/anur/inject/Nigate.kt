@@ -8,6 +8,7 @@ import java.io.IOException
 import java.net.JarURLConnection
 import java.net.URL
 import java.util.HashSet
+import java.util.function.BiFunction
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.isAccessible
@@ -22,15 +23,39 @@ import kotlin.system.exitProcess
  */
 object Nigate {
 
-    private val logger = LoggerFactory.getLogger(this::class.java)
+    class NigateBeanDefinition(
+        /**
+         * fromJar 代表此实现是有默认的实现而且实现在继承的maven里就已经写好
+         */
+        val fromJar: Boolean
+    )
 
+    /**
+     * 存储 类与其类定义 的映射集合
+     */
+    private val BEAN_DEFINITION_MAPPING = mutableMapOf<Class<*>, NigateBeanDefinition>()
+
+    /**
+     * 存储 接口类与其实现们 的映射集合
+     */
+    private val INTERFACE_MAPPING = mutableMapOf<Class<*>, MutableSet<Class<*>>>()
+
+    /**
+     * bean 的容器们
+     */
     private val BEAN_MAPPING = mutableMapOf<String, Any>()
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     private var OVER_REGISTER: Boolean = false
 
     init {
         val start = System.currentTimeMillis()
         val scans = doScan()
+
+        for (scan in scans) {
+            analyzeInterfaces(scan)
+        }
 
         logger.info("Nigate ==> Registering..")
         for (clazz in scans) {
@@ -176,6 +201,17 @@ object Nigate {
             }
         }
         return res
+    }
+
+    /**
+     * 分析一个类的接口继承关系，方便注入接口
+     */
+    private fun analyzeInterfaces(clazz: Class<*>) {
+        clazz.interfaces.forEach {
+            INTERFACE_MAPPING.compute(clazz, BiFunction { _, v ->
+                (v ?: mutableSetOf()).also { s -> s.add(it) }
+            })
+        }
     }
 
     private fun doScan(): MutableSet<Class<*>> {

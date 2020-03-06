@@ -18,16 +18,15 @@ public class KScheduledAspect {
     @Autowired
     private ApplicationContext appContext;
 
-    @PostConstruct
-    public void initKSchedule() {
-        for (String beanDefinitionName : appContext.getBeanDefinitionNames()) {
-            Object bean = appContext.getBean(beanDefinitionName);
-            Method[] declaredMethods = ReflectionUtils.getDeclaredMethods(AopUtils.getTargetClass(bean));
-            for (Method declaredMethod : declaredMethods) {
-                if (declaredMethod.getAnnotation(KScheduled.class) != null) {
-                    System.out.println();
-                }
-            }
-        }
-    }
+//    @PostConstruct
+//    public void initKSchedule() {
+//        for (String beanDefinitionName : appContext.getBeanDefinitionNames()) {
+//            Object bean = appContext.getBean(beanDefinitionName);
+//            Method[] declaredMethods = ReflectionUtils.getDeclaredMethods(AopUtils.getTargetClass(bean));
+//            for (Method declaredMethod : declaredMethods) {
+//                if (declaredMethod.getAnnotation(KScheduled.class) != null) {
+//                }
+//            }
+//        }
+//    }
 }

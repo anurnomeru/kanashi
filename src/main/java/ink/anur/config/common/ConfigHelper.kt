@@ -1,6 +1,7 @@
 package ink.anur.config.common
 
 import ink.anur.exception.ApplicationConfigException
+import ink.anur.exception.KanashiException
 import javafx.util.Pair
 import java.util.ResourceBundle
 import java.util.concurrent.ConcurrentHashMap
@@ -16,8 +17,16 @@ open class ConfigHelper {
 
     companion object {
         @Volatile
-        private var resourceBundle: ResourceBundle = ResourceBundle.getBundle("kanashi")
+        private var resourceBundle: ResourceBundle? = null
 
+        init {
+            try {
+                resourceBundle = ResourceBundle.getBundle("kanashi")
+            } catch (t: Throwable) {
+            }
+        }
+
+        val isServer = resourceBundle != null
         private val readLock: Lock
         private val writeLock: Lock
         private val cache = ConcurrentHashMap<ConfigurationEnum, Any>()
@@ -67,9 +76,13 @@ open class ConfigHelper {
          * 根据key获取某个配置
          */
         fun getConfig(configEnum: ConfigurationEnum, transfer: (String) -> Any?): Any {
-            return lockSupplier(configEnum) {
-                transfer.invoke(resourceBundle.getString(configEnum.key))
-                    ?: throw ApplicationConfigException("读取application.properties配置异常，异常项目：${configEnum.key}，建议：${configEnum.adv}")
+            if (!isServer) {
+                throw KanashiException("非协调节点无法使用协调配置")
+            } else {
+                return lockSupplier(configEnum) {
+                    transfer.invoke(resourceBundle!!.getString(configEnum.key))
+                        ?: throw ApplicationConfigException("读取application.properties配置异常，异常项目：${configEnum.key}，建议：${configEnum.adv}")
+                }
             }
         }
 
@@ -77,25 +90,31 @@ open class ConfigHelper {
          * 根据key模糊得获取某些配置，匹配规则为 key%
          */
         fun getConfigSimilar(configEnum: ConfigurationEnum, transfer: (Pair<String, String>) -> Any?): Any {
-            return lockSupplier(configEnum) {
-                val stringEnumeration = resourceBundle.keys
-                val keys = mutableListOf<String>()
+            if (!isServer) {
+                throw KanashiException("非协调节点无法使用协调配置")
+            } else {
+                return lockSupplier(configEnum) {
+                    val stringEnumeration = resourceBundle!!.keys
+                    val keys = mutableListOf<String>()
 
-                while (stringEnumeration.hasMoreElements()) {
-                    val k = stringEnumeration.nextElement()
-                    if (k.startsWith(configEnum.key)) {
-                        keys.add(k)
+                    while (stringEnumeration.hasMoreElements()) {
+                        val k = stringEnumeration.nextElement()
+                        if (k.startsWith(configEnum.key)) {
+                            keys.add(k)
+                        }
                     }
-                }
 
-                keys.map {
-                    transfer.invoke(
-                        Pair(
-                            if (it.length > configEnum.key.length) it.substring(configEnum.key.length + 1) else it,
-                            resourceBundle.getString(it)
-                        )) ?: throw ApplicationConfigException("读取application.properties配置异常，异常项目：${configEnum.key}，建议：${configEnum.adv}")
+                    keys.map {
+                        transfer.invoke(
+                            Pair(
+                                if (it.length > configEnum.key.length) it.substring(configEnum.key.length + 1) else it,
+                                resourceBundle!!.getString(it)
+                            )) ?: throw ApplicationConfigException("读取application.properties配置异常，异常项目：${configEnum.key}，建议：${configEnum.adv}")
+                    }
                 }
             }
         }
+
+
     }
 }

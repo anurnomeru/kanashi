@@ -23,7 +23,14 @@ class InetSocketAddressConfiguration : ConfigHelper() {
 
     @NigatePostConstruct
     private fun init() {
-        val name = BootstrapConfiguration.get(BootstrapConfiguration.SERVER_NAME) ?: getConfig(ConfigurationEnum.SERVER_NAME) { unChange -> unChange } as String
+        val nameFromConfig: String =
+            try {
+                getConfig(ConfigurationEnum.SERVER_NAME) { it } as String
+            } catch (t: Throwable) {
+                "随便生成一个"
+            }
+
+        val name = BootstrapConfiguration.get(BootstrapConfiguration.SERVER_NAME) ?: nameFromConfig
         if (name == ChannelHolder.COORDINATE_LEADE_SIGN) {
             throw ApplicationConfigException(" 'LEADER' 为关键词，节点不能命名为这个关键词")
         }
