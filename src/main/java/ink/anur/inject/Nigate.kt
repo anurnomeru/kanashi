@@ -39,7 +39,8 @@ object Nigate {
         private val INTERFACE_MAPPING = mutableMapOf<Class<*>, MutableSet<Class<*>>>()
 
         fun autoRegister(clazz: Class<*>, anno: NigateBean, fromJar: Boolean) {
-            register(clazz.newInstance(), anno.name)
+            val name = register(clazz.newInstance(), anno.name)
+            BEAN_DEFINITION_MAPPING[name] = NigateBeanDefinition(fromJar)
         }
 
         fun register(bean: Any, alias: String? = null): String {
@@ -68,6 +69,24 @@ object Nigate {
                 throw DuplicateBeanException("bean $clazz 存在多实例的情况，请使用 @NigateInject(name = alias) 选择注入其中的某个 bean")
             }
             return (l[0]) as T
+        }
+
+        /**
+         * 为某个bean注入成员变量
+         */
+        private fun inject(injected: Any) {
+            for (kProperty in injected::class.declaredMemberProperties) {
+                for (annotation in kProperty.annotations) {
+                    if (annotation.annotationClass == NigateInject::class) {
+                        annotation as NigateInject
+                        val alias = annotation.name ?: (kProperty.returnType.javaType as Class<*>).simpleName
+                        val injection = BEAN_NAME_MAPPING[alias]
+                        val javaField = kProperty.javaField!!
+                        javaField.isAccessible = true
+                        javaField.set(injected, injection)
+                    }
+                }
+            }
         }
     }
 
@@ -129,23 +148,6 @@ object Nigate {
         inject(injected)
     }
 
-    /**
-     * 为某个bean注入成员变量
-     */
-    private fun inject(injected: Any) {
-        for (kProperty in injected::class.declaredMemberProperties) {
-            for (annotation in kProperty.annotations) {
-                if (annotation.annotationClass == NigateInject::class) {
-
-
-                    val injection = BEAN_MAPPING[(kProperty.returnType.javaType as Class<*>).simpleName]
-                    val javaField = kProperty.javaField!!
-                    javaField.isAccessible = true
-                    javaField.set(injected, injection)
-                }
-            }
-        }
-    }
 
     fun postConstruct(bean: Any, startUp: Boolean) {
         for (memberFunction in bean::class.memberFunctions) {
@@ -201,7 +203,7 @@ object Nigate {
                     val aClass = Class.forName("$packagePath.${classPath.replace(".class", "")}")
                     for (annotation in aClass.annotations) {
                         if (annotation.annotationClass == NigateBean::class) {
-                            beanContainer.autoRegister(aClass, annotation as NigateBean)
+                            beanContainer.autoRegister(aClass, annotation as NigateBean, false)
                             res.add(aClass)
                         }
                     }
@@ -232,7 +234,7 @@ object Nigate {
                     val aClass = Class.forName(className)
                     for (annotation in aClass.annotations) {
                         if (annotation.annotationClass == NigateBean::class) {
-                            beanContainer.autoRegister(aClass, annotation as NigateBean)
+                            beanContainer.autoRegister(aClass, annotation as NigateBean, true)
                             res.add(aClass)
                         }
                     }
