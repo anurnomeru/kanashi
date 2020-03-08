@@ -4,6 +4,7 @@ import ink.anur.io.common.ShutDownHooker
 import ink.anur.io.common.handler.EventDriverPoolHandler
 import ink.anur.io.common.handler.ErrorHandler
 import ink.anur.io.common.handler.KanashiDecoder
+import ink.anur.io.common.handler.AutoUnRegistryHandler
 import io.netty.channel.ChannelPipeline
 
 /**
@@ -13,15 +14,14 @@ import io.netty.channel.ChannelPipeline
  * 以及 pipeline 的定制入口
  */
 class CoordinateServer(port: Int,
-                       shutDownHooker: ShutDownHooker,
-                       private val howToConsumePipeline: (ChannelPipeline) -> Unit)
+                       shutDownHooker: ShutDownHooker)
     : Server(port, shutDownHooker) {
     override fun channelPipelineConsumer(channelPipeline: ChannelPipeline): ChannelPipeline {
         channelPipeline
+            .addFirst(AutoUnRegistryHandler())
             .addLast(KanashiDecoder())
             .addLast(EventDriverPoolHandler())
             .addLast(ErrorHandler())
-        howToConsumePipeline.invoke(channelPipeline)
         return channelPipeline
     }
 }

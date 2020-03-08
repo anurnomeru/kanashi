@@ -188,8 +188,8 @@ object Nigate {
             beanContainer.over_registry = true
             val allBeans = beanContainer.getManagedBeans()
             logger.info("Nigate ==> Register complete")
-
             logger.info("Nigate ==> Injecting..")
+
             for (bean in allBeans) {
                 beanContainer.inject(bean)
             }
@@ -200,6 +200,13 @@ object Nigate {
                 postConstruct(bean, true)
             }
             logger.info("Nigate ==> Invoke postConstruct complete")
+
+            logger.info("Nigate ==> Registering listener..")
+            val nigateListenerService = getBeanByClass(NigateListenerService::class.java)
+            for (bean in allBeans) {
+                nigateListenerService.registerListenEvent(bean)
+            }
+            logger.info("Nigate ==> Register complete")
 
             logger.info("Nigate Started in ${(System.currentTimeMillis() - start) / 1000f} seconds")
         } catch (e: Exception) {
@@ -215,20 +222,24 @@ object Nigate {
     /**
      * 注册某个bean
      */
-    fun register(bean: Any, alias: String? = null) {
-        val actualName = beanContainer.register(bean, alias)
-        logger.debug("bean named [$actualName] is managed by Nigate")
-    }
-
-    fun inject(injected: Any) {
+    fun registerToNigate(injected: Any, alias: String? = null) {
         if (!beanContainer.over_registry) {
             throw KanashiException("暂时不支持在初始化完成前进行构造注入！")
         }
+        beanContainer.register(injected, alias)
+        beanContainer.inject(injected)
+        postConstruct(injected, false)
+        getBeanByClass(NigateListenerService::class.java).registerListenEvent(injected)
+    }
+
+    /**
+     * 单纯的注入
+     */
+    fun injectOnly(injected: Any) {
         beanContainer.inject(injected)
     }
 
-
-    fun postConstruct(bean: Any, startUp: Boolean) {
+    fun postConstruct(bean: Any, onStartUp: Boolean) {
         for (memberFunction in bean::class.memberFunctions) {
             for (annotation in memberFunction.annotations) {
                 if (annotation.annotationClass == NigatePostConstruct::class) {
@@ -238,7 +249,7 @@ object Nigate {
                     } catch (e: Exception) {
                         logger.error("class [${bean::class}] invoke post construct method [${memberFunction.name}] error : ${e.message}")
                         e.printStackTrace()
-                        if (startUp) {
+                        if (onStartUp) {
                             exitProcess(1)
                         }
                     }

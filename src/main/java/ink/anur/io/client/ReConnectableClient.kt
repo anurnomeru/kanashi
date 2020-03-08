@@ -1,6 +1,7 @@
 package ink.anur.io.client
 
 import ink.anur.common.KanashiExecutors
+import ink.anur.common.struct.KanashiNode
 import ink.anur.io.common.ShutDownHooker
 import ink.anur.io.common.handler.AutoRegistryHandler
 import ink.anur.io.common.handler.EventDriverPoolHandler
@@ -20,7 +21,7 @@ import java.util.concurrent.CountDownLatch
  *
  * 可重连的客户端
  */
-class ReConnectableClient(private val serverName: String, private val host: String, private val port: Int, private val shutDownHooker: ShutDownHooker) {
+class ReConnectableClient(private val node: KanashiNode, private val shutDownHooker: ShutDownHooker) {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -36,14 +37,14 @@ class ReConnectableClient(private val serverName: String, private val host: Stri
             }
 
             if (shutDownHooker.isShutDown()) {
-                logger.debug("与节点 [{}:{}] 的连接已被终止，无需再进行重连", host, port)
+                logger.debug("与节点 $node 的连接已被终止，无需再进行重连")
             } else {
-                logger.trace("正在重新连接节点 [{}:{}] ...", host, port)
-                ReConnectableClient(serverName, host, port, shutDownHooker).start()
+                logger.trace("正在重新连接节点 $node ...")
+                ReConnectableClient(node, shutDownHooker).start()
             }
         }
         KanashiExecutors.execute(restartMission)
-        restartMission.name = "Client Restart [$host:$port]"
+        restartMission.name = "Client Restart $node"
 
         val group = NioEventLoopGroup()
 
@@ -56,7 +57,7 @@ class ReConnectableClient(private val serverName: String, private val host: Stri
                     @Throws(Exception::class)
                     override fun initChannel(socketChannel: SocketChannel) {
                         socketChannel.pipeline()
-                            .addFirst(AutoRegistryHandler(serverName, host, port)) // 自动注册到管道管理服务
+                            .addFirst(AutoRegistryHandler(node)) // 自动注册到管道管理服务
                             .addLast(KanashiDecoder())// 解码处理器
                             .addLast(EventDriverPoolHandler())// 消息事件驱动
                             .addLast(ReconnectHandler(reconnectLatch))// 重连控制器
@@ -64,13 +65,12 @@ class ReConnectableClient(private val serverName: String, private val host: Stri
                     }
                 })
 
-            val channelFuture = bootstrap.connect(host, port)
+            val channelFuture = bootstrap.connect(node.host, node.port)
             channelFuture.addListener { future ->
                 if (!future.isSuccess) {
                     if (reconnectLatch.count == 1L) {
-                        logger.trace("连接节点 [{}:{}] 失败，准备进行重连 ...", host, port)
+                        logger.trace("连接节点 $node 失败，准备进行重连 ...")
                     }
-
                     reconnectLatch.countDown()
                 }
             }

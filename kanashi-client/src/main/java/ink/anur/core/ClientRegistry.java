@@ -18,7 +18,7 @@ public class ClientRegistry {
 
     @Bean
     public ClientOperateHandler clientOperateHandler() {
-        ClientOperateHandler handler = new ClientOperateHandler(new KanashiNode("server", kanashiConfig.getHost(), kanashiConfig.getPort()));
+        ClientOperateHandler handler = new ClientOperateHandler(new KanashiNode("SERVER", kanashiConfig.getHost(), kanashiConfig.getPort()));
         handler.start();
         return handler;
     }

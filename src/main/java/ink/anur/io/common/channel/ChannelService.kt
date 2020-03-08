@@ -1,43 +1,78 @@
 package ink.anur.io.common.channel
 
-import ink.anur.exception.NoSuchChannelException
+import ink.anur.common.struct.KanashiNode
 import ink.anur.inject.NigateBean
-import java.util.concurrent.ConcurrentHashMap
+import ink.anur.mutex.ReentrantReadWriteLocker
+import io.netty.channel.Channel
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/23
  *
- * 管理所有连接的Channel服务
+ * 管理所有连接
  */
 @NigateBean
-class ChannelService {
+class ChannelService : ReentrantReadWriteLocker() {
 
-    private val HOLDER_MAPPING = ConcurrentHashMap<ChannelType, ChannelHolder>()
+    companion object {
+        val COORDINATE_LEADE_SIGN = "LEADER"
+    }
+
+    private val kanashiNodeMap: MutableMap<String/* serverName */, KanashiNode> = mutableMapOf()
 
     /**
-     * 获取 协调管道 或者 业务管道
+     * 记录了服务名和 channel 的映射
      */
-    fun getChannelHolder(channelType: ChannelType): ChannelHolder {
-        var channelManager: ChannelHolder? = HOLDER_MAPPING[channelType]
-        if (channelManager == null) {
-            synchronized(this::class.java) {
-                channelManager = HOLDER_MAPPING[channelType]
-                if (channelManager == null) {
+    private val serverChannelMap: MutableMap<String/* serverName */, Channel> = mutableMapOf()
 
-                    channelManager = ChannelHolder()
-                    HOLDER_MAPPING[channelType] = channelManager!!
-                }
-            }
-        }
+    /**
+     * 记录了 channel 和服务名的映射
+     */
+    private val channelServerMap: MutableMap<Channel, String/* serverName */> = mutableMapOf()
 
-        return channelManager ?: throw NoSuchChannelException("channel type $channelType not enable")
+    /**
+     * 如果还没连接上服务，是会返回空的
+     */
+    fun getChannel(serverName: String): Channel? = this.readLockSupplier {
+        serverChannelMap[serverName]
     }
 
     /**
-     * 连接类型
+     * 如果还没连接上服务，是会返回空的
      */
-    enum class ChannelType {
-        COORDINATE,
-        SERVICE
+    fun getChannelName(channel: Channel): String? = this.readLockSupplier {
+        channelServerMap[channel]
+    }
+
+    /**
+     * 向 channelManager 注册服务
+     */
+    fun register(kanashiNode: KanashiNode, channel: Channel) {
+        this.writeLockSupplier {
+            kanashiNodeMap[kanashiNode.serverName] = kanashiNode
+            serverChannelMap[kanashiNode.serverName] = channel
+            channelServerMap[channel] = kanashiNode.serverName
+        }
+    }
+
+    /**
+     * 根据服务名来注销服务
+     */
+    fun unRegister(serverName: String): KanashiNode? {
+        return this.writeLockSupplier {
+            val channel = serverChannelMap.remove(serverName)
+            channelServerMap.remove(channel)
+            return@writeLockSupplier kanashiNodeMap.remove(serverName)
+        }
+    }
+
+    /**
+     * 根据管道来注销服务
+     */
+    fun unRegister(channel: Channel): KanashiNode? {
+        return this.writeLockSupplier {
+            val serverName = channelServerMap.remove(channel)
+            serverChannelMap.remove(serverName)
+            return@writeLockSupplier kanashiNodeMap.remove(serverName)
+        }
     }
 }

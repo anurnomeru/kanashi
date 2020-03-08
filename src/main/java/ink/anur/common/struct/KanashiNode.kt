@@ -5,7 +5,7 @@ import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
 
 
-class KanashiNode(val serverName: String, val host: String, val coordinatePort: Int) {
+class KanashiNode(val serverName: String, val host: String, val port: Int) {
 
     companion object {
         val NOT_EXIST = KanashiNode("", "", 0)
@@ -20,7 +20,7 @@ class KanashiNode(val serverName: String, val host: String, val coordinatePort: 
     @Synchronized
     fun isLocalNode(): Boolean {
         if (inetClass == null) {
-            Nigate.inject(this)
+            Nigate.injectOnly(this)
         }
 
         return this.serverName == inetClass!!.getLocalServerName()
@@ -34,18 +34,18 @@ class KanashiNode(val serverName: String, val host: String, val coordinatePort: 
 
         if (serverName != other.serverName) return false
         if (host != other.host) return false
-        if (coordinatePort != other.coordinatePort) return false
+        if (port != other.port) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = serverName.hashCode()
         result = 31 * result + host.hashCode()
-        result = 31 * result + coordinatePort
+        result = 31 * result + port
         return result
     }
 
     override fun toString(): String {
-        return "KanashiNode(serverName='$serverName', host='$host', port='$coordinatePort')"
+        return "KanashiNode(serverName='$serverName', host='$host', port='$port')"
     }
 }

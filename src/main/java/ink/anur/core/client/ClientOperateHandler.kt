@@ -15,8 +15,7 @@ class ClientOperateHandler(kanashiNode: KanashiNode) : KanashiRunnable(), Shutdo
 
     private val serverShutDownHooker = ShutDownHooker("终止与协调节点 $kanashiNode 的连接")
 
-    private val coordinateClient = ReConnectableClient(kanashiNode.serverName, kanashiNode.host,
-        kanashiNode.coordinatePort, this.serverShutDownHooker)
+    private val coordinateClient = ReConnectableClient(kanashiNode, this.serverShutDownHooker)
 
     override fun run() {
         if (serverShutDownHooker.isShutDown()) {

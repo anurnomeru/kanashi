@@ -16,7 +16,6 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelPipeline
 import org.slf4j.LoggerFactory
-import java.util.concurrent.TimeUnit
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/22
@@ -27,39 +26,18 @@ import java.util.concurrent.TimeUnit
 class ServerService : Shutdownable {
 
     @NigateInject
-    private lateinit var requestProcessCentreService: RequestProcessCentreService
-
-    @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
-
-    private val logger = LoggerFactory.getLogger(this::class.java)
 
     /**
      * 协调服务端
      */
     private lateinit var coordinateServer: CoordinateServer
 
-    private val SERVER_PIPELINE_CONSUME: (ChannelPipeline) -> Unit = { it.addFirst(UnRegister()) }
-
-    /**
-     * Coordinate 断开连接时，需要从 ChannelManager 移除管理
-     */
-    internal class UnRegister : ChannelInboundHandlerAdapter() {
-
-        @Throws(Exception::class)
-        override fun channelInactive(ctx: ChannelHandlerContext) {
-            super.channelInactive(ctx)
-            Nigate.getBeanByClass(ChannelService::class.java).getChannelHolder(ChannelService.ChannelType.COORDINATE).unRegister(ctx.channel())
-        }
-    }
-
     @NigatePostConstruct
     private fun init() {
         val sdh = ShutDownHooker("终止协调服务器的套接字接口 ${inetSocketAddressConfiguration.getLocalCoordinatePort()} 的监听！")
-
         this.coordinateServer = CoordinateServer(inetSocketAddressConfiguration.getLocalCoordinatePort(),
-            sdh,
-            SERVER_PIPELINE_CONSUME)
+            sdh)
         coordinateServer.start()
     }
 

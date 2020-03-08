@@ -6,7 +6,7 @@ import ink.anur.config.common.ConfigurationEnum
 import ink.anur.exception.ApplicationConfigException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigatePostConstruct
-import ink.anur.io.common.channel.ChannelHolder
+import ink.anur.io.common.channel.ChannelService
 import org.slf4j.LoggerFactory
 
 /**
@@ -25,7 +25,7 @@ class InetSocketAddressConfiguration : ConfigHelper(), InetConfig {
     private fun init() {
         val nameFromConfig: String = getConfig(ConfigurationEnum.SERVER_NAME) { it } as String
         val name = BootstrapConfiguration.get(BootstrapConfiguration.SERVER_NAME) ?: nameFromConfig
-        if (name == ChannelHolder.COORDINATE_LEADE_SIGN) {
+        if (name == ChannelService.COORDINATE_LEADE_SIGN) {
             throw ApplicationConfigException(" 'LEADER' 为关键词，节点不能命名为这个关键词")
         }
         me = getNode(name)
@@ -45,7 +45,7 @@ class InetSocketAddressConfiguration : ConfigHelper(), InetConfig {
     }
 
     fun getLocalCoordinatePort(): Int {
-        return me.coordinatePort
+        return me.port
     }
 
     fun getCluster(): List<KanashiNode> {

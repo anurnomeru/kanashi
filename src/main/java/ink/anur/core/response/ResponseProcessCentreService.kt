@@ -57,7 +57,7 @@ class ResponseProcessCentreService {
         val lock = getLock(serverName)
         try {
             lock.lock()
-            val channel = channelService.getChannelHolder(ChannelService.ChannelType.COORDINATE).getChannel(serverName)
+            val channel = channelService.getChannel(serverName)
 
             if (channel == null) {
                 val node = inetConfig.getNode(serverName)

@@ -9,7 +9,9 @@ import java.nio.ByteBuffer
  *
  * 对于一个请求，总有发送回调，消息收到回调等等配置，就是通过这个来完成的
  */
-class RequestExtProcessor(val sendUntilReceiveResponse: Boolean = false, val howToConsumeResponse: ((ByteBuffer) -> Unit)? = null, val afterCompleteReceive: (() -> Unit)? = null) : ReentrantReadWriteLocker() {
+class RequestExtProcessor(
+    private val howToConsumeResponse: ((ByteBuffer) -> Unit)? = null,
+    val requestProcessType: RequestProcessType = RequestProcessType.SEND_ONCE) : ReentrantReadWriteLocker() {
 
     /**
      * 是否已经完成了这个请求过程（包括接收response）
@@ -18,9 +20,9 @@ class RequestExtProcessor(val sendUntilReceiveResponse: Boolean = false, val how
     private var complete = false
 
     /**
-     * 是否已经处理完成
+     * 是否孩子处于需要发送的状态
      */
-    fun isComplete(): Boolean = complete
+    fun inFlight(): Boolean = !complete
 
     /**
      * 已经完成了此任务
@@ -28,7 +30,6 @@ class RequestExtProcessor(val sendUntilReceiveResponse: Boolean = false, val how
     fun complete() = writeLockSupplier {
         if (!complete) {
             complete = true
-            KanashiExecutors.execute(Runnable { afterCompleteReceive?.invoke() })
         }
     }
 
@@ -41,7 +42,6 @@ class RequestExtProcessor(val sendUntilReceiveResponse: Boolean = false, val how
 
             KanashiExecutors.execute(Runnable {
                 howToConsumeResponse?.invoke(byteBuffer)
-                afterCompleteReceive?.invoke()
             })
         }
     }

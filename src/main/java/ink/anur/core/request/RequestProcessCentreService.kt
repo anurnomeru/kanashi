@@ -9,6 +9,7 @@ import ink.anur.pojo.common.AbstractTimedStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.core.common.RequestExtProcessor
 import ink.anur.core.common.RequestMapping
+import ink.anur.core.common.RequestProcessType
 import ink.anur.core.response.ResponseProcessCentreService
 import ink.anur.mutex.ReentrantReadWriteLocker
 import ink.anur.exception.NetWorkException
@@ -109,7 +110,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
             logger.error("????????????????????????????????????")
         } else {
             val requestTimestampCurrent = msg.getLong(AbstractTimedStruct.TimestampOffset)
-            val serverName = channelService.getChannelHolder(ChannelService.ChannelType.COORDINATE).getChannelName(channel)
+            val serverName = channelService.getChannelName(channel)
 
             // serverName 是不会为空的，但是有一种情况例外，便是服务还未注册时 这里做特殊处理
             when {
@@ -148,7 +149,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                         readLockSupplier { getting(inFlight, serverName, requestType) }?.complete(msg)
                         writeLocker {
                             removing(inFlight, serverName, requestType)?.complete()
-                            removing(reSendTask, serverName, requestType)
+                            removing(reSendTask, serverName, requestType)?.cancel()
                         }
                     }
 
@@ -167,16 +168,17 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue
      */
-    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor = RequestExtProcessor(), keepError: Boolean = false): Boolean {
+    fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor = RequestExtProcessor(), keepCurrentSendTask: Boolean = true, keepError: Boolean = false): Boolean {
         val typeEnum = msg.getOperationTypeEnum()
 
-        return if (getting(inFlight, serverName, typeEnum) != null) {
+        // 可以选择 keepCurrentSendTask = false 强制取消上次的任务
+        return if (getting(inFlight, serverName, typeEnum)?.inFlight() == true && keepCurrentSendTask) {
             logger.debug("尝试创建发送到节点 $serverName 的 $typeEnum 任务失败，上次的指令还未收到 response")
             false
         } else {
             writeLocker {
-                // 发送之前，首先将任务加入 inflight，移除之前可能留下的发送任务
-                computing(inFlight, serverName, typeEnum, requestProcessor)
+                // 发送之前，移除之前可能遗留的任务
+                removing(inFlight, serverName, typeEnum)?.complete()
                 removing(reSendTask, serverName, typeEnum)?.cancel()
             }
             val error = sendImpl(serverName, msg, typeEnum, requestProcessor)
@@ -190,27 +192,35 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 真正发送消息的方法，内置了重发机制
      */
-    private fun sendImpl(serverName: String, command: AbstractStruct, operationTypeEnum: RequestTypeEnum, requestProcessor: RequestExtProcessor): Throwable? {
+    private fun sendImpl(serverName: String, command: AbstractStruct, requestTypeEnum: RequestTypeEnum, requestProcessor: RequestExtProcessor): Throwable? {
         var throwable: Throwable? = null
-        if (!requestProcessor.isComplete()) {
+        if (requestProcessor.inFlight()) {
             throwable = msgSendService.doSend(serverName, command)
-        }
-        if (!requestProcessor.sendUntilReceiveResponse) { // 是不需要回复的类型，直接移除所有任务，发出去了就完事了
-            writeLocker {
-                removing(inFlight, serverName, operationTypeEnum)?.complete()
-                removing(reSendTask, serverName, operationTypeEnum)?.cancel()
-            }
-        } else {
-            if (getting(inFlight, serverName, operationTypeEnum)?.isComplete() == false) {// 如果还没收到回复，则重新拟定重发定时任务
-                val task = TimedTask(coordinateConfig.getReSendBackOfMs()) { sendImpl(serverName, command, operationTypeEnum, requestProcessor) }
-                writeLocker {
-                    computing(reSendTask, serverName, operationTypeEnum, task)
-                }
-                Timer.getInstance()// 扔进时间轮不断重试，直到收到此消息的回复
-                    .addTask(task)
-            }
-        }
 
+            when (requestProcessor.requestProcessType) {
+                // 只需要发送的类型直接移除重发任务
+                RequestProcessType.SEND_ONCE -> {
+                } // ignore
+
+                // 需要发送并收到回复，但是不需要重发
+                RequestProcessType.SEND_ONCE_THEN_NEED_RESPONSE -> {
+                    writeLocker {
+                        computing(inFlight, serverName, requestTypeEnum, requestProcessor)
+                    }
+                }
+
+                // 需要发送并收到回复，也需要重发
+                RequestProcessType.SEND_UNTIL_RESPONSE -> {
+                    writeLocker {
+                        val task = TimedTask(coordinateConfig.getReSendBackOfMs()) { sendImpl(serverName, command, requestTypeEnum, requestProcessor) }
+                        computing(inFlight, serverName, requestTypeEnum, requestProcessor)
+                        computing(reSendTask, serverName, requestTypeEnum, task)
+                        Timer.getInstance()// 扔进时间轮不断重试，直到收到此消息的回复
+                            .addTask(task)
+                    }
+                }
+            }
+        }
         return throwable
     }
 

@@ -16,8 +16,6 @@ class ReconnectHandler(private val reconnectLatch: CountDownLatch) : ChannelInbo
     @Throws(Exception::class)
     override fun channelActive(ctx: ChannelHandlerContext) {
         super.channelActive(ctx)
-        logger.debug("连接节点 [{}] 成功", ctx.channel()
-            .remoteAddress())
     }
 
     @Throws(Exception::class)

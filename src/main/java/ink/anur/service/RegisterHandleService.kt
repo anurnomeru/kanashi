@@ -1,5 +1,6 @@
 package ink.anur.service
 
+import ink.anur.common.struct.KanashiNode
 import ink.anur.core.common.AbstractRequestMapping
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.inject.NigateBean
@@ -12,6 +13,10 @@ import ink.anur.pojo.enumerate.RequestTypeEnum
 import io.netty.channel.Channel
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
+import kotlin.random.Random
+import com.sun.deploy.util.URLUtil.getPort
+import java.net.InetSocketAddress
+
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/25
@@ -21,6 +26,8 @@ import java.nio.ByteBuffer
 @NigateBean
 class RegisterHandleService : AbstractRequestMapping() {
 
+    val CLIENT_SIGN = "CLIENT";
+
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     @NigateInject
@@ -28,7 +35,6 @@ class RegisterHandleService : AbstractRequestMapping() {
 
     @NigateInject
     private lateinit var msgCenterService: RequestProcessCentreService
-
 
     override fun typeSupport(): RequestTypeEnum = RequestTypeEnum.REGISTER
 
@@ -47,10 +53,32 @@ class RegisterHandleService : AbstractRequestMapping() {
 
         val register = Register(msg)
 
+        var serverName = register.getServerName()
+        if (serverName == CLIENT_SIGN) {
+            serverName = randomName()
+            logger.info("客户端节点 {} 已注册到本节点", serverName)
+        } else {
+            logger.info("协调节点 {} 已注册到本节点", serverName)
+        }
+
+        val inetSocket = channel.remoteAddress() as InetSocketAddress
+
         channelService
-            .getChannelHolder(ChannelService.ChannelType.COORDINATE)
-            .register(register.getServerName(), channel)
-        logger.info("协调节点 {} 已注册到本节点", register.getServerName())
-        msgCenterService.send(fromServer, RegisterResponse())
+            .register(KanashiNode(serverName, inetSocket.address.hostAddress, inetSocket.port), channel)
+
+        msgCenterService.send(serverName, RegisterResponse())
+    }
+
+    private val random = Random(100)
+
+    private val str = "0123456789abcdefghijklmnopqrstuvwxyz"
+
+    private fun randomName(): String {
+        val sb = StringBuffer()
+        val charLength = str.length
+
+        for (i in 0..20)
+            sb.append(str[random.nextInt(charLength)])
+        return sb.toString()
     }
 }
