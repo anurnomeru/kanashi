@@ -11,6 +11,8 @@ import ink.anur.inject.NigateInject
 import ink.anur.inject.NigateListener
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.pojo.Register
+import ink.anur.timewheel.TimedTask
+import ink.anur.timewheel.Timer
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import org.slf4j.LoggerFactory
@@ -52,9 +54,12 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
             logger.info("与节点 $node 的连接已建立")
         }, RequestProcessType.SEND_ONCE_THEN_NEED_RESPONSE), false)
 
-        if (!connectCDL.await(2, TimeUnit.SECONDS)) {
-            throw NetWorkException("尝试连接服务 $node 失败，两秒内没有收到注册回复！")
-        }
+        Timer.getInstance().addTask(TimedTask(0) {
+            if (!connectCDL.await(2, TimeUnit.SECONDS)) {
+                ctx.close()
+                throw NetWorkException("尝试连接服务 $node 失败，两秒内没有收到注册回复！")
+            }
+        })
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {

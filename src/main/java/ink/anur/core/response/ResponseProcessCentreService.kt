@@ -70,6 +70,7 @@ class ResponseProcessCentreService {
             if (channel == null) {
                 return NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
             }
+            logger.info("---> 发送了类型为 ${body.getOperationTypeEnum()} 的消息")
             channel.write(Unpooled.copyInt(body.totalSize()))
             body.writeIntoChannel(channel)
             channel.flush()

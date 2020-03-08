@@ -68,7 +68,7 @@ class RaftCenterController : KanashiRunnable() {
 
     override fun run() {
         logger.info("初始化选举控制器 启动中...")
-        eden(electionMetaService.generation + 1, "选举控制器启动")
+        this.becomeCandidateAndBeginElectTask(electionMetaService.generation)
     }
 
     /**
