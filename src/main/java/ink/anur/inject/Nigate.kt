@@ -181,26 +181,31 @@ object Nigate {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     init {
-        val start = System.currentTimeMillis()
-        logger.info("Nigate ==> Registering..")
-        doScan()
-        beanContainer.over_registry = true
-        val allBeans = beanContainer.getManagedBeans()
-        logger.info("Nigate ==> Register complete")
+        try {
+            val start = System.currentTimeMillis()
+            logger.info("Nigate ==> Registering..")
+            doScan()
+            beanContainer.over_registry = true
+            val allBeans = beanContainer.getManagedBeans()
+            logger.info("Nigate ==> Register complete")
 
-        logger.info("Nigate ==> Injecting..")
-        for (bean in allBeans) {
-            beanContainer.inject(bean)
+            logger.info("Nigate ==> Injecting..")
+            for (bean in allBeans) {
+                beanContainer.inject(bean)
+            }
+            logger.info("Nigate ==> Inject complete")
+
+            logger.info("Nigate ==> Invoking postConstruct..")
+            for (bean in allBeans) {
+                postConstruct(bean, true)
+            }
+            logger.info("Nigate ==> Invoke postConstruct complete")
+
+            logger.info("Nigate Started in ${(System.currentTimeMillis() - start) / 1000f} seconds")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            exitProcess(1)
         }
-        logger.info("Nigate ==> Inject complete")
-
-        logger.info("Nigate ==> Invoking postConstruct..")
-        for (bean in allBeans) {
-            postConstruct(bean, true)
-        }
-        logger.info("Nigate ==> Invoke postConstruct complete")
-
-        logger.info("Nigate Started in ${(System.currentTimeMillis() - start) / 1000f} seconds")
     }
 
     fun <T> getBeanByClass(clazz: Class<T>): T = beanContainer.getBeanByClass(clazz)

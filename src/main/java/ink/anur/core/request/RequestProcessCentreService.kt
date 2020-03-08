@@ -1,6 +1,8 @@
 package ink.anur.core.request
 
 import ink.anur.common.Resetable
+import ink.anur.common.pool.EventDriverPool
+import ink.anur.common.struct.Request
 import ink.anur.config.CoordinateConfig
 import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.common.AbstractTimedStruct
@@ -12,6 +14,7 @@ import ink.anur.mutex.ReentrantReadWriteLocker
 import ink.anur.exception.NetWorkException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.inject.NigatePostConstruct
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.service.RegisterHandleService
 import ink.anur.timewheel.TimedTask
@@ -20,6 +23,7 @@ import io.netty.channel.Channel
 import io.netty.util.internal.StringUtil
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/24
@@ -72,6 +76,17 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
 
     init {
         responseRequestRegister[RequestTypeEnum.REGISTER_RESPONSE] = RequestTypeEnum.REGISTER
+    }
+
+    @NigatePostConstruct
+    private fun init() {
+        EventDriverPool.register(Request::class.java,
+            8,
+            300,
+            TimeUnit.MILLISECONDS
+        ) {
+            this.receive(it.msg, it.typeEnum, it.channel)
+        }
     }
 
     override fun reset() {

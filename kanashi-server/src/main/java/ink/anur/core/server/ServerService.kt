@@ -1,6 +1,5 @@
 package ink.anur.core.server
 
-import ink.anur.common.KanashiRunnable
 import ink.anur.common.Shutdownable
 import ink.anur.common.pool.EventDriverPool
 import ink.anur.common.struct.Request
@@ -28,7 +27,7 @@ import java.util.concurrent.TimeUnit
 class ServerService : Shutdownable {
 
     @NigateInject
-    private lateinit var msgCenterService: RequestProcessCentreService
+    private lateinit var requestProcessCentreService: RequestProcessCentreService
 
     @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
@@ -57,14 +56,6 @@ class ServerService : Shutdownable {
     @NigatePostConstruct
     private fun init() {
         val sdh = ShutDownHooker("终止协调服务器的套接字接口 ${inetSocketAddressConfiguration.getLocalCoordinatePort()} 的监听！")
-
-        EventDriverPool.register(Request::class.java,
-            8,
-            300,
-            TimeUnit.MILLISECONDS
-        ) {
-            msgCenterService.receive(it.msg, it.typeEnum, it.channel)
-        }
 
         this.coordinateServer = CoordinateServer(inetSocketAddressConfiguration.getLocalCoordinatePort(),
             sdh,
