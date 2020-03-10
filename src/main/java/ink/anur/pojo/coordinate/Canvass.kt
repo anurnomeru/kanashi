@@ -44,7 +44,9 @@ class Canvass : AbstractTimedStruct {
     }
 
     override fun writeIntoChannel(channel: Channel) {
-        channel.write(Unpooled.wrappedBuffer(buffer))
+        val wrappedBuffer = Unpooled.wrappedBuffer(buffer)
+        channel.write(wrappedBuffer)
+        wrappedBuffer.release()
     }
 
     override fun totalSize(): Int {

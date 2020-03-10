@@ -1,4 +1,4 @@
-package ink.anur.service
+package ink.anur.service.coordinate
 
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.core.common.AbstractRequestMapping

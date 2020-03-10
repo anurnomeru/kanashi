@@ -1,4 +1,4 @@
-package ink.anur.core;
+package ink.anur.core.scheduled;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

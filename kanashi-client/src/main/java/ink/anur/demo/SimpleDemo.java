@@ -1,7 +1,7 @@
 package ink.anur.demo;
 
 import org.springframework.stereotype.Component;
-import ink.anur.core.KScheduled;
+import ink.anur.core.scheduled.KScheduled;
 
 /**
  * Created by Anur IjuoKaruKas on 2020/3/3
