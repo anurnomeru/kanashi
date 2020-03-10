@@ -80,7 +80,6 @@ class ResponseProcessCentreService {
         } finally {
             lock.unlock()
         }
-
         return null
     }
 }

@@ -48,7 +48,7 @@ class ScheduledReport : AbstractTimedStruct {
     @Synchronized
     fun prepare() {
         if (!prepared) {
-            val capacity = SimpleScheduledLength + 4 + SimpleScheduledLengthSize
+            val capacity = SimpleScheduledLength + SimpleScheduledLengthSize
 
             var simpleScheduledLength = 0
             for (meta in simpleScheduledList) {
