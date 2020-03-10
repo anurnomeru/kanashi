@@ -1,6 +1,7 @@
 package ink.anur.inject
 
 import ink.anur.exception.NigateListenerException
+import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
 
 /**
@@ -9,7 +10,9 @@ import java.lang.reflect.Method
 @NigateBean
 class NigateListenerService {
 
-    private val EVENT_POOL = mutableMapOf<String, MutableList<ListenerContainer>>()
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
+    private val EVENT_POOL = mutableMapOf<Event, MutableList<ListenerContainer>>()
 
     fun registerListenEvent(bean: Any) {
         val methods = bean.javaClass.methods
@@ -31,7 +34,9 @@ class NigateListenerService {
         }
     }
 
-    fun onEvent(onEvent: String) {
+    fun onEvent(onEvent: Event) {
+        logger.debug("==> onEvent  | $onEvent |")
+        logger
         val mutableList = EVENT_POOL[onEvent] ?: throw NigateListenerException("event $onEvent is not register")
         for (listenerContainer in mutableList) {
             listenerContainer.onEvent()

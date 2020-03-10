@@ -1,14 +1,17 @@
 package ink.anur.io.common.handler
 
+import ink.anur.common.Constant
 import ink.anur.common.struct.KanashiNode
 import ink.anur.config.InetConfig
 import ink.anur.core.common.RequestExtProcessor
 import ink.anur.core.common.RequestProcessType
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.exception.NetWorkException
+import ink.anur.inject.Event
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigateListener
+import ink.anur.inject.NigateListenerService
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.pojo.Register
 import ink.anur.timewheel.TimedTask
@@ -37,6 +40,9 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
     @NigateInject
     private lateinit var msgCenterService: RequestProcessCentreService
 
+    @NigateInject
+    private lateinit var nigateListenerService: NigateListenerService
+
     init {
         Nigate.injectOnly(this)
     }
@@ -51,15 +57,18 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
         val register = Register(inetConfig.getLocalServerName())
         msgCenterService.send(node.serverName, register, RequestExtProcessor({
             connectCDL.countDown()
+            if (node.serverName == Constant.SERVER) {
+                nigateListenerService.onEvent(Event.REGISTER_TO_SERVER)
+            }
             logger.info("与节点 $node 的连接已建立")
         }, RequestProcessType.SEND_ONCE_THEN_NEED_RESPONSE), false)
 
-        Timer.getInstance().addTask(TimedTask(0) {
-            if (!connectCDL.await(2, TimeUnit.SECONDS)) {
-                ctx.close()
-                throw NetWorkException("尝试连接服务 $node 失败，两秒内没有收到注册回复！")
-            }
-        })
+//        Timer.getInstance().addTask(TimedTask(0) {
+//            if (!connectCDL.await(2, TimeUnit.SECONDS)) {
+//                ctx.close()
+//                throw NetWorkException("尝试连接服务 $node 失败，两秒内没有收到注册回复！")
+//            }
+//        })
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {

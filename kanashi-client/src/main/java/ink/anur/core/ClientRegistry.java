@@ -3,6 +3,7 @@ package ink.anur.core;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ink.anur.common.Constant;
 import ink.anur.common.struct.KanashiNode;
 import ink.anur.config.KanashiConfig;
 import ink.anur.core.client.ClientOperateHandler;
@@ -18,7 +19,7 @@ public class ClientRegistry {
 
     @Bean
     public ClientOperateHandler clientOperateHandler() {
-        ClientOperateHandler handler = new ClientOperateHandler(new KanashiNode("SERVER", kanashiConfig.getHost(), kanashiConfig.getPort()));
+        ClientOperateHandler handler = new ClientOperateHandler(new KanashiNode(Constant.INSTANCE.getSERVER(), kanashiConfig.getHost(), kanashiConfig.getPort()));
         handler.start();
         return handler;
     }

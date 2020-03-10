@@ -2,6 +2,7 @@ package ink.anur.core.scheduled;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
 import org.springframework.aop.support.AopUtils;
@@ -9,9 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
+import ink.anur.common.Constant;
 import ink.anur.core.response.ResponseProcessCentreService;
+import ink.anur.inject.Event;
 import ink.anur.inject.Nigate;
 import ink.anur.inject.NigateInject;
+import ink.anur.inject.NigateListener;
+import ink.anur.pojo.client.ScheduledReport;
+import ink.anur.pojo.client.SimpleScheduledMeta;
 
 /**
  * Created by Anur IjuoKaruKas on 2020/3/3
@@ -25,7 +31,7 @@ public class KScheduledAspect {
     @NigateInject
     private ResponseProcessCentreService responseProcessCentreService;
 
-    private Map<String, Schedule> MAPPING = new HashMap<>();
+    private Map<String, SimpleScheduled> SIMPLE_SCHEDULED_POOL = new HashMap<>();
 
     @PostConstruct
     public void initKSchedule() {
@@ -43,12 +49,22 @@ public class KScheduledAspect {
                     simpleScheduled.bean = bean;
                     simpleScheduled.cron = cron;
                     simpleScheduled.method = declaredMethod;
-                    MAPPING.put(simpleScheduled.name, simpleScheduled);
+                    SIMPLE_SCHEDULED_POOL.put(simpleScheduled.name, simpleScheduled);
                 }
             }
         }
+    }
 
-        responseProcessCentreService.doSend()
+    @NigateListener(onEvent = Event.REGISTER_TO_SERVER)
+    public void sendScheduledReport() {
+        ScheduledReport scheduledReport = new ScheduledReport();
+        List<SimpleScheduledMeta> simpleScheduledList = scheduledReport.getSimpleScheduledList();
+        for (SimpleScheduled value : SIMPLE_SCHEDULED_POOL.values()) {
+            simpleScheduledList.add(new SimpleScheduledMeta(value.name, value.cron));
+        }
+
+        scheduledReport.prepare();
+        responseProcessCentreService.doSend(Constant.INSTANCE.getSERVER(), scheduledReport);
     }
 
     public String methodNameGenerate(Method method) {

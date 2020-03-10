@@ -43,24 +43,11 @@ class ScheduledReport : AbstractTimedStruct {
 
     var simpleScheduledLength: Int? = null
 
-    override fun writeIntoChannel(channel: Channel) {
-        totalSize()
-        val byteBuffer = ByteBuffer.allocate(this.totalSize!!)
-        init(byteBuffer, RequestTypeEnum.SCHEDULED_REPORT)
-        byteBuffer.putInt(this.simpleScheduledLength!!)
-        for (meta in simpleScheduledList) {
-            byteBuffer.putInt(meta.nameArraySize)
-            byteBuffer.put(meta.nameArray)
-            byteBuffer.putInt(meta.cronArraySize)
-            byteBuffer.put(meta.cronArray)
-        }
-        val wrappedBuffer = Unpooled.wrappedBuffer(buffer)
-        channel.write(wrappedBuffer)
-        wrappedBuffer.release()
-    }
+    var prepared = false
 
-    override fun totalSize(): Int {
-        if (totalSize == null || simpleScheduledLength == null) {
+    @Synchronized
+    fun prepare() {
+        if (!prepared) {
             val capacity = SimpleScheduledLength + 4 + SimpleScheduledLengthSize
 
             var simpleScheduledLength = 0
@@ -70,6 +57,32 @@ class ScheduledReport : AbstractTimedStruct {
             }
             this.simpleScheduledLength = simpleScheduledLength
             this.totalSize = capacity + simpleScheduledLength
+
+            val byteBuffer = ByteBuffer.allocate(this.totalSize!!)
+            init(byteBuffer, RequestTypeEnum.SCHEDULED_REPORT)
+            byteBuffer.putInt(this.simpleScheduledLength!!)
+            for (meta in simpleScheduledList) {
+                byteBuffer.putInt(meta.nameArraySize)
+                byteBuffer.put(meta.nameArray)
+                byteBuffer.putInt(meta.cronArraySize)
+                byteBuffer.put(meta.cronArray)
+            }
+
+            byteBuffer.flip()
+        }
+    }
+
+    override fun writeIntoChannel(channel: Channel) {
+        if (!prepared) {
+            prepare()
+        }
+        val wrappedBuffer = Unpooled.wrappedBuffer(buffer)
+        channel.write(wrappedBuffer)
+    }
+
+    override fun totalSize(): Int {
+        if (!prepared) {
+            prepare()
         }
         return this.totalSize!!
     }

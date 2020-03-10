@@ -30,7 +30,6 @@ open class RegisterResponse : AbstractTimedStruct {
     override fun writeIntoChannel(channel: Channel) {
         val wrappedBuffer = Unpooled.wrappedBuffer(buffer)
         channel.write(wrappedBuffer)
-        wrappedBuffer.release()
     }
 
     override fun totalSize(): Int {

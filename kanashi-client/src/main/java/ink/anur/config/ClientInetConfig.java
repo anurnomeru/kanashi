@@ -2,6 +2,7 @@ package ink.anur.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ink.anur.common.Constant;
 import ink.anur.common.struct.KanashiNode;
 import ink.anur.inject.NigateBean;
 
@@ -14,7 +15,7 @@ public class ClientInetConfig implements InetConfig {
     @NotNull
     @Override
     public String getLocalServerName() {
-        return "CLIENT";
+        return Constant.INSTANCE.getCLIENT();
     }
 
     @NotNull
