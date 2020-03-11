@@ -6,5 +6,15 @@ package ink.anur.inject
 annotation class NigateListener(val onEvent: Event)
 
 enum class Event {
-    REGISTER_TO_SERVER
+    REGISTER_TO_SERVER,
+
+    /**
+     * 当集群可用时
+     */
+    CLUSTER_VALID,
+
+    /**
+     * 当集群不可用时
+     */
+    CLUSTER_INVALID,
 }

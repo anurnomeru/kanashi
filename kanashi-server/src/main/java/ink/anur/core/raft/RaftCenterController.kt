@@ -3,7 +3,9 @@ package ink.anur.core.raft
 import ink.anur.common.KanashiRunnable
 import ink.anur.config.ElectConfiguration
 import ink.anur.config.InetSocketAddressConfiguration
+import ink.anur.core.raft.gao.GenerationAndOffset
 import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.exception.KanashiException
 import ink.anur.mutex.ReentrantLocker
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
@@ -387,11 +389,33 @@ class RaftCenterController : KanashiRunnable() {
                 } else {
                     // do nothing
                 }
-
             }
         }
     }
 
+    /**
+     * 生成对应一次操作的id号（用于给其他节点发送日志同步消息，并且得到其ack，以便知道消息是否持久化成功）
+     */
+    fun genOperationId(): GenerationAndOffset {
+        return reentrantLocker.lockSupplierCompel {
+            if (electionMetaService.isLeader()) {
+                var gen = electionMetaService.generation
+
+                // 当流水号达到最大时，进行世代的自增，
+                if (electionMetaService.offset == java.lang.Long.MAX_VALUE) {
+                    logger.warn("流水号 offset 已达最大值，节点将更新自身世代 {} => {}", electionMetaService.generation, electionMetaService.generation + 1)
+                    electionMetaService.offset = 0L
+                    gen = electionMetaService.generationIncr()
+                }
+
+                val offset = electionMetaService.offsetIncr()
+
+                return@lockSupplierCompel GenerationAndOffset(gen, offset)
+            } else {
+                throw KanashiException("不是 Leader 的节点无法生成id号")
+            }
+        }
+    }
 
     private fun addTask(taskEnum: TaskEnum, task: TimedTask) {
         taskMap[taskEnum]?.cancel()

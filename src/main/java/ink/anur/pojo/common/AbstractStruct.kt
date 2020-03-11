@@ -71,7 +71,7 @@ abstract class AbstractStruct {
         return ByteBufferUtil.crc32(buffer!!.array(), buffer!!.arrayOffset() + TypeOffset, buffer!!.limit() - TypeOffset)
     }
 
-    fun getOperationTypeEnum(): RequestTypeEnum {
+    fun getRequestType(): RequestTypeEnum {
         return RequestTypeEnum.parseByByteSign(buffer!!.getInt(TypeOffset))
     }
 

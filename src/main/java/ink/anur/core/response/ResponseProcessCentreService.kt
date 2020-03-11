@@ -70,12 +70,12 @@ class ResponseProcessCentreService {
             if (channel == null) {
                 return NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
             }
-            logger.info("---> 发送了类型为 ${body.getOperationTypeEnum()} 的消息")
+            logger.info("---> 发送了类型为 ${body.getRequestType()} 的消息")
             channel.write(Unpooled.copyInt(body.totalSize()))
             body.writeIntoChannel(channel)
             channel.flush()
         } catch (t: Throwable) {
-            logger.error("向节点发送 [$serverName] 关于 ${body.getOperationTypeEnum()} 的请求失败： ${t.message}")
+            logger.error("向节点发送 [$serverName] 关于 ${body.getRequestType()} 的请求失败： ${t.message}")
             return t
         } finally {
             lock.unlock()

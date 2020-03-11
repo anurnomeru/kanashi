@@ -6,4 +6,4 @@ package ink.anur.exception
  *
  * 不支持的操作类型
  */
-class UnsupportedOperationTypeException(message: String) : KanashiException(message)
+class UnSupportedRequestTypeException(message: String) : KanashiException(message)

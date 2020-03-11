@@ -169,7 +169,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue
      */
     fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor = RequestExtProcessor(), keepCurrentSendTask: Boolean = true, keepError: Boolean = false): Boolean {
-        val typeEnum = msg.getOperationTypeEnum()
+        val typeEnum = msg.getRequestType()
 
         // 可以选择 keepCurrentSendTask = false 强制取消上次的任务
         return if (getting(inFlight, serverName, typeEnum)?.inFlight() == true && keepCurrentSendTask) {

@@ -1,7 +1,6 @@
 package ink.anur.demo;
 
 import org.springframework.stereotype.Component;
-import ink.anur.core.scheduled.KScheduled;
 
 /**
  * Created by Anur IjuoKaruKas on 2020/3/3
@@ -10,9 +9,4 @@ import ink.anur.core.scheduled.KScheduled;
  */
 @Component
 public class SimpleDemo {
-
-    @KScheduled(cron = "*/10 * * * * *")
-    public void print() {
-        System.out.println("zzzzzzzz");
-    }
 }

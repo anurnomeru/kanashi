@@ -1,7 +1,9 @@
 package ink.anur.inject
 
+import com.google.common.collect.Lists
 import ink.anur.exception.DuplicateBeanException
 import ink.anur.exception.KanashiException
+import ink.anur.exception.NigateException
 import ink.anur.exception.NoSuchBeanException
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -35,7 +37,12 @@ object Nigate {
         /**
          * bean 名字与 bean 的映射，只能一对一
          */
-        private val BEAN_NAME_MAPPING = mutableMapOf<String, Any>()
+        private val NAME_TO_BEAN_MAPPING = mutableMapOf<String, Any>()
+
+        /**
+         * bean 名字与 bean 的映射，只能一对一
+         */
+        private val BEAN_TO_NAME_MAPPING = mutableMapOf<Any, String>()
 
         /**
          * bean 类型与 bean 的映射，可以一对多
@@ -53,14 +60,24 @@ object Nigate {
         private val INTERFACE_MAPPING = mutableMapOf<Class<*>, MutableSet<Class<*>>>()
 
         /**
+         * 延迟加载的 BEAN
+         */
+        private val LAZY_POSTCONTROL_BEAN = mutableMapOf<Any, Any>()
+
+        /**
+         * 已经进行了 postControl
+         */
+        private val HAS_BEEN_POSTCONTROL = mutableSetOf<Any>()
+
+        /**
          * 避免因为路径问题导致初始化重复扫描
          */
-        private val initDuplicateCleaner = mutableSetOf<String>()
+        private val INIT_DUPLICATE_CLEANER = mutableSetOf<String>()
 
         fun autoRegister(path: String, clazz: Class<*>, anno: NigateBean, fromJar: Boolean) {
-            if (initDuplicateCleaner.add(path)) {
+            if (INIT_DUPLICATE_CLEANER.add(path)) {
                 val name = register(clazz.newInstance(), anno.name)
-                BEAN_DEFINITION_MAPPING[name] = NigateBeanDefinition(fromJar)
+                BEAN_DEFINITION_MAPPING[name] = NigateBeanDefinition(fromJar, path)
             } else {
                 // ignore
             }
@@ -72,8 +89,9 @@ object Nigate {
         fun register(bean: Any, alias: String? = null): String {
             val clazz = bean.javaClass
             val actualName = if (alias == null || alias == UNDEFINE_ALIAS) clazz.simpleName else alias
-            val duplicate = BEAN_NAME_MAPPING.putIfAbsent(actualName, bean)
+            val duplicate = NAME_TO_BEAN_MAPPING.putIfAbsent(actualName, bean)
             duplicate?.also { throw DuplicateBeanException("bean $clazz 存在重复注册的情况，请使用 @NigateBean(name = alias) 为其中一个起别名") }
+            BEAN_TO_NAME_MAPPING[bean] = actualName
 
             BEAN_CLASS_MAPPING.compute(bean.javaClass) { _, v ->
                 val set = v ?: mutableSetOf()
@@ -105,7 +123,7 @@ object Nigate {
             return result!!
         }
 
-        fun getBeanByName(name: String): Any = BEAN_NAME_MAPPING[name] ?: throw NoSuchBeanException("bean named $name is not managed")
+        fun getBeanByName(name: String): Any = NAME_TO_BEAN_MAPPING[name] ?: throw NoSuchBeanException("bean named $name is not managed")
 
         fun <T> getBeanByClass(clazz: Class<T>): T {
             val l = BEAN_CLASS_MAPPING[clazz] ?: throw NoSuchBeanException("bean with type $clazz is not managed")
@@ -162,7 +180,116 @@ object Nigate {
         }
 
         fun getManagedBeans(): MutableCollection<Any> {
-            return BEAN_NAME_MAPPING.values
+            return NAME_TO_BEAN_MAPPING.values
+        }
+
+        fun postConstruct(beans: MutableCollection<Any>, onStartUp: Boolean) {
+            for (bean in beans) {
+                for (memberFunction in bean::class.memberFunctions) {
+                    for (annotation in memberFunction.annotations) {
+                        if (annotation.annotationClass == NigatePostConstruct::class) {
+                            annotation as NigatePostConstruct
+                            val dependsOn = NAME_TO_BEAN_MAPPING[annotation.dependsOn]
+                            if (annotation.dependsOn != "-NONE-" && !HAS_BEEN_POSTCONTROL.contains(dependsOn)) {
+                                dependsOn ?: throw NoSuchBeanException("$bean 依赖的 bean ${annotation.dependsOn} 不存在")
+                                LAZY_POSTCONTROL_BEAN[bean] = dependsOn
+                                if (LAZY_POSTCONTROL_BEAN[dependsOn] != null && LAZY_POSTCONTROL_BEAN[dependsOn] == bean) {
+                                    throw NigateException("bean ${BEAN_TO_NAME_MAPPING[dependsOn]} 与 ${BEAN_TO_NAME_MAPPING[bean]} 的 @NigatePostConstruct 构成了循环依赖！")
+                                }
+                            } else {
+
+                                HAS_BEEN_POSTCONTROL.add(bean)
+                                LAZY_POSTCONTROL_BEAN[bean] == null
+
+                                try {
+                                    memberFunction.isAccessible = true
+                                    memberFunction.call(bean)
+                                } catch (e: Exception) {
+                                    logger.error("class [${bean::class}] invoke post construct method [${memberFunction.name}] error : ${e.message}")
+                                    e.printStackTrace()
+                                    if (onStartUp) {
+                                        exitProcess(1)
+                                    }
+                                }
+                                val name = BEAN_TO_NAME_MAPPING[bean] ?: throw NoSuchBeanException("无法根据类 ${bean.javaClass.simpleName} 找到唯一的 Bean 找到指定的 BeanName")
+                                hasBeanPostConstruct.add(name)
+                            }
+                        }
+                    }
+                }
+            }
+            if (LAZY_POSTCONTROL_BEAN.keys.size > 0) {
+                postConstruct(LAZY_POSTCONTROL_BEAN.keys, onStartUp)
+            }
+        }
+
+        fun getClasses(packagePath: String) {
+            val path = packagePath.replace(".", "/")
+            val resources = Thread.currentThread().contextClassLoader.getResources(path)
+
+            while (resources.hasMoreElements()) {
+                val url = resources.nextElement()
+                val protocol = url.protocol
+                if ("jar".equals(protocol, ignoreCase = true)) {
+                    try {
+                        getJarClasses(url, packagePath)
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+
+                } else if ("file".equals(protocol, ignoreCase = true)) {
+                    getFileClasses(url, packagePath)
+                }
+            }
+        }
+
+        //获取file路径下的class文件
+        private fun getFileClasses(url: URL, packagePath: String) {
+            val filePath = url.file
+            val dir = File(filePath)
+            val list = dir.list() ?: return
+            for (classPath in list) {
+                if (classPath.endsWith(".class")) {
+                    val path = "$packagePath.${classPath.replace(".class", "")}"
+                    registerByClassPath(path)
+                } else {
+                    getClasses("$packagePath.$classPath")
+                }
+            }
+        }
+
+        //使用JarURLConnection类获取路径下的所有类
+        @Throws(IOException::class)
+        private fun getJarClasses(url: URL, packagePath: String) {
+            val conn = url.openConnection() as JarURLConnection
+            val jarFile = conn.jarFile
+            val entries = jarFile.entries()
+            while (entries.hasMoreElements()) {
+                val jarEntry = entries.nextElement()
+                val name = jarEntry.name
+                if (name.contains(".class") && name.replace("/".toRegex(), ".").startsWith(packagePath)) {
+                    val className = name.substring(0, name.lastIndexOf(".")).replace("/", ".")
+                    registerByClassPath(className)
+                }
+            }
+        }
+
+        private fun registerByClassPath(classPath: String) {
+            try {
+                val aClass = Class.forName(classPath)
+                for (annotation in aClass.annotations) {
+                    if (annotation.annotationClass == NigateBean::class) {
+                        annotation as NigateBean
+                        beanContainer.autoRegister(classPath, aClass, annotation, true)
+                    }
+                }
+            } catch (e: ClassNotFoundException) {
+                e.printStackTrace()
+            }
+        }
+
+        fun doScan() {
+            getClasses("ink.anur")
         }
     }
 
@@ -170,7 +297,9 @@ object Nigate {
         /**
          * fromJar 代表此实现是有默认的实现而且实现在继承的maven里就已经写好
          */
-        val fromJar: Boolean
+        val fromJar: Boolean,
+
+        val path: String
     )
 
     /**
@@ -178,13 +307,15 @@ object Nigate {
      */
     private val beanContainer = NigateBeanContainer()
 
+    private val hasBeanPostConstruct: MutableSet<String> = mutableSetOf()
+
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     init {
         try {
             val start = System.currentTimeMillis()
             logger.info("Nigate ==> Registering..")
-            doScan()
+            beanContainer.doScan()
             beanContainer.over_registry = true
             val allBeans = beanContainer.getManagedBeans()
             logger.info("Nigate ==> Register complete")
@@ -196,9 +327,7 @@ object Nigate {
             logger.info("Nigate ==> Inject complete")
 
             logger.info("Nigate ==> Invoking postConstruct..")
-            for (bean in allBeans) {
-                postConstruct(bean, true)
-            }
+            beanContainer.postConstruct(allBeans, true)
             logger.info("Nigate ==> Invoke postConstruct complete")
 
             logger.info("Nigate ==> Registering listener..")
@@ -208,11 +337,16 @@ object Nigate {
             }
             logger.info("Nigate ==> Register complete")
 
+
             logger.info("Nigate Started in ${(System.currentTimeMillis() - start) / 1000f} seconds")
         } catch (e: Exception) {
             e.printStackTrace()
             exitProcess(1)
         }
+    }
+
+    private fun lazyInit(injected: Any) {
+
     }
 
     fun <T> getBeanByClass(clazz: Class<T>): T = beanContainer.getBeanByClass(clazz)
@@ -228,7 +362,7 @@ object Nigate {
         }
         beanContainer.register(injected, alias)
         beanContainer.inject(injected)
-        postConstruct(injected, false)
+        beanContainer.postConstruct(Lists.newArrayList(injected), false)
         getBeanByClass(NigateListenerService::class.java).registerListenEvent(injected)
     }
 
@@ -237,108 +371,5 @@ object Nigate {
      */
     fun injectOnly(injected: Any) {
         beanContainer.inject(injected)
-    }
-
-    fun postConstruct(bean: Any, onStartUp: Boolean) {
-        for (memberFunction in bean::class.memberFunctions) {
-            for (annotation in memberFunction.annotations) {
-                if (annotation.annotationClass == NigatePostConstruct::class) {
-                    try {
-                        memberFunction.isAccessible = true
-                        memberFunction.call(bean)
-                    } catch (e: Exception) {
-                        logger.error("class [${bean::class}] invoke post construct method [${memberFunction.name}] error : ${e.message}")
-                        e.printStackTrace()
-                        if (onStartUp) {
-                            exitProcess(1)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fun getClasses(packagePath: String): Set<Class<*>> {
-        val res = HashSet<Class<*>>()
-        val path = packagePath.replace(".", "/")
-        val resources = Thread.currentThread().contextClassLoader.getResources(path)
-
-        while (resources.hasMoreElements()) {
-            val url = resources.nextElement()
-            val protocol = url.protocol
-            if ("jar".equals(protocol, ignoreCase = true)) {
-                try {
-                    res.addAll(getJarClasses(url, packagePath))
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    return res
-                }
-
-            } else if ("file".equals(protocol, ignoreCase = true)) {
-                res.addAll(getFileClasses(url, packagePath))
-            }
-        }
-        return res
-    }
-
-    //获取file路径下的class文件
-    private fun getFileClasses(url: URL, packagePath: String): Set<Class<*>> {
-        val res = HashSet<Class<*>>()
-        val filePath = url.file
-        val dir = File(filePath)
-        val list = dir.list() ?: return res
-        for (classPath in list) {
-            if (classPath.endsWith(".class")) {
-                try {
-                    val path = "$packagePath.${classPath.replace(".class", "")}"
-                    val aClass = Class.forName(path)
-                    for (annotation in aClass.annotations) {
-                        if (annotation.annotationClass == NigateBean::class) {
-                            beanContainer.autoRegister(path, aClass, annotation as NigateBean, false)
-                            res.add(aClass)
-                        }
-                    }
-                } catch (e: ClassNotFoundException) {
-                    e.printStackTrace()
-                }
-
-            } else {
-                res.addAll(getClasses("$packagePath.$classPath"))
-            }
-        }
-        return res
-    }
-
-    //使用JarURLConnection类获取路径下的所有类
-    @Throws(IOException::class)
-    private fun getJarClasses(url: URL, packagePath: String): Set<Class<*>> {
-        val res = HashSet<Class<*>>()
-        val conn = url.openConnection() as JarURLConnection
-        val jarFile = conn.jarFile
-        val entries = jarFile.entries()
-        while (entries.hasMoreElements()) {
-            val jarEntry = entries.nextElement()
-            val name = jarEntry.name
-            if (name.contains(".class") && name.replace("/".toRegex(), ".").startsWith(packagePath)) {
-                val className = name.substring(0, name.lastIndexOf(".")).replace("/", ".")
-                try {
-                    val aClass = Class.forName(className)
-                    for (annotation in aClass.annotations) {
-                        if (annotation.annotationClass == NigateBean::class) {
-                            beanContainer.autoRegister(className, aClass, annotation as NigateBean, true)
-                            res.add(aClass)
-                        }
-                    }
-                } catch (e: ClassNotFoundException) {
-                    e.printStackTrace()
-                }
-
-            }
-        }
-        return res
-    }
-
-    private fun doScan() {
-        getClasses("ink.anur")
     }
 }

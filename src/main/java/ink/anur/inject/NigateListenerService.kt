@@ -44,6 +44,10 @@ class NigateListenerService {
     }
 
     inner class ListenerContainer(val bean: Any, val method: Method) {
+        init {
+            method.isAccessible = true
+        }
+
         fun onEvent() {
             method.invoke(bean)
         }

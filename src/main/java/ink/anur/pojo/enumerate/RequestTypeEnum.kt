@@ -8,7 +8,6 @@ import ink.anur.pojo.common.AbstractStruct
 import ink.anur.exception.KanashiException
 import ink.anur.pojo.coordinate.Canvass
 import ink.anur.pojo.HeartBeat
-import ink.anur.pojo.client.ScheduledReport
 import java.util.HashMap
 
 /**
@@ -46,10 +45,6 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
      */
     VOTING(10003, Voting::class.java),
 
-    /**
-     * 客户端上报自己的定时任务
-     */
-    SCHEDULED_REPORT(50000, ScheduledReport::class.java),
     ;
 
     companion object {
