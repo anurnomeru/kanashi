@@ -4,6 +4,7 @@ import ink.anur.config.LogConfiguration
 import ink.anur.core.raft.gao.GenerationAndOffset
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.inject.NigatePostConstruct
 import ink.anur.log.LogService
 import ink.anur.log.prelog.ByteBufPreLogService
 import ink.anur.mutex.ReentrantReadWriteLocker
@@ -41,7 +42,7 @@ class CommitProcessManageService : ReentrantReadWriteLocker() {
 
     private lateinit var mmap: MappedByteBuffer
 
-    @PostConstruct
+    @NigatePostConstruct(dependsOn = "LogService")
     private fun init() {
         offsetFile = File(logConfiguration.getBaseDir(), "commitOffset.temp")
         dir = File(logConfiguration.getBaseDir())
