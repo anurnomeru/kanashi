@@ -314,9 +314,9 @@ class RaftCenterController : KanashiRunnable() {
 
 
                     // 如果是leader。则先触发集群无效
-//                    if (electionMetaService.isLeader()) {
-//                        electionMetaService.electionStateChanged(false) todo
-//                    }
+                    if (electionMetaService.isLeader()) {
+                        electionMetaService.electionStateChanged(false)
+                    }
 
                     // 成为follower
                     electionMetaService.becomeFollower()
@@ -324,7 +324,7 @@ class RaftCenterController : KanashiRunnable() {
                     // 将那个节点设为leader节点
                     electionMetaService.leader = leaderServerName
                     electionMetaService.beginElectTime = 0L
-//                    meta.electionStateChanged(true) todo
+                    electionMetaService.electionStateChanged(true)
                 }
 
                 // 重置成为候选者任务

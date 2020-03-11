@@ -7,11 +7,11 @@ import java.nio.ByteBuffer
 /**
  * Created by Anur IjuoKaruKas on 2019/12/4
  *
- * TODO hanabiCommand 和  ByteBufferHanabiEntry 共享底层 byteBuffer
+ * TODO kanashiCommand 和  ByteBufferKanashiEntry 共享底层 byteBuffer
  *
- * 负责将 HanabiEntry 写入磁盘
+ * 负责将 KanashiEntry 写入磁盘
  *
- * 不包括 key 部分，则 HanabiEntry为以下部分组成：
+ * 不包括 key 部分，则 KanashiEntry为以下部分组成：
  *
  *      1       +        1        +      4     + x
  *  commandType  + operationType  +  valueSize + value.
@@ -19,7 +19,7 @@ import java.nio.ByteBuffer
 class ByteBufferKanashiEntry(val byteBuffer: ByteBuffer) {
 
     /**
-     * 对整个 ByteBufferHanabiEntry 大小的预估
+     * 对整个 ByteBufferKanashiEntry 大小的预估
      */
     val expectedSize: Int = byteBuffer.limit()
 
@@ -70,7 +70,7 @@ class ByteBufferKanashiEntry(val byteBuffer: ByteBuffer) {
         // 理论上key 可以支持到很大，但是一个key 2g = = 玩呢？
 
         /**
-         * 与 HanabiCommand 同义
+         * 与 kanashiCommand 同义
          */
         const val CommandTypeOffset = 0
         const val CommandTypeLength = 1

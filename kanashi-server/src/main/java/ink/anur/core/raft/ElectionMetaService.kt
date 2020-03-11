@@ -3,8 +3,10 @@ package ink.anur.core.raft
 import ink.anur.common.struct.KanashiNode
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.raft.gao.GenerationAndOffsetService
+import ink.anur.inject.Event
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.inject.NigateListenerService
 import ink.anur.inject.NigatePostConstruct
 import ink.anur.pojo.HeartBeat
 import ink.anur.util.TimeUtil
@@ -24,6 +26,9 @@ class ElectionMetaService {
 
     @NigateInject
     private lateinit var generationAndOffsetService: GenerationAndOffsetService
+
+    @NigateInject
+    private lateinit var kanashiListenerService: NigateListenerService
 
     private val logger: Logger = LoggerFactory.getLogger(this::class.java)
 
@@ -55,7 +60,7 @@ class ElectionMetaService {
         this.box.clear()
         this.leader = null
 
-//        meta.electionStateChanged(false) // todo
+        this.electionStateChanged(false)
     }
 
     /**
@@ -139,20 +144,20 @@ class ElectionMetaService {
     fun isCandidate() = raftRole == RaftRole.CANDIDATE
     fun isLeader() = raftRole == RaftRole.LEADER
 
-//    /**
-//     * 当集群选举状态变更时调用
-//     */
-//    fun electionStateChanged(electionCompleted: Boolean): Boolean {
-//        val changed = electionCompleted != this.electionCompleted
-//
-//        if (changed) {
-//            this.electionCompleted = electionCompleted
-//            if (electionCompleted) HanabiListener.onEvent(EventEnum.CLUSTER_VALID)
-//            else HanabiListener.onEvent(EventEnum.CLUSTER_INVALID)
-//        }
-//
-//        return changed
-//    }
+    /**
+     * 当集群选举状态变更时调用
+     */
+    fun electionStateChanged(electionCompleted: Boolean): Boolean {
+        val changed = electionCompleted != this.electionCompleted
+
+        if (changed) {
+            this.electionCompleted = electionCompleted
+            if (electionCompleted) kanashiListenerService.onEvent(Event.CLUSTER_VALID)
+            else kanashiListenerService.onEvent(Event.CLUSTER_INVALID)
+        }
+
+        return changed
+    }
 
     /**
      * 成为候选者
@@ -162,7 +167,7 @@ class ElectionMetaService {
         return if (raftRole == RaftRole.FOLLOWER) {
             logger.info("本节点角色由 {} 变更为 {}", raftRole, RaftRole.CANDIDATE)
             raftRole = RaftRole.CANDIDATE
-//            electionStateChanged(false) todo
+            this.electionStateChanged(false)
             true
         } else {
             logger.debug("本节点的角色已经是 {} ，无法变更为 {}", raftRole, raftRole)
@@ -195,6 +200,6 @@ class ElectionMetaService {
         leader = inetSocketAddressConfiguration.getLocalServerName()
         raftRole = RaftRole.LEADER
         heartBeat = HeartBeat(generation)
-//        electionStateChanged(true) // todo
+        this.electionStateChanged(true)
     }
 }

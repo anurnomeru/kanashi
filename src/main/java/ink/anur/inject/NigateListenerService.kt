@@ -35,9 +35,9 @@ class NigateListenerService {
     }
 
     fun onEvent(onEvent: Event) {
-        logger.debug("==> onEvent  | $onEvent |")
+        logger.debug("=====================> onEvent | $onEvent | <=====================")
         logger
-        val mutableList = EVENT_POOL[onEvent] ?: throw NigateListenerException("event $onEvent is not register")
+        val mutableList = EVENT_POOL[onEvent] ?: return
         for (listenerContainer in mutableList) {
             listenerContainer.onEvent()
         }

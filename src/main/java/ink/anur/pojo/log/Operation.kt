@@ -113,7 +113,7 @@ class Operation : AbstractStruct {
         return "Operation{" +
             "requestType='" + getRequestType() + '\''.toString() +
             ", key='" + key + '\''.toString() +
-            ", hanabiEntry='" + kanashiCommand + '\''.toString() +
+            ", kanashiEntry='" + kanashiCommand + '\''.toString() +
             '}'.toString()
     }
 

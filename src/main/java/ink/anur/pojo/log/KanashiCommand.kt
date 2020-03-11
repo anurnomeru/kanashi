@@ -37,7 +37,7 @@ class KanashiCommand(val content: ByteBuffer) {
         /**
          * 表明参数长度，四个字节 values size 可传多参数，格式为 size+value size+value
          *
-         * 第一个参数为真正 HanabiEntry的值
+         * 第一个参数为真正 KanashiEntry的值
          */
         const val ValuesSizeLength = 4
 
@@ -116,7 +116,7 @@ class KanashiCommand(val content: ByteBuffer) {
     }
 
     /**
-     * 通过 hanabiCommand 来生成一个 ByteBufferHanabiEntry
+     * 通过 kanashiCommand 来生成一个 ByteBufferKanashiEntry
      *
      * 调用后，limit会发生变化，第一个参数之后的数据将丢失
      */
@@ -133,9 +133,9 @@ class KanashiCommand(val content: ByteBuffer) {
         byteBuffer.position(from)
         byteBuffer.limit(to)
 
-        val hanabiEntry = ByteBufferKanashiEntry(byteBuffer.slice())
+        val kanashiEntry = ByteBufferKanashiEntry(byteBuffer.slice())
         byteBuffer.reset()
-        return hanabiEntry
+        return kanashiEntry
     }
 
     override fun toString(): String {
