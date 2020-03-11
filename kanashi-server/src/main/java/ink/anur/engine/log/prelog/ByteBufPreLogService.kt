@@ -1,7 +1,8 @@
-package ink.anur.engine.log
+package ink.anur.engine.log.prelog
 
 import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.engine.StoreEngineFacadeService
+import ink.anur.engine.log.common.LogService
 import ink.anur.exception.LogException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject

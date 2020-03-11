@@ -1,4 +1,4 @@
-package ink.anur.engine.log;
+package ink.anur.engine.log.common;
 
 import java.io.File;
 import java.io.IOException;

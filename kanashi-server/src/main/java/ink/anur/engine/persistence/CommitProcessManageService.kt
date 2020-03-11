@@ -5,8 +5,10 @@ import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
-import ink.anur.engine.log.ByteBufPreLogService
-import ink.anur.engine.log.LogService
+import ink.anur.engine.log.prelog.ByteBufPreLogService
+import ink.anur.engine.log.common.LogService
+import ink.anur.inject.Event
+import ink.anur.inject.NigateListener
 import ink.anur.mutex.ReentrantReadWriteLocker
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -66,6 +68,7 @@ class CommitProcessManageService : ReentrantReadWriteLocker() {
      *
      * 需要讲这些消息摈弃
      */
+    @NigateListener(Event.CLUSTER_VALID)
     fun discardInvalidMsg() {
         if (commitGAO != null && commitGAO != GenerationAndOffset.INVALID) {
             logger.info("检测到本节点曾是 leader 节点，需摒弃部分未 Commit 的消息")

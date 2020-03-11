@@ -1,4 +1,4 @@
-package ink.anur.engine.log
+package ink.anur.engine.log.common
 
 import ink.anur.config.LogConfiguration
 import ink.anur.core.raft.ElectionMetaService

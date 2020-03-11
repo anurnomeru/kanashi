@@ -1,7 +1,8 @@
-package ink.anur.engine.log
+package ink.anur.engine.log.fetch
 
 import ink.anur.core.raft.ElectionMetaService
 import ink.anur.debug.Debugger
+import ink.anur.engine.log.prelog.ByteBufPreLogService
 import ink.anur.inject.Event
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
@@ -10,6 +11,8 @@ import ink.anur.pojo.server.FetchResponse
 
 /**
  * Created by Anur IjuoKaruKas on 2020/3/11
+ *
+ * follower 负责不断从 leader fetch 消息
  */
 @NigateBean
 class FollowerFetcherService : LogFetcher() {
