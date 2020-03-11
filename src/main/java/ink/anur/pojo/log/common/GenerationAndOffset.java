@@ -1,4 +1,4 @@
-package ink.anur.core.raft.gao;
+package ink.anur.pojo.log.common;
 
 import java.util.Optional;
 

@@ -6,15 +6,44 @@ package ink.anur.inject
 annotation class NigateListener(val onEvent: Event)
 
 enum class Event {
+
+    /**
+     * 连接上server后（client）
+     */
     REGISTER_TO_SERVER,
 
     /**
-     * 当集群可用时
+     * 选举成功
      */
     CLUSTER_VALID,
 
     /**
-     * 当集群不可用时
+     * 当节点没有 leader 时
      */
     CLUSTER_INVALID,
+
+    /**
+     * 当集群日志恢复完毕
+     */
+    RECOVERY_COMPLETE,
+
+    /**
+     * 当协调器连接上 leader
+     */
+    COORDINATE_CONNECT_TO_LEADER,
+
+    /**
+     * 当协调器与 leader 断开连接
+     */
+    COORDINATE_DISCONNECT_FROM_LEADER,
+
+    /**
+     * 当协调器连接上 某节点
+     */
+    COORDINATE_CONNECT_TO,
+
+    /**
+     * 当协调器与 某节点 断开连接
+     */
+    COORDINATE_DISCONNECT_TO,
 }

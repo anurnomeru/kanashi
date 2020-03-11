@@ -199,7 +199,7 @@ object Nigate {
                             } else {
 
                                 HAS_BEEN_POSTCONTROL.add(bean)
-                                LAZY_POSTCONTROL_BEAN[bean] == null
+                                LAZY_POSTCONTROL_BEAN.remove(bean)
 
                                 try {
                                     memberFunction.isAccessible = true

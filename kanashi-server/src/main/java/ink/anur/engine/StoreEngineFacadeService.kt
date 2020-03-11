@@ -1,12 +1,12 @@
 package ink.anur.engine
 
 import ink.anur.common.KanashiRunnable
-import ink.anur.core.raft.gao.GenerationAndOffset
+import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.debug.Debugger
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.log.common.OperationAndGAO
-import ink.anur.log.persistence.CommitProcessManageService
+import ink.anur.engine.persistence.CommitProcessManageService
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock

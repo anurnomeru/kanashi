@@ -1,4 +1,4 @@
-package ink.anur.log.persistence;
+package ink.anur.engine.log;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,7 +7,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 import com.google.common.collect.Lists;
 import ink.anur.config.LogConfiguration;
-import ink.anur.core.raft.gao.GenerationAndOffset;
+import ink.anur.log.persistence.LogSegment;
+import ink.anur.pojo.log.common.GenerationAndOffset;
 import ink.anur.debug.Debugger;
 import ink.anur.engine.StoreEngineFacadeService;
 import ink.anur.exception.LogException;

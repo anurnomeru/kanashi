@@ -1,13 +1,14 @@
-package ink.anur.log.prelog
+package ink.anur.engine.log
 
-import ink.anur.core.raft.gao.GenerationAndOffset
+import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.engine.StoreEngineFacadeService
 import ink.anur.exception.LogException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
-import ink.anur.log.LogService
 import ink.anur.log.operationset.ByteBufferOperationSet
+import ink.anur.log.prelog.ByteBufPreLog
+import ink.anur.log.prelog.PreLogMeta
 import ink.anur.mutex.ReentrantReadWriteLocker
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentSkipListMap

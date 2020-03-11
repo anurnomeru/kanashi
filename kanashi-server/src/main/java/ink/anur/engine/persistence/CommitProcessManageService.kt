@@ -1,19 +1,18 @@
-package ink.anur.log.persistence
+package ink.anur.engine.persistence
 
 import ink.anur.config.LogConfiguration
-import ink.anur.core.raft.gao.GenerationAndOffset
+import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
-import ink.anur.log.LogService
-import ink.anur.log.prelog.ByteBufPreLogService
+import ink.anur.engine.log.ByteBufPreLogService
+import ink.anur.engine.log.LogService
 import ink.anur.mutex.ReentrantReadWriteLocker
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
-import javax.annotation.PostConstruct
 
 /**
  * Created by Anur IjuoKaruKas on 2019/7/15

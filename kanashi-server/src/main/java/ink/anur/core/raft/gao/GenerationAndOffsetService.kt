@@ -1,6 +1,7 @@
 package ink.anur.core.raft.gao
 
 import ink.anur.inject.NigateBean
+import ink.anur.pojo.log.common.GenerationAndOffset
 import org.slf4j.LoggerFactory
 
 /**

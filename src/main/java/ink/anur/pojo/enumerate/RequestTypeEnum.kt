@@ -8,6 +8,8 @@ import ink.anur.pojo.common.AbstractStruct
 import ink.anur.exception.KanashiException
 import ink.anur.pojo.coordinate.Canvass
 import ink.anur.pojo.HeartBeat
+import ink.anur.pojo.server.FetchResponse
+import ink.anur.pojo.server.Fetcher
 import java.util.HashMap
 
 /**
@@ -45,6 +47,15 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
      */
     VOTING(10003, Voting::class.java),
 
+    /**
+     * 请求 fetch log
+     */
+    FETCH(20000, Fetcher::class.java),
+
+    /**
+     * fetch 结果
+     */
+    FETCH_RESPONSE(20001, FetchResponse::class.java),
     ;
 
     companion object {

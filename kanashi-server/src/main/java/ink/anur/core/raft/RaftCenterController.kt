@@ -3,7 +3,7 @@ package ink.anur.core.raft
 import ink.anur.common.KanashiRunnable
 import ink.anur.config.ElectConfiguration
 import ink.anur.config.InetSocketAddressConfiguration
-import ink.anur.core.raft.gao.GenerationAndOffset
+import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.exception.KanashiException
 import ink.anur.mutex.ReentrantLocker

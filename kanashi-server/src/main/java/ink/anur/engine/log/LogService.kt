@@ -1,9 +1,9 @@
-package ink.anur.log
+package ink.anur.engine.log
 
 import ink.anur.config.LogConfiguration
 import ink.anur.core.raft.ElectionMetaService
 import ink.anur.core.raft.RaftCenterController
-import ink.anur.core.raft.gao.GenerationAndOffset
+import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.debug.Debugger
 import ink.anur.exception.LogException
 import ink.anur.inject.Event
@@ -13,7 +13,6 @@ import ink.anur.inject.NigateListener
 import ink.anur.inject.NigatePostConstruct
 import ink.anur.log.common.FetchDataInfo
 import ink.anur.log.common.LogUtil
-import ink.anur.log.persistence.Log
 import ink.anur.log.persistence.LogSegment
 import ink.anur.mutex.ReentrantReadWriteLocker
 import ink.anur.pojo.log.Operation

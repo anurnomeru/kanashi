@@ -1,6 +1,6 @@
 package ink.anur.log.common
 
-import ink.anur.core.raft.gao.GenerationAndOffset
+import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.pojo.log.Operation
 
 /**
