@@ -28,7 +28,10 @@ class EventDriverPoolHandler : SimpleChannelInboundHandler<ByteBuffer>() {
             }
 
             val typeEnum = RequestTypeEnum.parseByByteSign(sign)
-            logger.info("<--- 收到了类型为 $typeEnum 的消息")
+
+            if (typeEnum!=RequestTypeEnum.HEAT_BEAT){
+                logger.info("<--- 收到了类型为 $typeEnum 的消息")
+            }
             EventDriverPool.offer(Request(msg, typeEnum, ctx.channel()))
         } else {
             logger.error("Channel HandlerContext or its byte buffer in pipeline is null")

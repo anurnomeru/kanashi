@@ -9,6 +9,7 @@ import ink.anur.exception.UnKnownNodeException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
+import ink.anur.pojo.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
 import org.slf4j.LoggerFactory
 import java.util.HashMap
@@ -70,7 +71,9 @@ class ResponseProcessCentreService {
             if (channel == null) {
                 return NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
             }
-            logger.info("---> 发送了类型为 ${body.getRequestType()} 的消息")
+            if (body.getRequestType() != RequestTypeEnum.HEAT_BEAT) {
+                logger.info("---> 发送了类型为 ${body.getRequestType()} 的消息")
+            }
             channel.write(Unpooled.copyInt(body.totalSize()))
             body.writeIntoChannel(channel)
             channel.flush()
