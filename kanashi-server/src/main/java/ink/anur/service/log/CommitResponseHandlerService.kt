@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentSkipListMap
  * Created by Anur IjuoKaruKas on 2020/3/17
  *
  * 在集群成员收到COMMIT 消息时,需要回复一个 COMMIT RESPONSE,表明自己的 fetch 进度
+ *
  */
 @NigateBean
 class CommitResponseHandlerService : AbstractRequestMapping() {

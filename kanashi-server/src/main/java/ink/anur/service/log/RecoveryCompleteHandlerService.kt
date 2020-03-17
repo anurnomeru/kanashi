@@ -45,11 +45,10 @@ class RecoveryCompleteHandlerService : AbstractRequestMapping() {
             logService.discardAfter(clusterGAO)
         }
 
-        logger.info("集群已经恢复正常，开始通知 Fetcher 进行日志同步")
-
         /*
          * 当集群同步完毕，通知 RECOVERY_COMPLETE
          */
         nigateListenerService.onEvent(Event.RECOVERY_COMPLETE)
+        logger.info("集群已经恢复正常，RECOVERY 完成")
     }
 }

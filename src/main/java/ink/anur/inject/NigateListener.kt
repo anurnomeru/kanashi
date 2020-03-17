@@ -23,27 +23,12 @@ enum class Event {
     CLUSTER_INVALID,
 
     /**
+     * leader 已经 fetch 了所有的遗失进度
+     */
+    LEADER_FETCH_COMPLETE,
+
+    /**
      * 当集群日志恢复完毕
      */
     RECOVERY_COMPLETE,
-
-    /**
-     * 当协调器连接上 leader
-     */
-    COORDINATE_CONNECT_TO_LEADER,
-
-    /**
-     * 当协调器与 leader 断开连接
-     */
-    COORDINATE_DISCONNECT_FROM_LEADER,
-
-    /**
-     * 当协调器连接上 某节点
-     */
-    COORDINATE_CONNECT_TO,
-
-    /**
-     * 当协调器与 某节点 断开连接
-     */
-    COORDINATE_DISCONNECT_TO,
 }

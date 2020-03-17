@@ -142,7 +142,6 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                          * 2、移除 MAPPING
                          */
                         val requestType = responseRequestRegister[operationTypeEnum]!!
-                        logger.trace("收到来自节点 {} 关于 {} 的 response", serverName, requestType.name)
 
                         if (StringUtil.isNullOrEmpty(serverName)) {
                             throw NetWorkException("收到了来自已断开连接节点 $serverName 关于 ${requestType.name} 的无效 response")
