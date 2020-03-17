@@ -28,7 +28,7 @@ import java.util.function.Consumer
  * leader 负责集群日志恢复的控制器
  */
 @NigateBean
-class LeaderClusterRecoveryService : Resetable, AbstractFetcher() {
+class ClusterRecoveryService : Resetable, AbstractFetcher() {
 
     private val logger = Debugger(this.javaClass)
 

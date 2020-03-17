@@ -69,7 +69,7 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
     /**
      * 表示已经recovery完毕
      */
-    RECOVERY_RESPONSE(20003, RecoveryComplete::class.java),
+    RECOVERY_COMPLETE(20003, RecoveryComplete::class.java),
 
     /**
      * 告知 follower 已经可以commit了
