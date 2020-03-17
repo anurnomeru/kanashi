@@ -1,5 +1,6 @@
 package ink.anur.inject
 
+import ink.anur.common.KanashiExecutors
 import ink.anur.exception.NigateListenerException
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
@@ -15,20 +16,27 @@ class NigateListenerService {
     private val EVENT_POOL = mutableMapOf<Event, MutableList<ListenerContainer>>()
 
     fun registerListenEvent(bean: Any) {
-        val methods = bean.javaClass.methods
+        val methods = bean.javaClass.declaredMethods
+        for (method in bean.javaClass.methods) {
+            doRegisterListenEvent(method, bean)
+        }
         for (method in methods) {
-            for (annotation in method.annotations) {
-                if (annotation.annotationClass == NigateListener::class) {
-                    if (method.annotatedParameterTypes.isNotEmpty()) {
-                        throw NigateListenerException("bean ${bean.javaClass} 的监听方法 ${method.name} 不能有参数！")
-                    }
-                    annotation as NigateListener
-                    val onEvent = annotation.onEvent
-                    EVENT_POOL.compute(onEvent) { _, l ->
-                        val list = l ?: mutableListOf()
-                        list.add(ListenerContainer(bean, method))
-                        return@compute list
-                    }
+            doRegisterListenEvent(method, bean)
+        }
+    }
+
+    private fun doRegisterListenEvent(method: Method, bean: Any) {
+        for (annotation in method.annotations) {
+            if (annotation.annotationClass == NigateListener::class) {
+                if (method.annotatedParameterTypes.isNotEmpty()) {
+                    throw NigateListenerException("bean ${bean.javaClass} 的监听方法 ${method.name} 不能有参数！")
+                }
+                annotation as NigateListener
+                val onEvent = annotation.onEvent
+                EVENT_POOL.compute(onEvent) { _, l ->
+                    val list = l ?: mutableListOf()
+                    list.add(ListenerContainer(bean, method))
+                    return@compute list
                 }
             }
         }
@@ -39,7 +47,11 @@ class NigateListenerService {
         logger
         val mutableList = EVENT_POOL[onEvent] ?: return
         for (listenerContainer in mutableList) {
-            listenerContainer.onEvent()
+            KanashiExecutors.execute(
+                Runnable {
+                    listenerContainer.onEvent()
+                }
+            )
         }
     }
 

@@ -77,6 +77,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
 
     init {
         responseRequestRegister[RequestTypeEnum.REGISTER_RESPONSE] = RequestTypeEnum.REGISTER
+        responseRequestRegister[RequestTypeEnum.RECOVERY_RESPONSE] = RequestTypeEnum.RECOVERY_REPORTER
         responseRequestRegister[RequestTypeEnum.FETCH_RESPONSE] = RequestTypeEnum.FETCH
     }
 

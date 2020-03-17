@@ -12,7 +12,7 @@ import io.netty.channel.Channel;
  * <p>
  * 用于向协调 Leader 拉取消息，并告知自己的提交进度
  */
-public class Fetcher extends AbstractTimedStruct {
+public class Fetch extends AbstractTimedStruct {
 
     public static final int FetchGenerationOffset = AbstractTimedStruct.Companion.getTimestampOffset() + AbstractTimedStruct.Companion.getTimestampLength();
 
@@ -24,7 +24,7 @@ public class Fetcher extends AbstractTimedStruct {
 
     public static final int BaseMessageOverhead = FetchOffsetOffset + FetchOffsetLength;
 
-    public Fetcher(GenerationAndOffset fetchGAO) {
+    public Fetch(GenerationAndOffset fetchGAO) {
         init(BaseMessageOverhead, RequestTypeEnum.FETCH, buffer -> {
             buffer.putLong(fetchGAO.getGeneration());
             buffer.putLong(fetchGAO.getOffset());
@@ -32,7 +32,7 @@ public class Fetcher extends AbstractTimedStruct {
         });
     }
 
-    public Fetcher(ByteBuffer byteBuffer) {
+    public Fetch(ByteBuffer byteBuffer) {
         this.setBuffer(byteBuffer);
     }
 

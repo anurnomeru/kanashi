@@ -8,8 +8,12 @@ import ink.anur.pojo.common.AbstractStruct
 import ink.anur.exception.KanashiException
 import ink.anur.pojo.coordinate.Canvass
 import ink.anur.pojo.HeartBeat
+import ink.anur.pojo.log.Commit
+import ink.anur.pojo.log.CommitResponse
+import ink.anur.pojo.log.RecoveryComplete
+import ink.anur.pojo.log.RecoveryReporter
 import ink.anur.pojo.server.FetchResponse
-import ink.anur.pojo.server.Fetcher
+import ink.anur.pojo.server.Fetch
 import java.util.HashMap
 
 /**
@@ -50,12 +54,34 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
     /**
      * 请求 fetch log
      */
-    FETCH(20000, Fetcher::class.java),
+    FETCH(20000, Fetch::class.java),
 
     /**
      * fetch 结果
      */
     FETCH_RESPONSE(20001, FetchResponse::class.java),
+
+    /**
+     * 上报recovery进度
+     */
+    RECOVERY_REPORTER(20002, RecoveryReporter::class.java),
+
+    /**
+     * 表示已经recovery完毕
+     */
+    RECOVERY_RESPONSE(20003, RecoveryComplete::class.java),
+
+    /**
+     * 告知 follower 已经可以commit了
+     * <p>
+     * 集群成员收到 COMMIT 消息时,需要回复一个 COMMIT RESPONSE,表明自己的 commit 进度, leader
+     */
+    COMMIT(20004, Commit::class.java),
+
+    /**
+     * 当收到leader发来的可提交进度时,进行进度提交,并且进行当前最大提交进度的回包
+     */
+    COMMIT_RESPONSE(20005, CommitResponse::class.java)
     ;
 
     companion object {

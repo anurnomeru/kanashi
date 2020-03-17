@@ -158,8 +158,9 @@ class RaftCenterController : KanashiRunnable() {
      */
     private fun becomeLeader() {
         return reentrantLocker.lockSupplier {
-            electionMetaService.becomeLeader()
             this.cancelAllTask()
+            electionMetaService.becomeLeader()
+            logger.info("开始给集群内的节点发送心跳包")
             this.initHeartBeatTask()
         }
     }

@@ -8,7 +8,7 @@ import ink.anur.engine.log.prelog.ByteBufPreLogService
 import ink.anur.inject.NigateInject
 import ink.anur.mutex.ReentrantReadWriteLocker
 import ink.anur.pojo.server.FetchResponse
-import ink.anur.pojo.server.Fetcher
+import ink.anur.pojo.server.Fetch
 import ink.anur.timewheel.TimedTask
 import ink.anur.timewheel.Timer
 import org.slf4j.LoggerFactory
@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantLock
  *
  * 负责创建拉取日志的任务
  */
-abstract class LogFetcher : ReentrantReadWriteLocker() {
+abstract class AbstractFetcher : ReentrantReadWriteLocker() {
 
     private var logger = LoggerFactory.getLogger(this::class.java)
 
@@ -118,7 +118,7 @@ abstract class LogFetcher : ReentrantReadWriteLocker() {
         try {
             fetchPreLogTask?.takeIf { !it.isCancel }?.run {
                 requestProcessCentreService.send(fetchFrom,
-                    Fetcher(byteBufPreLogService.getPreLogGAO()),
+                    Fetch(byteBufPreLogService.getPreLogGAO()),
                     RequestExtProcessor({
                         readLocker {
                             val fetchResponse = FetchResponse(it)
