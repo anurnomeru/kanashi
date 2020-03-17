@@ -17,7 +17,6 @@ import kotlin.random.Random
 import com.sun.deploy.util.URLUtil.getPort
 import java.net.InetSocketAddress
 
-
 /**
  * Created by Anur IjuoKaruKas on 2020/2/25
  *
@@ -65,7 +64,6 @@ class RegisterHandleService : AbstractRequestMapping() {
 
         channelService
             .register(KanashiNode(serverName, inetSocket.address.hostAddress, inetSocket.port), channel)
-
         msgCenterService.send(serverName, RegisterResponse())
     }
 

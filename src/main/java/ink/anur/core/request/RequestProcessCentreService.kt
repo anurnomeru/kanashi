@@ -25,6 +25,9 @@ import io.netty.util.internal.StringUtil
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
+import java.util.function.BiFunction
+import javax.security.auth.callback.Callback
+import kotlin.system.exitProcess
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/24
@@ -59,11 +62,6 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
     private val requestMappingRegister = mutableMapOf<RequestTypeEnum, RequestMapping>()
 
     /**
-     * 注册所有请求的”回复“的映射
-     */
-    private val responseRequestRegister = mutableMapOf<RequestTypeEnum, RequestTypeEnum>()
-
-    /**
      * 此 map 确保对一个服务发送某个消息，在收到回复之前，不可以再次对其发送消息。（有自动重发机制）
      */
     @Volatile
@@ -75,11 +73,8 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
     @Volatile
     private var reSendTask = mutableMapOf<String, MutableMap<RequestTypeEnum, TimedTask?>>()
 
-    init {
-        responseRequestRegister[RequestTypeEnum.REGISTER_RESPONSE] = RequestTypeEnum.REGISTER
-        responseRequestRegister[RequestTypeEnum.RECOVERY_COMPLETE] = RequestTypeEnum.RECOVERY_REPORTER
-        responseRequestRegister[RequestTypeEnum.FETCH_RESPONSE] = RequestTypeEnum.FETCH
-    }
+    @Volatile
+    private var responseCallback = mutableMapOf<RequestTypeEnum, MutableList<RequestExtProcessor>>()
 
     @NigatePostConstruct
     private fun init() {
@@ -131,27 +126,27 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                 } -> try {
                     val requestMapping = requestMappingRegister[operationTypeEnum]
                     if (requestMapping != null) {
+
                         requestMapping.handleRequest(serverName, msg, channel)// 收到正常的请求
+
+                        responseCallback[operationTypeEnum]?.also {
+                            writeLocker {
+                                val iterator = it.iterator()
+                                while (iterator.hasNext()) {
+                                    val requestExtProcessor = iterator.next()
+                                    requestExtProcessor.complete()
+                                    val inFlightRequestType = requestExtProcessor.requestType
+
+                                    removing(inFlight, serverName, inFlightRequestType)?.complete()
+                                    removing(reSendTask, serverName, inFlightRequestType)?.cancel()
+                                    iterator.remove()
+                                }
+                            }
+                        }
+
                     } else {
-
-                        /*
-                         *  默认请求处理，也就是 response 处理
-                         * response 的处理非常简单：
-                         *
-                         * 1、触发 complete
-                         * 2、移除 MAPPING
-                         */
-                        val requestType = responseRequestRegister[operationTypeEnum]!!
-
-                        if (StringUtil.isNullOrEmpty(serverName)) {
-                            throw NetWorkException("收到了来自已断开连接节点 $serverName 关于 ${requestType.name} 的无效 response")
-                        }
-
-                        readLockSupplier { getting(inFlight, serverName, requestType) }?.complete(msg)
-                        writeLocker {
-                            removing(inFlight, serverName, requestType)?.complete()
-                            removing(reSendTask, serverName, requestType)?.cancel()
-                        }
+                        logger.error("类型 $operationTypeEnum 消息没有定制化 requestMapping ！！！")
+                        System.exit(1)
                     }
 
                 } catch (e: Exception) {
@@ -172,15 +167,27 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
     fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor = RequestExtProcessor(), keepCurrentSendTask: Boolean = true, keepError: Boolean = false): Boolean {
         val typeEnum = msg.getRequestType()
 
+        // 标记此次请求时什么请求类型
+        requestProcessor.requestType = typeEnum
+
         // 可以选择 keepCurrentSendTask = false 强制取消上次的任务
         return if (getting(inFlight, serverName, typeEnum)?.inFlight() == true && keepCurrentSendTask) {
-            logger.debug("尝试创建发送到节点 $serverName 的 $typeEnum 任务失败，上次的指令还未收到 response")
+            logger.debug("尝试创建发送到节点 $serverName 的 $typeEnum 任务失败，上次的指令还未收到 response，如果想要在发送时覆盖上次的同类型发送请求，请设置 keepCurrentSendTask = false")
             false
         } else {
             writeLocker {
                 // 发送之前，移除之前可能遗留的任务
                 removing(inFlight, serverName, typeEnum)?.complete()
                 removing(reSendTask, serverName, typeEnum)?.cancel()
+                requestProcessor.listenOnRequestTypeEnum?.let {
+                    responseCallback.compute(
+                        it, BiFunction { _, v ->
+                        val callBackList = v ?: mutableListOf()
+                        callBackList.add(requestProcessor)
+                        return@BiFunction callBackList
+                    })
+                }
+
             }
             val error = sendImpl(serverName, msg, typeEnum, requestProcessor)
             if (keepError && error != null) {
@@ -199,19 +206,22 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
             throwable = msgSendService.doSend(serverName, command)
 
             when (requestProcessor.requestProcessType) {
-                // 只需要发送的类型直接移除重发任务
+                // 只需要发送一次的类型
                 RequestProcessType.SEND_ONCE -> {
-                } // ignore
 
-                // 需要发送并收到回复，但是不需要重发
-                RequestProcessType.SEND_ONCE_THEN_NEED_RESPONSE -> {
-                    writeLocker {
-                        computing(inFlight, serverName, requestTypeEnum, requestProcessor)
+                    // 如果不需要回复，直接触发其 complete
+                    if (requestProcessor.listenOnRequestTypeEnum == null) {
+                        requestProcessor.complete()
                     }
-                }
+                } // ignore
 
                 // 需要发送并收到回复，也需要重发
                 RequestProcessType.SEND_UNTIL_RESPONSE -> {
+                    if (requestProcessor.listenOnRequestTypeEnum == null) {
+                        logger.error("发送消息出现异常！！需要重复发的任务必须监听 response，否则会无限发下去！")
+                        exitProcess(1)
+                    }
+
                     writeLocker {
                         val task = TimedTask(coordinateConfig.getReSendBackOfMs()) { sendImpl(serverName, command, requestTypeEnum, requestProcessor) }
                         computing(inFlight, serverName, requestTypeEnum, requestProcessor)

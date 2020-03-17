@@ -40,9 +40,6 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
     @NigateInject
     private lateinit var msgCenterService: RequestProcessCentreService
 
-    @NigateInject
-    private lateinit var nigateListenerService: NigateListenerService
-
     init {
         Nigate.injectOnly(this)
     }
@@ -51,24 +48,11 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
         super.channelActive(ctx)
 
         logger.info("正在向节点 $node 发送注册请求")
-        val connectCDL = CountDownLatch(1)
         channelService.register(node, ctx!!.channel())
 
         val register = Register(inetConfig.getLocalServerName())
-        msgCenterService.send(node.serverName, register, RequestExtProcessor({
-            connectCDL.countDown()
-            if (node.serverName == Constant.SERVER) {
-                nigateListenerService.onEvent(Event.REGISTER_TO_SERVER)
-            }
-            logger.info("与节点 $node 的连接已建立")
-        }, RequestProcessType.SEND_ONCE_THEN_NEED_RESPONSE), false)
-
-//        Timer.getInstance().addTask(TimedTask(0) {
-//            if (!connectCDL.await(2, TimeUnit.SECONDS)) {
-//                ctx.close()
-//                throw NetWorkException("尝试连接服务 $node 失败，两秒内没有收到注册回复！")
-//            }
-//        })
+        // TODO 这里可能有bug 如果server处理失败这里将无法连接
+        msgCenterService.send(node.serverName, register, RequestExtProcessor(), false
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {

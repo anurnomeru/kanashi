@@ -11,11 +11,6 @@ enum class RequestProcessType {
     SEND_ONCE,
 
     /**
-     * 只需要回复，但不需要重发
-     */
-    SEND_ONCE_THEN_NEED_RESPONSE,
-
-    /**
      * 一直重发到收到回复为止
      */
     SEND_UNTIL_RESPONSE

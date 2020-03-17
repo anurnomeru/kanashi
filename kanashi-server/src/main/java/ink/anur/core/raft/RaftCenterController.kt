@@ -375,8 +375,7 @@ class RaftCenterController : KanashiRunnable() {
                                 logger.debug("正向节点 {} [{}:{}] 发送世代 {} 的拉票请求...", kanashiNode.serverName, kanashiNode.host, kanashiNode.port, electionMetaService.generation)
                             }
 
-                            msgCenterService.send(kanashiNode.serverName,
-                                Canvass(electionMetaService.generation))
+                            msgCenterService.send(kanashiNode.serverName, Canvass(electionMetaService.generation))
                         }
 
                     val timedTask = TimedTask(VOTES_BACK_OFF_MS, Runnable {

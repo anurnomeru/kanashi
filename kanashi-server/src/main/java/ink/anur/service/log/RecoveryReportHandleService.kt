@@ -103,10 +103,7 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
         RecoveryTimer = TimeUtil.getTime()
 
         if (!electionMetaService.isLeader()) {
-            requestProcessCentreService.send(
-                electionMetaService.leader!!,
-                RecoveryReporter(byteBufPreLogService.getCommitGAO())
-            )
+            requestProcessCentreService.send(electionMetaService.leader!!, RecoveryReporter(byteBufPreLogService.getCommitGAO()))
         } else {
             // 当项目选主成功后，子节点需启动协调控制器去连接主节点
             // 将 recoveryComplete 设置为真，表示正在集群正在日志恢复
@@ -195,7 +192,7 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
      */
     private fun sendFetchMessage(myVersion: Long, fetchFrom: String) {
         locker.writeLockSupplier {
-            if (!super.isCancel()){
+            if (!super.isCancel()) {
                 requestProcessCentreService.send(fetchFrom, Fetch(byteBufPreLogService.getPreLogGAO()))
             }
         }
