@@ -123,7 +123,6 @@ class ByteBufPreLogService : ReentrantReadWriteLocker() {
 
             // 需要提交的进度小于等于preLogOffset
             if (compareResult <= 0) {
-                logger.trace("收到来自 Leader 节点的无效 commit 请求 => {}，本地预日志 commit 进度 {} 已经大于等于此请求。", GAO.toString(), commitOffset.toString())
                 return@writeLocker
             } else {
                 val canCommit = readLockSupplierCompel { if (GAO > preLogOffset) preLogOffset else GAO }

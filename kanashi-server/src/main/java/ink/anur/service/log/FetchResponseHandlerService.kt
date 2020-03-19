@@ -53,10 +53,10 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
 
 
         if (!electionMetaService.isLeader()) {
+
             /**
              * 普通节点收到了日志，只需要简单将其追加到 byteBufPreLog 即可
              */
-
             logger.trace("收到节点 {} 返回的 FETCH_RESPONSE", fromServer)
             if (fetchResponse.fileOperationSetSize == 0) return
             byteBufPreLogService.append(fetchResponse.generation, fetchResponse.read())
@@ -85,10 +85,10 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
                     val offset = it.offset
                     val fetchToOffset = fetchTo!!.offset
                     if (offset == fetchToOffset) {// 如果已经同步完毕，则通知集群同步完成
-                        nigateListenerService.onEvent(Event.LEADER_FETCH_COMPLETE)
 
 //                    cancelTask() TODO
 //                    shuttingWhileRecoveryComplete()
+                        nigateListenerService.onEvent(Event.LEADER_FETCH_COMPLETE)
                     }
                 }
             }

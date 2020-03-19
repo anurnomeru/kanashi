@@ -37,7 +37,6 @@ class CommitHandlerService : AbstractRequestMapping() {
     override fun handleRequest(fromServer: String, msg: ByteBuffer, channel: Channel) {
         val commit = Commit(msg)
 
-        logger.trace("收到来自协调 Leader {} 的 commit 请求 {} ", fromServer, commit.canCommitGAO)
         byteBufPreLogService.commit(commit.canCommitGAO)
 
         val commitGAO = byteBufPreLogService.getCommitGAO()
