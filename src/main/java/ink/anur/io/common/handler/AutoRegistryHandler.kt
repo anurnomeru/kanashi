@@ -52,7 +52,7 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
 
         val register = Register(inetConfig.getLocalServerName())
         // TODO 这里可能有bug 如果server处理失败这里将无法连接
-        msgCenterService.send(node.serverName, register, RequestExtProcessor(), false
+        msgCenterService.send(node.serverName, register, RequestExtProcessor(), false)
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {
