@@ -123,15 +123,15 @@ class ByteBufPreLogService : ReentrantReadWriteLocker() {
 
             // 需要提交的进度小于等于preLogOffset
             if (compareResult <= 0) {
-                logger.trace("收到来自 Leader 节点的无效 Commit 请求 => {}，本地预日志 commit 进度 {} 已经大于等于此请求。", GAO.toString(), commitOffset.toString())
+                logger.trace("收到来自 Leader 节点的无效 commit 请求 => {}，本地预日志 commit 进度 {} 已经大于等于此请求。", GAO.toString(), commitOffset.toString())
                 return@writeLocker
             } else {
                 val canCommit = readLockSupplierCompel { if (GAO > preLogOffset) preLogOffset else GAO }
 
                 if (canCommit == commitOffset) {
-                    logger.debug("收到来自 Leader 节点的有效 Commit 请求，本地预日志最大为 {} ，故可提交到 {} ，但本地已经提交此进度。", preLogOffset.toString(), canCommit!!.toString())
+                    logger.debug("收到来自 Leader 节点的有效 commit 请求，本地预日志最大为 {} ，故可提交到 {} ，但本地已经提交此进度。", preLogOffset.toString(), canCommit!!.toString())
                 } else {
-                    logger.debug("收到来自 Leader 节点的有效 Commit 请求，本地预日志最大为 {} ，故可提交到 {}", preLogOffset.toString(), canCommit!!.toString())
+                    logger.debug("收到来自 Leader 节点的有效 commit 请求，本地预日志最大为 {} ，故可提交到 {}", preLogOffset.toString(), canCommit!!.toString())
 
                     val preLogMeta = getBefore(canCommit) ?: throw LogException("有bug请注意排查！！，不应该出现这个情况")
 

@@ -81,12 +81,6 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
     private lateinit var byteBufPreLogService: ByteBufPreLogService
 
     @NigateInject
-    private lateinit var electMetaService: ElectionMetaService
-
-    @NigateInject
-    private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
-
-    @NigateInject
     private lateinit var nigateListenerService: NigateListenerService
 
     @NigateInject
@@ -114,19 +108,25 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
 
         // 当集群可用时， leader节点会受到一个来自自己的 recovery Report
         if (electionMetaService.isLeader()) {
-            this.receive(electMetaService.leader!!, byteBufPreLogService.getCommitGAO())
+            this.receive(electionMetaService.leader!!, byteBufPreLogService.getCommitGAO())
         } else {
             // 如果不是 leader，则需要各个节点汇报自己的 log 进度，给 leader 发送  recovery Report
             requestProcessCentreService.send(electionMetaService.leader!!, RecoveryReporter(byteBufPreLogService.getCommitGAO()))
         }
     }
 
+    @NigateListener(onEvent = Event.RECOVERY_COMPLETE)
+    private fun whileRecoveryComplete() {
+        if (!electionMetaService.isLeader()) {
+            startToFetchFrom(electionMetaService.leader!!)
+        }
+    }
 
     @NigateListener(onEvent = Event.CLUSTER_INVALID)
     override fun reset() {
         logger.debug("RecoveryReportHandlerService RESET is triggered")
         locker.writeLocker {
-            cancelTask()
+            super.cancelTask()
             RecoveryMap.clear()
             recoveryComplete = false
             RecoveryTimer = TimeUtil.getTime()
@@ -166,9 +166,8 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
         logger.info("节点 $serverName 提交了其最大进度 $latestGao ")
         RecoveryMap[serverName] = latestGao
 
-
         if (!recoveryComplete) {
-            if (RecoveryMap.size >= electMetaService.quorum) {
+            if (RecoveryMap.size >= electionMetaService.quorum) {
                 var latest: MutableMap.MutableEntry<String, GenerationAndOffset>? = null
 
                 // 找寻提交的所有的提交的 GAO 里面最大的
@@ -206,6 +205,7 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
      * 新建一个 Fetcher 用于拉取消息，将其发送给 Leader，并在收到回调后，调用 CONSUME_FETCH_RESPONSE 消费回调，且重启拉取定时任务
      */
     private fun startToFetchFrom(fetchFrom: String) {
+        logger.info("开始向 $fetchFrom fetch 消息 -->")
         rebuildTask { requestProcessCentreService.send(fetchFrom, Fetch(byteBufPreLogService.getPreLogGAO())) }
     }
 

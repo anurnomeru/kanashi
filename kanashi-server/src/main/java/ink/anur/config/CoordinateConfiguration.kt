@@ -10,6 +10,6 @@ import ink.anur.inject.NigateBean
 @NigateBean
 class CoordinateConfiguration : ConfigHelper(), CoordinateConfig {
     override fun getReSendBackOfMs(): Long {
-        return getConfig(ConfigurationEnum.COORDINATE_FETCH_BACK_OFF_MS) { Integer.valueOf(it) } as Long
+        return (getConfig(ConfigurationEnum.COORDINATE_FETCH_BACK_OFF_MS) { it } as String).toLong()
     }
 }

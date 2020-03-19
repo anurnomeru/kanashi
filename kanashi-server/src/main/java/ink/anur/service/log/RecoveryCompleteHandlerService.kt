@@ -49,6 +49,6 @@ class RecoveryCompleteHandlerService : AbstractRequestMapping() {
          * 当集群同步完毕，通知 RECOVERY_COMPLETE
          */
         nigateListenerService.onEvent(Event.RECOVERY_COMPLETE)
-        logger.info("集群已经恢复正常，RECOVERY 完成")
+        logger.info("收到 LEADER 告知 -> 集群已经恢复正常，RECOVERY 完成")
     }
 }
