@@ -34,8 +34,8 @@ open class EngineResult {
      */
     private var kanashiEntry: ByteBufferKanashiEntry? = null
 
-    fun setKanashiEntry(hanabiEntry: ByteBufferKanashiEntry) {
-        this.kanashiEntry = hanabiEntry
+    fun setKanashiEntry(kanashiEntry: ByteBufferKanashiEntry) {
+        this.kanashiEntry = kanashiEntry
     }
 
     fun getKanashiEntry(): ByteBufferKanashiEntry? = kanashiEntry?.takeIf { it.getOperateType() == ByteBufferKanashiEntry.Companion.OperateType.ENABLE }

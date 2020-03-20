@@ -47,7 +47,7 @@ class MemoryLSMService {
 
         when {
             /*
-             * 因 hanabiEntry 过大， 单 k-v 映射  ->  一个块
+             * 因 kanashiEntry 过大， 单 k-v 映射  ->  一个块
              * 故将此数据单独存到一个 MemoryLSM中，并位列当前lsm树之后
              */
             expectedSize > FullMemoryAccess -> {
@@ -65,7 +65,7 @@ class MemoryLSMService {
                 }
                 chainCount++
 
-                logger.info("由于 HanabiEntry 过大，MemoryLSMService 将为其单独分配一个 block，已进行扩容，现拥有 {} 个 block", chainCount)
+                logger.info("由于 kanashiEntry 过大，MemoryLSMService 将为其单独分配一个 block，已进行扩容，现拥有 {} 个 block", chainCount)
             }
             /*
              * 如果达到阈值，则创建新的lsm块
@@ -79,7 +79,7 @@ class MemoryLSMService {
                 firstChain = memoryLSMChain
 
                 chainCount++
-                logger.info("在插入新 HanabiEntry size[{}] 后，block 大小 [{}] 将超过阈值 {}，" +
+                logger.info("在插入新 kanashiEntry size[{}] 后，block 大小 [{}] 将超过阈值 {}，" +
                     " MemoryLSMService 将新增一个 block，已进行扩容，现拥有 {} 个 block", expectedSize, firstChain.nextChain!!.memoryAssess, FullMemoryAccess, chainCount)
             }
             /*

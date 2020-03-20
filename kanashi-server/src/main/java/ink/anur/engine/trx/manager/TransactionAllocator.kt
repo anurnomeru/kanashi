@@ -19,6 +19,8 @@ class TransactionAllocator {
 
     /**
      * 申请一个递增的事务id
+     *
+     * TODO 后续再考虑不够用的情况
      */
     internal fun allocate(): Long {
         val trx = nowTrx

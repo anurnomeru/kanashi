@@ -70,7 +70,7 @@ class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
     }
 
     @NigatePostConstruct
-    private fun init(){
+    private fun init() {
         this.start()
     }
 
@@ -94,19 +94,20 @@ class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
      * 而且，基于隔离性，且要实现可重复读
      */
     fun queryKeyInTrx(trxId: Long, key: String, waterMarker: WaterMarker): ByteBufferKanashiEntry? {
-        var verAndHanabiEntry = dataKeeper[key]
+        var verAndKanashiEntry = dataKeeper[key]
         val waterHolder = waterMarker.waterHolder
 
-        while (verAndHanabiEntry != null) {
+        while (verAndKanashiEntry != null) {
 
+
+            if (
             // NONE 代表不需要创建快照，而且这种短事务查询，到了这一层肯定是可见的，只要查到就可以返回
-            if (waterMarker == WaterMarker.NONE ||
-
+                waterMarker == WaterMarker.NONE ||
                 // 如果是长事务，则要求事务小于当前事务，且在创建时已经提交，才是可见的
-                verAndHanabiEntry.trxId <= trxId && !waterHolder.isActivateTrx(verAndHanabiEntry.trxId)) {
-                return verAndHanabiEntry.hanabiEntry
+                verAndKanashiEntry.trxId <= trxId && !waterHolder.isActivateTrx(verAndKanashiEntry.trxId)) {
+                return verAndKanashiEntry.kanashiEntry
             }
-            verAndHanabiEntry = verAndHanabiEntry.currentVersion
+            verAndKanashiEntry = verAndKanashiEntry.currentVersion
         }
         return null
     }
@@ -115,7 +116,7 @@ class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
      * 将 uc 部分的数据提交到 mvcc 临界控制区，这部分需要做好隔离性控制
      */
     fun commonOperate(trxId: Long, pairs: List<VerAndKanashiEntryWithKeyPair>) {
-        logger.debug("事务 {} 已经进入 MVCC 临界控制区，其所属的所有 key {} 将进入 commit part ", trxId, pairs)
+//        logger.trace("事务 {} 已经进入 MVCC 临界控制区，其所属的所有 key {} 将进入 commit part ", trxId, pairs)
         for (pair in pairs) {
             locker.lockSupplier {
                 synchronized(pair.key) {
@@ -144,8 +145,8 @@ class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
             currentVer.trxId < removeEntry.trxId -> // 找到更小的也没必要继续找下去了
                 return
             currentVer.trxId == removeEntry.trxId -> {// 只需要提交最新的key即可
-                memoryLSMService.put(key, currentVer.hanabiEntry)
-                logger.debug("由事务 {} 提交的 key [{}] 正式提交到 LSM 树，此 key 上早于 {} 的事务将失效", currentVer.trxId, key, currentVer.trxId)
+                memoryLSMService.put(key, currentVer.kanashiEntry)
+//                logger.trace("由事务 {} 提交的 key [{}] 正式提交到 LSM 树，此 key 上早于 {} 的事务将失效", currentVer.trxId, key, currentVer.trxId)
                 prev.currentVersion = null// 抹除当前版本
                 currentVer.currentVersion = null// 将小于此版本的抹除
             }

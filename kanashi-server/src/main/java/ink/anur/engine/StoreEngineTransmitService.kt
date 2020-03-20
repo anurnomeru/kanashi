@@ -49,6 +49,8 @@ class StoreEngineTransmitService {
 
         try {
 
+            var selectOperate = false
+
             /*
              * common 操作比较特殊，它直接会有些特殊交互，比如开启一个事务，关闭一个事务等。
              */
@@ -56,7 +58,7 @@ class StoreEngineTransmitService {
                 CommandTypeEnum.COMMON -> {
                     when (dataHandler.getApi()) {
                         CommonApiTypeEnum.START_TRX -> {
-                            logger.trace("事务 [{}] 已经开启", trxId)
+//                            logger.trace("事务 [{}] 已经开启", trxId)
                             return engineExecutor.engineResult
                         }
                         CommonApiTypeEnum.COMMIT_TRX -> {
@@ -72,7 +74,8 @@ class StoreEngineTransmitService {
                 CommandTypeEnum.STR -> {
                     when (dataHandler.getApi()) {
                         StrApiTypeEnum.SELECT -> {
-                            doQuery(engineExecutor)
+                            selectOperate = true
+                            engineDataQueryer.doQuery(engineExecutor)
                         }
                         StrApiTypeEnum.DELETE -> {
                             doAcquire(engineExecutor, ByteBufferKanashiEntry.Companion.OperateType.DISABLE)
@@ -89,7 +92,7 @@ class StoreEngineTransmitService {
                                 }
                         }
                         StrApiTypeEnum.SET_NOT_EXIST -> {
-                            doQuery(engineExecutor)
+                            engineDataQueryer.doQuery(engineExecutor)
                             engineExecutor.kanashiEntry()
                                 ?.also {
                                     doAcquire(engineExecutor, ByteBufferKanashiEntry.Companion.OperateType.ENABLE)
@@ -97,7 +100,7 @@ class StoreEngineTransmitService {
                                 ?: also { engineExecutor.shotFailure() }
                         }
                         StrApiTypeEnum.SET_IF -> {
-                            doQuery(engineExecutor)
+                            engineDataQueryer.doQuery(engineExecutor)
                             val currentValue = engineExecutor.kanashiEntry()?.getValue()
                             val expectValue = dataHandler.extraParams[0]
 
@@ -111,7 +114,7 @@ class StoreEngineTransmitService {
                 }
             }
 
-            if (dataHandler.shortTransaction) doCommit(trxId)
+            if (dataHandler.shortTransaction && !selectOperate) doCommit(trxId)
         } catch (e: Throwable) {
             logger.error("存储引擎执行出错，将执行回滚，原因 [{}]", e.message)
             e.printStackTrace()
@@ -121,12 +124,6 @@ class StoreEngineTransmitService {
         }
 
         return engineExecutor.engineResult
-    }
-
-    private fun doQuery(engineExecutor: EngineExecutor) {
-        engineDataQueryer.doQuery(engineExecutor)
-        logger.trace("事务 [${engineExecutor.getDataHandler().getTrxId()}] 对 key [${engineExecutor.getDataHandler().key}] 进行了查询操作" +
-            " 数据位于 ${engineExecutor.engineResult.queryExecutorDefinition} 值为 ==> {${engineExecutor.kanashiEntry()}}")
     }
 
     /**
@@ -142,7 +139,7 @@ class StoreEngineTransmitService {
         trxFreeQueuedSynchronizer.acquire(trxId, dataHandler.key) {
             memoryMVCCStorageUnCommittedPart.commonOperate(dataHandler)
         }
-        logger.trace("事务 [{}] 将 key [{}] 设置为了新值", trxId, engineExecutor.getDataHandler().key)
+//        logger.trace("事务 [{}] 将 key [{}] 设置为了新值", trxId, engineExecutor.getDataHandler().key)
     }
 
     /**
@@ -156,7 +153,8 @@ class StoreEngineTransmitService {
             keys?.let { memoryMVCCStorageUnCommittedPart.flushToCommittedPart(trxId, it) }
             transactionManageService.releaseTrx(trxId)
         }
-        logger.trace("事务 [{}] 已经提交", trxId)
+
+//        logger.trace("事务 [{}] 已经提交", trxId)
     }
 
     private fun doRollBack(trxId: Long) {

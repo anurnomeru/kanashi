@@ -78,7 +78,7 @@ class WaterHolder {
             null -> logger.error("重复释放事务？？？？？？？？？？？？？？？？？？？？？")
             else -> {
                 trxSegment.release(TrxId)
-                logger.debug("事务 $TrxId 已经释放")
+//                logger.trace("事务 $TrxId 已经释放")
 
                 var releaseSegment = false
                 var releaseLowWaterMark = false
@@ -93,8 +93,8 @@ class WaterHolder {
                 // 如果当前操作的是最小的段，最小段发生操作，则有可能会更新最小水位，此时需要推送一下当前提交的最小事务
                 val isMinSeg = waterHolder.firstEntry()?.value?.let { it == trxSegment } ?: false
                 if (isMinSeg) {
-                    logger.debug("当前最小事务段 start[${waterHolder.firstEntry().value.start}] 已经释放元素，" +
-                            "最小事务为 [${waterHolder.firstEntry().value.minTrx()}]")
+//                    logger.trace("当前最小事务段 start[${waterHolder.firstEntry().value.start}] 已经释放元素，" +
+//                            "最小事务为 [${waterHolder.firstEntry().value.minTrx()}]")
                     releaseLowWaterMark = true
                 }
                 return WaterReleaseResult(releaseSegment, releaseLowWaterMark)

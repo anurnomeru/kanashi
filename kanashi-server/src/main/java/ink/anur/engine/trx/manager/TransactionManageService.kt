@@ -18,9 +18,6 @@ import java.util.concurrent.LinkedBlockingDeque
 class TransactionManageService {
 
     @NigateInject
-    private lateinit var transactionAllocator: TransactionAllocator
-
-    @NigateInject
     private lateinit var waterMarkRegistry: WaterMarkRegistry
 
     private val logger = Debugger(this.javaClass)
@@ -28,13 +25,6 @@ class TransactionManageService {
     private val recycler = mutableListOf<ReentrantReadWriteLocker>()
     private val notifyQueue = LinkedBlockingDeque<Long>()
     private val waterHolder = WaterHolder()
-
-    /**
-     * 申请一个事务id
-     */
-    fun allocateTrx(): Long {
-        return transactionAllocator.allocate()
-    }
 
     /**
      * 激活一个递增的事务id，代表这个事务id是已经正式开始投入使用了，处于 “待提交水位”
@@ -53,7 +43,7 @@ class TransactionManageService {
             if (!waterHolder.activateTrx(trxId)) {
                 logger.error("事务 [$trxId] 不应该被激活，因为已经激活过了")
             }
-            logger.trace("事务 [$trxId] 已经激活")
+//            logger.trace("事务 [$trxId] 已经激活")
         }
     }
 

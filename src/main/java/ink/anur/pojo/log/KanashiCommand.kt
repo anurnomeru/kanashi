@@ -20,6 +20,12 @@ import javax.annotation.concurrent.NotThreadSafe
 class KanashiCommand(val content: ByteBuffer) {
 
     companion object {
+
+        /**
+         * 代表不需要事务（短查询）
+         */
+        const val NON_TRX = Long.MAX_VALUE
+
         const val TrxIdOffset = 0
         const val TrxIdLength = 8
 
@@ -41,7 +47,7 @@ class KanashiCommand(val content: ByteBuffer) {
          */
         const val ValuesSizeLength = 4
 
-        fun generator(trxId: Long, transactionSign: TransactionTypeEnum, commandType: CommandTypeEnum, api: Byte, vararg values: String = arrayOf("")): KanashiCommand {
+        fun generator(trxId: Long?, transactionSign: TransactionTypeEnum, commandType: CommandTypeEnum, api: Byte, vararg values: String = arrayOf("")): KanashiCommand {
             if (values.isEmpty()) {
                 throw KanashiException("不允许生成值为空数组的命令！至少要传一个含有空字符串的数组")
             }
@@ -52,7 +58,7 @@ class KanashiCommand(val content: ByteBuffer) {
                 ValuesSizeOffset
                     + valuesSizeLengthTotal
                     + valuesByteArr.map { it.size }.reduce(operation = { i1, i2 -> i1 + i2 }))
-            bb.putLong(trxId)
+            bb.putLong(trxId ?: NON_TRX)
             bb.put(api)
             bb.put(commandType.byte)
             bb.put(transactionSign.byte)

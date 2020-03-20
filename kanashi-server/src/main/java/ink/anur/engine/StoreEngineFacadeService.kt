@@ -1,5 +1,6 @@
 package ink.anur.engine
 
+import ink.anur.common.KanashiExecutors
 import ink.anur.common.KanashiRunnable
 import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.debug.Debugger
@@ -39,6 +40,16 @@ class StoreEngineFacadeService : KanashiRunnable() {
     override fun run() {
         // 启动锁
 
+        KanashiExecutors.execute(Runnable {
+            var currentNum = counter
+            while (true) {
+                Thread.sleep(1000)
+                var nowNum = counter
+                logger.debug("| - 存储引擎控制中心 - | 每秒流速 ->> ${nowNum - currentNum}")
+                currentNum = nowNum
+            }
+        })
+
         logger.error("| - 存储引擎控制中心 - | 已经启动")
         while (true) {
             val take = queue.take()
@@ -52,7 +63,8 @@ class StoreEngineFacadeService : KanashiRunnable() {
         }
     }
 
-    private val counter = AtomicInteger()
+    @Volatile
+    private var counter: Int = 0
 
     /**
      * 检查是否需要阻塞
@@ -67,7 +79,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
             lock.unlock()
             blockCheckIter(Gao)
         } else {
-            if (counter.incrementAndGet() % 100000 == 0) logger.info("| - 存储引擎控制中心 - | 当前最新提交进度为： ${latestCommitted}，消费进度为：${Gao} ")
+            if (counter++ % 100000 == 0) logger.info("| - 存储引擎控制中心 - | 当前最新提交进度为： ${latestCommitted}，消费进度为：${Gao} ")
         }
     }
 

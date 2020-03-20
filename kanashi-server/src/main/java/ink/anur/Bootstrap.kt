@@ -2,6 +2,7 @@ package ink.anur
 
 import ink.anur.config.BootstrapConfiguration
 import ink.anur.engine.log.LogService
+import ink.anur.engine.trx.manager.TransactionAllocator
 import ink.anur.inject.Nigate
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.KanashiCommand
@@ -32,11 +33,17 @@ object Bootstrap {
             Thread.sleep(5000)
 
 //            for (i in 0..99999999) {
-            for (i in 0..5000) {
+            for (i in 0..1000000) {
+
+                val transactionAllocator = Nigate.getBeanByClass(TransactionAllocator::class.java)
+
+//                val operation = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
+//                    KanashiCommand.generator(
+//                        transactionAllocator.allocate(), TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, "kanashiValue-中文-"))
 
                 val operation = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
                     KanashiCommand.generator(
-                        99, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, "HanabiValue-中文-"))
+                        Long.MAX_VALUE, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SELECT))
 
                 val logService = Nigate.getBeanByClass(LogService::class.java)
                 logService.appendWhileClusterValid(operation)
