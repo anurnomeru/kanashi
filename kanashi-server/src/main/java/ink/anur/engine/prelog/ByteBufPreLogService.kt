@@ -44,7 +44,7 @@ class ByteBufPreLogService : ReentrantReadWriteLocker() {
 
     @NigatePostConstruct(dependsOn = "LogService")
     private fun init() {
-        this.commitOffset = logService.getInitial()
+        this.commitOffset = logService.getInitialGAO()
         this.preLogOffset = commitOffset
         logger.info("预日志初始化成功，预日志将由 {} 开始", commitOffset!!.toString())
     }

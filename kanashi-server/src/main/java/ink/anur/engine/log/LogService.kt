@@ -401,7 +401,7 @@ class LogService {
         logger.info("世代 $generation 没有任何日志，将其删除")
     }
 
-    fun getInitial(): GenerationAndOffset {
+    fun getInitialGAO(): GenerationAndOffset {
         return initial
     }
 }

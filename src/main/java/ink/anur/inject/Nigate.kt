@@ -89,8 +89,12 @@ object Nigate {
         fun register(bean: Any, alias: String? = null): String {
             val clazz = bean.javaClass
             val actualName = if (alias == null || alias == UNDEFINE_ALIAS) clazz.simpleName else alias
-            val duplicate = NAME_TO_BEAN_MAPPING.putIfAbsent(actualName, bean)
-            duplicate?.also { throw DuplicateBeanException("bean $clazz 存在重复注册的情况，请使用 @NigateBean(name = alias) 为其中一个起别名") }
+
+            if (NAME_TO_BEAN_MAPPING[actualName] != null) {
+                throw DuplicateBeanException("bean $clazz 存在重复注册的情况，请使用 @NigateBean(name = alias) 为其中一个起别名")
+            }
+
+            NAME_TO_BEAN_MAPPING[actualName] = bean
             BEAN_TO_NAME_MAPPING[bean] = actualName
 
             BEAN_CLASS_MAPPING.compute(bean.javaClass) { _, v ->
@@ -184,6 +188,8 @@ object Nigate {
         }
 
         fun postConstruct(beans: MutableCollection<Any>, onStartUp: Boolean) {
+            val removes = mutableListOf<Any>()
+
             for (bean in beans) {
                 for (memberFunction in bean::class.memberFunctions) {
                     for (annotation in memberFunction.annotations) {
@@ -191,7 +197,8 @@ object Nigate {
                             annotation as NigatePostConstruct
                             val dependsOn = NAME_TO_BEAN_MAPPING[annotation.dependsOn]
                             if (annotation.dependsOn != "-NONE-" && !HAS_BEEN_POSTCONTROL.contains(dependsOn)) {
-                                dependsOn ?: throw NoSuchBeanException("$bean 依赖的 bean ${annotation.dependsOn} 不存在")
+                                dependsOn
+                                    ?: throw NoSuchBeanException("$bean 依赖的 bean ${annotation.dependsOn} 不存在")
                                 LAZY_POSTCONTROL_BEAN[bean] = dependsOn
                                 if (LAZY_POSTCONTROL_BEAN[dependsOn] != null && LAZY_POSTCONTROL_BEAN[dependsOn] == bean) {
                                     throw NigateException("bean ${BEAN_TO_NAME_MAPPING[dependsOn]} 与 ${BEAN_TO_NAME_MAPPING[bean]} 的 @NigatePostConstruct 构成了循环依赖！")
@@ -199,7 +206,9 @@ object Nigate {
                             } else {
 
                                 HAS_BEEN_POSTCONTROL.add(bean)
-                                LAZY_POSTCONTROL_BEAN.remove(bean)
+                                removes.add(
+                                    bean
+                                )
 
                                 try {
                                     memberFunction.isAccessible = true
@@ -218,6 +227,10 @@ object Nigate {
                     }
                 }
             }
+            for (remove in removes) {
+                LAZY_POSTCONTROL_BEAN.remove(remove)
+            }
+
             if (LAZY_POSTCONTROL_BEAN.keys.size > 0) {
                 postConstruct(LAZY_POSTCONTROL_BEAN.keys, onStartUp)
             }

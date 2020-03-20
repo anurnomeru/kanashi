@@ -2,7 +2,7 @@ package ink.anur.core.raft
 
 import ink.anur.common.struct.KanashiNode
 import ink.anur.config.InetSocketAddressConfiguration
-import ink.anur.core.raft.gao.GenerationAndOffsetService
+import ink.anur.engine.log.LogService
 import ink.anur.inject.Event
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
@@ -25,7 +25,7 @@ class ElectionMetaService {
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
 
     @NigateInject
-    private lateinit var generationAndOffsetService: GenerationAndOffsetService
+    private lateinit var logService: LogService
 
     @NigateInject
     private lateinit var kanashiListenerService: NigateListenerService
@@ -35,9 +35,9 @@ class ElectionMetaService {
     /**
      * 启动后将之前保存的 GAO 进度重新加载回内存
      */
-    @NigatePostConstruct
+    @NigatePostConstruct(dependsOn = "LogService")
     private fun init() {
-        val initialGAO = generationAndOffsetService.getInitialGAO()
+        val initialGAO = logService.getInitialGAO()
         this.generation = initialGAO.generation
         this.offset = initialGAO.offset
     }
