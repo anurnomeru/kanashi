@@ -7,7 +7,7 @@ import ink.anur.engine.processor.EngineExecutor
 import ink.anur.engine.queryer.EngineDataQueryer
 import ink.anur.engine.result.EngineResult
 import ink.anur.engine.trx.lock.TrxFreeQueuedSynchronizer
-import ink.anur.engine.trx.manager.TrxManageService
+import ink.anur.engine.trx.manager.TransactionManageService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.pojo.log.ByteBufferKanashiEntry
@@ -34,7 +34,7 @@ class StoreEngineTransmitService {
     private lateinit var trxFreeQueuedSynchronizer: TrxFreeQueuedSynchronizer
 
     @NigateInject
-    private lateinit var trxManageService: TrxManageService
+    private lateinit var transactionManageService: TransactionManageService
 
     @NigateInject
     private lateinit var memoryMVCCStorageUnCommittedPart: MemoryMVCCStorageUnCommittedPart
@@ -154,7 +154,7 @@ class StoreEngineTransmitService {
     private fun doCommit(trxId: Long) {
         trxFreeQueuedSynchronizer.release(trxId) { keys ->
             keys?.let { memoryMVCCStorageUnCommittedPart.flushToCommittedPart(trxId, it) }
-            trxManageService.releaseTrx(trxId)
+            transactionManageService.releaseTrx(trxId)
         }
         logger.trace("事务 [{}] 已经提交", trxId)
     }

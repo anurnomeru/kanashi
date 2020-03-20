@@ -1,13 +1,11 @@
 package ink.anur.engine.processor
 
-import ink.anur.debug.Debugger
-import ink.anur.engine.trx.manager.TrxManageService
+import ink.anur.engine.trx.manager.TransactionManageService
 import ink.anur.engine.trx.watermark.WaterMarkRegistry
 import ink.anur.engine.trx.watermark.common.WaterMarker
 import ink.anur.exception.WaterMarkCreationException
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
-import ink.anur.inject.NigatePostConstruct
 import ink.anur.pojo.log.ByteBufferKanashiEntry
 import ink.anur.pojo.log.KanashiCommand
 import ink.anur.pojo.log.base.LogItem
@@ -24,20 +22,11 @@ import java.rmi.UnexpectedException
  */
 class DataHandler(val operation: LogItem) {
 
-    companion object {
-        val logger = Debugger(DataHandler.javaClass)
+    @NigateInject
+    private lateinit var waterMarkRegistry: WaterMarkRegistry
 
-        @NigateInject
-        private lateinit var waterMarkRegistry: WaterMarkRegistry
-
-        @NigateInject
-        private lateinit var trxManageService: TrxManageService
-
-        @NigatePostConstruct
-        private fun init() {
-            Nigate.injectOnly(this)
-        }
-    }
+    @NigateInject
+    private lateinit var transactionManageService: TransactionManageService
 
     /////////////////////////////////////////// init
 
@@ -69,14 +58,15 @@ class DataHandler(val operation: LogItem) {
     private val byteBufferHanabiEntry: ByteBufferKanashiEntry
 
     init {
+        Nigate.injectOnly(this)
         val trxId = getTrxId()
         waterMarker = waterMarkRegistry.findOut(trxId)
         // 如果没有水位快照，代表此事务从未激活过，需要去激活一下
         if (waterMarker == WaterMarker.NONE) {
             if (shortTransaction) {
-                trxManageService.activateTrx(trxId, false)
+                transactionManageService.activateTrx(trxId, false)
             } else {
-                trxManageService.activateTrx(trxId, true)
+                transactionManageService.activateTrx(trxId, true)
 
                 // 从事务控制器申请激活该事务
                 waterMarker = waterMarkRegistry.findOut(trxId)

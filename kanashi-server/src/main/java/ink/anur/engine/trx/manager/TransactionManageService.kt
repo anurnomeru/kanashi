@@ -15,10 +15,10 @@ import java.util.concurrent.LinkedBlockingDeque
  * 事务管理器，包括获取自增的事务id，释放事务id，获取当前活跃的最小事务等
  */
 @NigateBean
-class TrxManageService {
+class TransactionManageService {
 
     @NigateInject
-    private lateinit var trxAllocator: TrxAllocator
+    private lateinit var transactionAllocator: TransactionAllocator
 
     @NigateInject
     private lateinit var waterMarkRegistry: WaterMarkRegistry
@@ -33,7 +33,7 @@ class TrxManageService {
      * 申请一个事务id
      */
     fun allocateTrx(): Long {
-        return trxAllocator.allocate()
+        return transactionAllocator.allocate()
     }
 
     /**
@@ -83,7 +83,7 @@ class TrxManageService {
     }
 
     /**
-     * TrxManageService 的所有操作都是要获取锁的，这里的锁使用分段锁，间隔为64个事务
+     * TransactionManageService 的所有操作都是要获取锁的，这里的锁使用分段锁，间隔为64个事务
      *
      * 这里传入事务“头”，也就是64取余，来获取一个读写锁
      */

@@ -9,10 +9,10 @@ import ink.anur.inject.NigateBean
  * 专门用于 leader 来生成事务id
  */
 @NigateBean
-class TrxAllocator {
+class TransactionAllocator {
 
     companion object {
-        const val StartTrx: Long = 1
+        const val StartTrx: Long = Long.MIN_VALUE
     }
 
     private var nowTrx: Long = StartTrx

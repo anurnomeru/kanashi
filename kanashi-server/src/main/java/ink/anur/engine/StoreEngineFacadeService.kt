@@ -7,6 +7,7 @@ import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.log.common.OperationAndGAO
 import ink.anur.engine.log.CommitProcessManageService
+import ink.anur.inject.NigatePostConstruct
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
@@ -30,11 +31,13 @@ class StoreEngineFacadeService : KanashiRunnable() {
     private val lock = ReentrantLock()
     private val pauseLatch = lock.newCondition()
 
+    @NigatePostConstruct
+    private fun init() {
+        this.start()
+    }
+
     override fun run() {
         // 启动锁
-        lock.lock()
-        pauseLatch.await()
-        lock.unlock()
 
         logger.error("| - 存储引擎控制中心 - | 已经启动")
         while (true) {

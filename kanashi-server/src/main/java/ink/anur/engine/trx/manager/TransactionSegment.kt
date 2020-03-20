@@ -7,7 +7,7 @@ import kotlin.math.max
 /**
  * 为了避免事务太多，导致列表太大，故采用分段，类似于位图的思想
  */
-class TrxSegment(anyElse: Long) {
+class TransactionSegment(anyElse: Long) {
 
     /**
      * 标记此事务第一位的事务id，比如为 100
@@ -30,8 +30,8 @@ class TrxSegment(anyElse: Long) {
     /**
      * 拷贝一份，快照用
      */
-    fun copyOf(): TrxSegment {
-        val neo = TrxSegment(start)
+    fun copyOf(): TransactionSegment {
+        val neo = TransactionSegment(start)
         neo.trxBitMap = trxBitMap
         neo.releaseBitMap = releaseBitMap
         return neo

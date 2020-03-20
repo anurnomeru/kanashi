@@ -1,8 +1,8 @@
 package ink.anur.engine.trx.watermark.common
 
 import ink.anur.debug.Debugger
-import ink.anur.engine.trx.manager.TrxAllocator
-import ink.anur.engine.trx.manager.TrxSegment
+import ink.anur.engine.trx.manager.TransactionAllocator
+import ink.anur.engine.trx.manager.TransactionSegment
 import java.util.*
 import kotlin.Comparator
 import kotlin.math.absoluteValue
@@ -33,7 +33,7 @@ class WaterHolder {
         }
     }
 
-    private val waterHolder = TreeMap<Long, TrxSegment>(Comparator { o1, o2 -> o1.compareTo(o2) })
+    private val waterHolder = TreeMap<Long, TransactionSegment>(Comparator { o1, o2 -> o1.compareTo(o2) })
 
     /**
      * 为每个事务创建一个未提交的事务的水位快照
@@ -64,7 +64,7 @@ class WaterHolder {
         val head = genSegmentHead(TrxId)
 
         // 将事务扔进水位
-        if (!waterHolder.contains(head)) waterHolder[head] = TrxSegment(TrxId)
+        if (!waterHolder.contains(head)) waterHolder[head] = TransactionSegment(TrxId)
         return waterHolder[head]!!.activate(TrxId)
     }
 
@@ -108,7 +108,7 @@ class WaterHolder {
      * 获取的最小的有效的事务
      */
     fun lowWaterMark(): Long {
-        return waterHolder.firstEntry()?.value?.minTrx() ?: TrxAllocator.StartTrx
+        return waterHolder.firstEntry()?.value?.minTrx() ?: TransactionAllocator.StartTrx
     }
 
 }

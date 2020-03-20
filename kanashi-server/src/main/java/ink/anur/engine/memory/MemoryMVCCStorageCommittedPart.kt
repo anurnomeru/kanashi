@@ -4,7 +4,7 @@ import ink.anur.common.KanashiRunnable
 import ink.anur.debug.Debugger
 import ink.anur.engine.common.VerAndKanashiEntry
 import ink.anur.engine.common.VerAndKanashiEntryWithKeyPair
-import ink.anur.engine.trx.manager.TrxManageService
+import ink.anur.engine.trx.manager.TransactionManageService
 import ink.anur.engine.trx.watermark.common.WaterMarker
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentSkipListMap
 class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
 
     @NigateInject
-    private lateinit var trxManageService: TrxManageService
+    private lateinit var transactionManageService: TransactionManageService
 
 
     @NigateInject
@@ -30,9 +30,9 @@ class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
 
 
     override fun run() {
-        logger.info("MVCC 临界控制区已经启动，等待从水位控制 TrxManageService 获取最新提交水位，并将数据提交到 LSM")
+        logger.info("MVCC 临界控制区已经启动，等待从水位控制 TransactionManageService 获取最新提交水位，并将数据提交到 LSM")
         while (true) {
-            val takeNotify = trxManageService.takeNotify()
+            val takeNotify = transactionManageService.takeNotify()
 
             // 拿到小于等于当前最低水位的部分
             val headMap = holdKeysMapping.headMap(takeNotify, true)
