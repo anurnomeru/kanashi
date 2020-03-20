@@ -1,4 +1,4 @@
-package ink.anur.engine.log.common
+package ink.anur.engine.log
 
 import ink.anur.config.LogConfiguration
 import ink.anur.core.raft.ElectionMetaService
@@ -99,7 +99,7 @@ class LogService {
         logger.info("初始化日志管理器，当前最大进度为 {}", init.toString())
 
         appendLock.switchOff()
-        logger.info("追加入口关闭~")
+        logger.info("log-service 追加入口关闭~")
 
         initial = init
         currentGAO = init
@@ -124,7 +124,7 @@ class LogService {
     @NigateListener(onEvent = Event.CLUSTER_INVALID)
     private fun onClusterInvalid() {
         appendLock.switchOff()
-        logger.info("追加入口关闭~")
+        logger.info("log-service 追加入口关闭~")
 //     * TODO 这里可能不太对
 //            if (isLeaderCurrent) {
 //                CommitProcessManager.discardInvalidMsg()
@@ -137,7 +137,7 @@ class LogService {
     @NigateListener(onEvent = Event.RECOVERY_COMPLETE)
     private fun onRecoveryComplete() {
         appendLock.switchOn()
-        logger.info("追加入口关闭~")
+        logger.info("log-service 追加入口开启~")
     }
 
     /**

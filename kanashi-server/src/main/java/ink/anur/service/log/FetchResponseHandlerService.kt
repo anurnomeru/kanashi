@@ -3,8 +3,8 @@ package ink.anur.service.log
 import ink.anur.core.common.AbstractRequestMapping
 import ink.anur.core.raft.ElectionMetaService
 import ink.anur.debug.Debugger
-import ink.anur.engine.log.common.LogService
-import ink.anur.engine.log.prelog.ByteBufPreLogService
+import ink.anur.engine.log.LogService
+import ink.anur.engine.prelog.ByteBufPreLogService
 import ink.anur.inject.Event
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject

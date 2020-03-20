@@ -11,19 +11,19 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 
-
 /**
  * Created by Anur IjuoKaruKas on 2019/10/10
  *
  * 存储引擎唯一对外开放的入口, 这使得存储引擎可以高内聚
- *
- * // todo 标记消费进度!!
  */
 @NigateBean
 class StoreEngineFacadeService : KanashiRunnable() {
 
     @NigateInject
     private lateinit var commitProcessManageService: CommitProcessManageService
+
+    @NigateInject
+    private lateinit var storeEngineTransmitService: StoreEngineTransmitService
 
     private val logger = Debugger(this::class.java)
     private val queue = LinkedBlockingQueue<OperationAndGAO>()
@@ -42,7 +42,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
 
             try {
                 blockCheckIter(take.GAO)
-//                EngineDataFlowController.commandInvoke(take.logItem) TODO
+                storeEngineTransmitService.commandInvoke(take.logItem)
             } catch (e: Exception) {
                 e.printStackTrace()
             }

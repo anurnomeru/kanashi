@@ -5,8 +5,7 @@ import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
-import ink.anur.engine.log.prelog.ByteBufPreLogService
-import ink.anur.engine.log.common.LogService
+import ink.anur.engine.prelog.ByteBufPreLogService
 import ink.anur.inject.Event
 import ink.anur.inject.NigateListener
 import ink.anur.mutex.ReentrantReadWriteLocker

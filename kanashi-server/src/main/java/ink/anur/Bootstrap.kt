@@ -1,7 +1,7 @@
 package ink.anur
 
 import ink.anur.config.BootstrapConfiguration
-import ink.anur.engine.log.common.LogService
+import ink.anur.engine.log.LogService
 import ink.anur.inject.Nigate
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.KanashiCommand
@@ -32,7 +32,8 @@ object Bootstrap {
 
             Thread.sleep(5000)
 
-            for (i in 0..99999999) {
+//            for (i in 0..99999999) {
+            for (i in 0..5000) {
 
                 val operation = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
                     KanashiCommand.generator(

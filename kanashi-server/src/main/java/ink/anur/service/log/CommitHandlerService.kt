@@ -3,7 +3,7 @@ package ink.anur.service.log
 import ink.anur.core.common.AbstractRequestMapping
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.debug.Debugger
-import ink.anur.engine.log.prelog.ByteBufPreLogService
+import ink.anur.engine.prelog.ByteBufPreLogService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.pojo.enumerate.RequestTypeEnum
