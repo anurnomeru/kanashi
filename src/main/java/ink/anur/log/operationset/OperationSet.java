@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.channels.GatheringByteChannel;
 import java.util.Collection;
 import java.util.Iterator;
-import ink.anur.pojo.log.Operation;
+import ink.anur.pojo.log.base.LogItem;
 import ink.anur.log.common.OperationAndOffset;
 
 /**
@@ -23,21 +23,21 @@ public abstract class OperationSet {
     /**
      * The size of a message set containing the given operationCollections
      *
-     * 循环 operationCollection，得出里面所有 Operation 在装载完 LogOverhead 后的大小
-     * 注意，这里在每个 Operation 的前面还预留了 LogOverhead 的大小
+     * 循环 logItemCollection，得出里面所有 LogItem 在装载完 LogOverhead 后的大小
+     * 注意，这里在每个 LogItem 的前面还预留了 LogOverhead 的大小
      */
-    public static int messageSetSize(Collection<Operation> operationCollection) {
-        return operationCollection.stream()
-                                  .map(OperationSet::entrySize)
-                                  .reduce(Integer::sum)
-                                  .orElse(0);
+    public static int messageSetSize(Collection<LogItem> logItemCollection) {
+        return logItemCollection.stream()
+                                .map(OperationSet::entrySize)
+                                .reduce(Integer::sum)
+                                .orElse(0);
     }
 
     /**
      * The size of a size-delimited entry in a operationSet
      */
-    public static int entrySize(Operation operation) {
-        return LogOverhead + operation.size();
+    public static int entrySize(LogItem logItem) {
+        return LogOverhead + logItem.size();
     }
 
     /**

@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.stream.Stream;
 import ink.anur.exception.LogException;
-import ink.anur.pojo.log.Operation;
+import ink.anur.pojo.log.base.LogItem;
 import ink.anur.log.common.OperationAndOffset;
 import ink.anur.util.IteratorTemplate;
 
@@ -40,13 +40,13 @@ public class ByteBufferOperationSet extends OperationSet {
     /**
      * 一个日志将要被append到日志之前，需要进行的操作
      */
-    public ByteBufferOperationSet(Operation operation, long offset) {
-        int size = operation.size();
+    public ByteBufferOperationSet(LogItem logItem, long offset) {
+        int size = logItem.size();
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(size + LogOverhead);
         byteBuffer.putLong(offset);
         byteBuffer.putInt(size);
-        byteBuffer.put(operation.getByteBuffer());
+        byteBuffer.put(logItem.getByteBuffer());
 
         byteBuffer.rewind();
         this.byteBuffer = byteBuffer;
@@ -117,7 +117,7 @@ public class ByteBufferOperationSet extends OperationSet {
 
                 location += LogOverhead + size;
 
-                return new OperationAndOffset(new Operation(operation), offset);
+                return new OperationAndOffset(new LogItem(operation), offset);
             }
         };
     }
@@ -129,13 +129,13 @@ public class ByteBufferOperationSet extends OperationSet {
     public static Stream<ByteBufferOperationSet> cast(Collection<OperationAndOffset> operations) {
         return operations.parallelStream()
                          .map(oao -> {
-                             int allocate = oao.getOperation()
+                             int allocate = oao.getLogItem()
                                                .totalSize();
                              ByteBuffer byteBuffer = ByteBuffer.allocate(allocate + LogOverhead);
                              byteBuffer.putLong(oao.getOffset());
-                             byteBuffer.putInt(oao.getOperation()
+                             byteBuffer.putInt(oao.getLogItem()
                                                   .totalSize());
-                             byteBuffer.put(oao.getOperation()
+                             byteBuffer.put(oao.getLogItem()
                                                .getByteBuffer());
                              byteBuffer.flip();
                              return byteBuffer;
@@ -146,7 +146,7 @@ public class ByteBufferOperationSet extends OperationSet {
     private static ByteBuffer create(Collection<OperationAndOffset> operations) {
         int count = operations.size();
         int needToAllocate = operations.stream()
-                                       .map(operationAndOffset -> operationAndOffset.getOperation()
+                                       .map(operationAndOffset -> operationAndOffset.getLogItem()
                                                                                     .totalSize())
                                        .reduce(Integer::sum)
                                        .orElse(0);
@@ -154,9 +154,9 @@ public class ByteBufferOperationSet extends OperationSet {
         ByteBuffer byteBuffer = ByteBuffer.allocate(needToAllocate + count * LogOverhead);
         for (OperationAndOffset operation : operations) {
             byteBuffer.putLong(operation.getOffset());
-            byteBuffer.putInt(operation.getOperation()
+            byteBuffer.putInt(operation.getLogItem()
                                        .totalSize());
-            byteBuffer.put(operation.getOperation()
+            byteBuffer.put(operation.getLogItem()
                                     .getByteBuffer());
         }
 

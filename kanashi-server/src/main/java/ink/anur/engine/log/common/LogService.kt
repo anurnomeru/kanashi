@@ -15,7 +15,7 @@ import ink.anur.log.common.FetchDataInfo
 import ink.anur.log.common.LogUtil
 import ink.anur.log.persistence.LogSegment
 import ink.anur.mutex.ReentrantReadWriteLocker
-import ink.anur.pojo.log.Operation
+import ink.anur.pojo.log.base.LogItem
 import ink.anur.log.prelog.PreLogMeta
 import java.io.File
 import java.io.IOException
@@ -132,16 +132,25 @@ class LogService {
     }
 
     /**
+     * 当集群完成recovery，打开追加入口
+     */
+    @NigateListener(onEvent = Event.RECOVERY_COMPLETE)
+    private fun onRecoveryComplete() {
+        appendLock.switchOn()
+        logger.info("追加入口关闭~")
+    }
+
+    /**
      * 追加操作日志到磁盘，只有当集群可用时，才可以进行追加
      */
-    fun appendWhileClusterValid(operation: Operation) {
+    fun appendWhileClusterValid(logItem: LogItem) {
         appendLock.writeLocker {
             explicitLock.writeLocker {
                 val operationId = raftCenterController.genOperationId()
 
                 currentGAO = operationId
                 val log = maybeRoll(operationId.generation, true)
-                log.append(operation, operationId.offset)
+                log.append(logItem, operationId.offset)
             }
         }
     }
@@ -152,7 +161,7 @@ class LogService {
      *
      * 允许插入到以前的世代
      */
-    fun append(gen: Long, offset: Long, operation: Operation) {
+    fun append(gen: Long, offset: Long, logItem: LogItem) {
         explicitLock.writeLocker {
             val insertion = GenerationAndOffset(gen, offset)
             if (insertion > currentGAO) {
@@ -162,7 +171,7 @@ class LogService {
             val log = maybeRoll(gen, false)
 
             // 追加到磁盘
-            log.append(operation, offset)
+            log.append(logItem, offset)
         }
     }
 

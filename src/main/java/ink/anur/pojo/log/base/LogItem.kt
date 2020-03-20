@@ -1,7 +1,8 @@
-package ink.anur.pojo.log
+package ink.anur.pojo.log.base
 
 import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
+import ink.anur.pojo.log.KanashiCommand
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
@@ -10,14 +11,14 @@ import java.nio.charset.Charset
 /**
  * Created by Anur IjuoKaruKas on 2/25/2019
  * <p>
- * Operation 是对应最基本的操作，表示这个操作将被写入日志
+ * LogItem 是对应最基本的操作，表示这个操作将被写入日志
  * <p>
  * 一个Operation由以下部分组成：
  * <p>
  * 　4　   +   4    +    4      + key +    4        +  v
  * CRC32  +  type  + keyLength + key + valueLength +  v
  */
-class Operation : AbstractStruct {
+class LogItem : AbstractStruct {
 
     companion object {
         val KeySizeOffset = AbstractStruct.TypeOffset + AbstractStruct.TypeLength
@@ -110,7 +111,7 @@ class Operation : AbstractStruct {
     }
 
     override fun toString(): String {
-        return "Operation{" +
+        return "LogItem{" +
             "requestType='" + getRequestType() + '\''.toString() +
             ", key='" + key + '\''.toString() +
             ", kanashiEntry='" + kanashiCommand + '\''.toString() +

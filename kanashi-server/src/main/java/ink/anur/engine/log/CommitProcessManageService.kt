@@ -1,4 +1,4 @@
-package ink.anur.engine.persistence
+package ink.anur.engine.log
 
 import ink.anur.config.LogConfiguration
 import ink.anur.pojo.log.common.GenerationAndOffset

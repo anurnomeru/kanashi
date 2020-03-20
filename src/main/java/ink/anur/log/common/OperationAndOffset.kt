@@ -1,8 +1,8 @@
 package ink.anur.log.common
 
-import ink.anur.pojo.log.Operation
+import ink.anur.pojo.log.base.LogItem
 
 /**
  * Created by Anur IjuoKaruKas on 2019/7/12
  */
-class OperationAndOffset(val operation: Operation, val offset: Long)
+class OperationAndOffset(val logItem: LogItem, val offset: Long)

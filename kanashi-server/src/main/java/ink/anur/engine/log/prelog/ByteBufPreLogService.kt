@@ -101,7 +101,7 @@ class ByteBufPreLogService : ReentrantReadWriteLocker() {
                     break
                 }
 
-                byteBufPreLogOperated!!.append(oao.operation, oaoOffset)
+                byteBufPreLogOperated!!.append(oao.logItem, oaoOffset)
                 lastOffset = oaoOffset
             }
 

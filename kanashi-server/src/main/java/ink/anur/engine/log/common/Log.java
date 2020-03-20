@@ -19,7 +19,7 @@ import ink.anur.log.common.OperationAndGAO;
 import ink.anur.log.common.OperationAndOffset;
 import ink.anur.log.operationset.ByteBufferOperationSet;
 import ink.anur.mutex.ReentrantLocker;
-import ink.anur.pojo.log.Operation;
+import ink.anur.pojo.log.base.LogItem;
 import ink.anur.log.prelog.PreLogMeta;
 
 /**
@@ -155,24 +155,24 @@ public class Log extends ReentrantLocker {
     /**
      * 将一个操作添加到日志文件中
      */
-    public void append(Operation operation, long offset) {
+    public void append(LogItem logItem, long offset) {
         if (offset < currentOffset) {
             throw new LogException(String.format("一定是哪里有问题，current %s, append %s", currentOffset, offset));
         }
 
-        LogSegment logSegment = maybeRoll(operation.size());
+        LogSegment logSegment = maybeRoll(logItem.size());
 
-        ByteBufferOperationSet byteBufferOperationSet = new ByteBufferOperationSet(operation, offset);
+        ByteBufferOperationSet byteBufferOperationSet = new ByteBufferOperationSet(logItem, offset);
         try {
             // 追加到磁盘
             logSegment.append(offset, byteBufferOperationSet);
         } catch (IOException e) {
-            throw new LogException("写入日志文件失败：" + operation.toString());
+            throw new LogException("写入日志文件失败：" + logItem.toString());
         }
         currentOffset = offset;
 
         // ×××× 追加到引擎
-        storeEngineFacadeService.append(new OperationAndGAO(operation, new GenerationAndOffset(generation, offset)));
+        storeEngineFacadeService.append(new OperationAndGAO(logItem, new GenerationAndOffset(generation, offset)));
     }
 
     /**
@@ -195,7 +195,7 @@ public class Log extends ReentrantLocker {
                 if (offset <= currentOffset) {
                     continue;
                 }
-                append(operationAndOffset.getOperation(), offset);
+                append(operationAndOffset.getLogItem(), offset);
             }
         } catch (Throwable e) {
             throw new LogException("写入日志文件失败：" + startOffset + " => " + endOffset + " " + e.getMessage());

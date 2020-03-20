@@ -2,7 +2,7 @@ package ink.anur.log.prelog
 
 import ink.anur.log.common.OperationAndOffset
 import ink.anur.mutex.ReentrantLocker
-import ink.anur.pojo.log.Operation
+import ink.anur.pojo.log.base.LogItem
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentNavigableMap
 import java.util.concurrent.ConcurrentSkipListMap
@@ -21,8 +21,8 @@ class ByteBufPreLog(val generation: Long) : ReentrantLocker() {
     /**
      * 将消息添加到内存中
      */
-    fun append(operation: Operation, offset: Long) {
-        preLog[offset] = OperationAndOffset(operation, offset)
+    fun append(logItem: LogItem, offset: Long) {
+        preLog[offset] = OperationAndOffset(logItem, offset)
     }
 
     /**

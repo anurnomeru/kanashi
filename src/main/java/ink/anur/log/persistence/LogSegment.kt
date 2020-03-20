@@ -202,7 +202,7 @@ class LogSegment(val fileOperationSet: FileOperationSet,
             val operationAndOffset = iter.next()
 
             // 校验 CRC
-            operationAndOffset.operation
+            operationAndOffset.logItem
                 .ensureValid()
 
             if (validBytes - lastIndexEntry > indexIntervalBytes) {
@@ -211,7 +211,7 @@ class LogSegment(val fileOperationSet: FileOperationSet,
                 index.append(startOffset, validBytes)
                 lastIndexEntry = validBytes
             }
-            validBytes += (OperationSet.LogOverhead + operationAndOffset.operation
+            validBytes += (OperationSet.LogOverhead + operationAndOffset.logItem
                 .size())
         }
 

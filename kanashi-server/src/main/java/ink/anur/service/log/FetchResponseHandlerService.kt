@@ -79,7 +79,7 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
                 if (start == null) start = it.offset
                 end = it.offset
 
-                logService.append(gen, it.offset, it.operation)
+                logService.append(gen, it.offset, it.logItem)
 
                 if (gen == fetchToGen) {
                     val offset = it.offset

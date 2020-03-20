@@ -6,7 +6,7 @@ import ink.anur.debug.Debugger
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.log.common.OperationAndGAO
-import ink.anur.engine.persistence.CommitProcessManageService
+import ink.anur.engine.log.CommitProcessManageService
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
@@ -42,7 +42,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
 
             try {
                 blockCheckIter(take.GAO)
-//                EngineDataFlowController.commandInvoke(take.operation) TODO
+//                EngineDataFlowController.commandInvoke(take.logItem) TODO
             } catch (e: Exception) {
                 e.printStackTrace()
             }

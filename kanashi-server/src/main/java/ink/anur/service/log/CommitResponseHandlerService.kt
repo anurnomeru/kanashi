@@ -5,7 +5,7 @@ import ink.anur.core.raft.ElectionMetaService
 import ink.anur.debug.Debugger
 import ink.anur.engine.StoreEngineFacadeService
 import ink.anur.engine.log.prelog.ByteBufPreLogService
-import ink.anur.engine.persistence.CommitProcessManageService
+import ink.anur.engine.log.CommitProcessManageService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.mutex.ReentrantReadWriteLocker

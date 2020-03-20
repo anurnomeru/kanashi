@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import ink.anur.exception.LogException;
 import ink.anur.log.common.OffsetAndPosition;
-import ink.anur.pojo.log.Operation;
+import ink.anur.pojo.log.base.LogItem;
 import ink.anur.log.common.OperationAndOffset;
 import ink.anur.util.FileIOUtil;
 import ink.anur.util.IteratorTemplate;
@@ -194,7 +194,7 @@ public class FileOperationSet extends OperationSet {
 
             int messageSize = buffer.getInt(); // 8字节的offset后面紧跟着4字节的这条消息的长度
 
-            if (messageSize < Operation.Companion.getMinMessageOverhead()) {
+            if (messageSize < LogItem.Companion.getMinMessageOverhead()) {
                 throw new IllegalStateException("Invalid message size: " + messageSize);
             }
 
@@ -297,7 +297,7 @@ public class FileOperationSet extends OperationSet {
                 long offset = sizeOffsetBuffer.getLong();
                 int size = sizeOffsetBuffer.getInt();
 
-                if (size < Operation.Companion.getMinMessageOverhead() || location + LogOverhead + size > end) { // 代表消息放不下了
+                if (size < LogItem.Companion.getMinMessageOverhead() || location + LogOverhead + size > end) { // 代表消息放不下了
                     return allDone();
                 }
 
@@ -319,7 +319,7 @@ public class FileOperationSet extends OperationSet {
 
                 // increment the location and return the item
                 location += size + LogOverhead;
-                return new OperationAndOffset(new Operation(buffer), offset);
+                return new OperationAndOffset(new LogItem(buffer), offset);
             }
         };
     }

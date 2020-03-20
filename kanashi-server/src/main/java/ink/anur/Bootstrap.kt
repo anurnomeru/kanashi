@@ -1,7 +1,14 @@
 package ink.anur
 
 import ink.anur.config.BootstrapConfiguration
+import ink.anur.engine.log.common.LogService
 import ink.anur.inject.Nigate
+import ink.anur.pojo.enumerate.RequestTypeEnum
+import ink.anur.pojo.log.KanashiCommand
+import ink.anur.pojo.log.base.LogItem
+import ink.anur.pojo.log.common.CommandTypeEnum
+import ink.anur.pojo.log.common.StrApiTypeEnum
+import ink.anur.pojo.log.common.TransactionTypeEnum
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/22
@@ -19,6 +26,27 @@ object Bootstrap {
         Nigate
 
         var i = 0
+
+
+        try {
+
+            Thread.sleep(5000)
+
+            for (i in 0..99999999) {
+
+                val operation = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
+                    KanashiCommand.generator(
+                        99, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, "HanabiValue-中文-"))
+
+                val logService = Nigate.getBeanByClass(LogService::class.java)
+                logService.appendWhileClusterValid(operation)
+            }
+
+            println("append complete")
+        } catch (e: Exception) {
+            throw e
+        }
+
 
         while (RUNNING) {
             i++

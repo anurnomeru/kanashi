@@ -12,6 +12,7 @@ import ink.anur.pojo.log.Commit
 import ink.anur.pojo.log.CommitResponse
 import ink.anur.pojo.log.RecoveryComplete
 import ink.anur.pojo.log.RecoveryReporter
+import ink.anur.pojo.log.base.LogItem
 import ink.anur.pojo.server.FetchResponse
 import ink.anur.pojo.server.Fetch
 import java.util.HashMap
@@ -81,7 +82,12 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
     /**
      * 当收到leader发来的可提交进度时,进行进度提交,并且进行当前最大提交进度的回包
      */
-    COMMIT_RESPONSE(20005, CommitResponse::class.java)
+    COMMIT_RESPONSE(20005, CommitResponse::class.java),
+
+    /**
+     *  LogItem 是对应最基本的操作，表示这个操作将被写入日志
+     */
+    LOG_ITEM(-100, LogItem::class.java)
     ;
 
     companion object {
