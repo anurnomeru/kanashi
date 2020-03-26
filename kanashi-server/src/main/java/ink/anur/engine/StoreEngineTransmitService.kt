@@ -40,9 +40,8 @@ class StoreEngineTransmitService {
     private lateinit var memoryMVCCStorageUnCommittedPart: MemoryMVCCStorageUnCommittedPart
 
     // 返回值仅用于测试校验
-    fun commandInvoke(opera: LogItem): EngineResult {
-        val engineExecutor = EngineExecutor(EngineResult())
-        val dataHandler = DataHandler(opera)
+    fun commandInvoke(logItem: LogItem, engineExecutor: EngineExecutor = EngineExecutor()) {
+        val dataHandler = DataHandler(logItem)
         engineExecutor.setDataHandler(dataHandler)
 
         var trxId = dataHandler.getTrxId()
@@ -59,11 +58,11 @@ class StoreEngineTransmitService {
                     when (dataHandler.getApi()) {
                         CommonApiTypeEnum.START_TRX -> {
 //                            logger.trace("事务 [{}] 已经开启", trxId)
-                            return engineExecutor.engineResult
+                            return
                         }
                         CommonApiTypeEnum.COMMIT_TRX -> {
                             doCommit(trxId)
-                            return engineExecutor.engineResult
+                            return
                         }
                         CommonApiTypeEnum.ROLL_BACK -> {
 //                            throw RollbackException() todo 还没写
@@ -122,8 +121,6 @@ class StoreEngineTransmitService {
             doRollBack(trxId)
             engineExecutor.exceptionCaught(e)
         }
-
-        return engineExecutor.engineResult
     }
 
     /**

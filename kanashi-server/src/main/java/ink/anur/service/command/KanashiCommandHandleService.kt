@@ -33,6 +33,7 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
         while (iterator.hasNext()){
             val logItemAndOffset = iterator.next()
             val kanashiCommand = logItemAndOffset.logItem.getKanashiCommand()
+            kanashiCommand.getApi()
         }
 
     }

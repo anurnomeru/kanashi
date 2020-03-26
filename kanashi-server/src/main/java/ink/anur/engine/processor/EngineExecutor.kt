@@ -11,13 +11,15 @@ import java.rmi.UnexpectedException
  *
  * 辅助访问访问数据层的媒介
  */
-class EngineExecutor(val engineResult: EngineResult) {
+class EngineExecutor() {
 
     companion object {
         val logger = Debugger(this.javaClass).switch(DebuggerLevel.INFO)
     }
 
     private var dataHandler: DataHandler? = null
+
+    val engineResult: EngineResult = EngineResult()
 
     fun kanashiEntry(): ByteBufferKanashiEntry? = engineResult.getKanashiEntry()
 
