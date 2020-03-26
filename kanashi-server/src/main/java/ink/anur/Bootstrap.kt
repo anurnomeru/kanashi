@@ -37,16 +37,16 @@ object Bootstrap {
 
                 val transactionAllocator = Nigate.getBeanByClass(TransactionAllocator::class.java)
 
-//                val operation = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
+//                val logItem = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
 //                    KanashiCommand.generator(
 //                        transactionAllocator.allocate(), TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, "kanashiValue-中文-"))
 
-                val operation = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
+                val logItem = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
                     KanashiCommand.generator(
                         Long.MAX_VALUE, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SELECT))
 
                 val logService = Nigate.getBeanByClass(LogService::class.java)
-                logService.appendWhileClusterValid(operation)
+                logService.appendWhileClusterValid(logItem)
             }
 
             println("append complete")

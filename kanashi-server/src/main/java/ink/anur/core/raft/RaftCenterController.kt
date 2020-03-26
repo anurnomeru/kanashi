@@ -396,7 +396,7 @@ class RaftCenterController : KanashiRunnable() {
     /**
      * 生成对应一次操作的id号（用于给其他节点发送日志同步消息，并且得到其ack，以便知道消息是否持久化成功）
      */
-    fun genOperationId(): GenerationAndOffset {
+    fun genGenerationAndOffset(): GenerationAndOffset {
         return reentrantLocker.lockSupplierCompel {
             if (electionMetaService.isLeader()) {
                 var gen = electionMetaService.generation

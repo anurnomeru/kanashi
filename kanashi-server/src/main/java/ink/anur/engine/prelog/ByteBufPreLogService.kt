@@ -7,7 +7,7 @@ import ink.anur.exception.LogException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
-import ink.anur.log.operationset.ByteBufferOperationSet
+import ink.anur.log.logitemset.ByteBufferLogItemSet
 import ink.anur.log.prelog.ByteBufPreLog
 import ink.anur.log.prelog.PreLogMeta
 import ink.anur.mutex.ReentrantReadWriteLocker
@@ -74,9 +74,9 @@ class ByteBufPreLogService : ReentrantReadWriteLocker() {
     }
 
     /**
-     * 此添加必须保证一次调用中，ByteBufferOperationSet 所有的操作日志都在同一个世代，实际上也确实如此
+     * 此添加必须保证一次调用中，ByteBufferLogItemSet 所有的操作日志都在同一个世代，实际上也确实如此
      */
-    fun append(generation: Long, byteBufferOperationSet: ByteBufferOperationSet) {
+    fun append(generation: Long, byteBufferLogItemSet: ByteBufferLogItemSet) {
         writeLocker {
             /* 简单检查 */
             if (generation < preLogOffset!!.generation) {
@@ -88,7 +88,7 @@ class ByteBufPreLogService : ReentrantReadWriteLocker() {
                 byteBufPreLog ?: ByteBufPreLog(generation)
             }
 
-            val iterator = byteBufferOperationSet.iterator()
+            val iterator = byteBufferLogItemSet.iterator()
             var lastOffset = -1L
 
             while (iterator.hasNext()) {

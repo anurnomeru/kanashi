@@ -33,7 +33,7 @@ import ink.anur.util.Os;
 /**
  * Created by Anur IjuoKaruKas on 2019/2/27
  *
- * 每个磁盘上 OperationSet 的索引文件，仿照 Kafka OffsetIndex 所写
+ * 每个磁盘上 LogItemSet 的索引文件，仿照 Kafka OffsetIndex 所写
  */
 public class OffsetIndex extends ReentrantLocker {
 

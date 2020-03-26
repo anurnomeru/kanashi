@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package ink.anur.log.operationset;
+package ink.anur.log.logitemset;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.stream.Stream;
 import ink.anur.exception.LogException;
 import ink.anur.pojo.log.base.LogItem;
-import ink.anur.log.common.OperationAndOffset;
+import ink.anur.log.common.LogItemAndOffset;
 import ink.anur.util.IteratorTemplate;
 
 /**
@@ -33,14 +33,14 @@ import ink.anur.util.IteratorTemplate;
  *
  * 仿照 Kafka ByteBufferMessageSet 所写
  */
-public class ByteBufferOperationSet extends OperationSet {
+public class ByteBufferLogItemSet extends LogItemSet {
 
     private ByteBuffer byteBuffer;
 
     /**
      * 一个日志将要被append到日志之前，需要进行的操作
      */
-    public ByteBufferOperationSet(LogItem logItem, long offset) {
+    public ByteBufferLogItemSet(LogItem logItem, long offset) {
         int size = logItem.size();
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(size + LogOverhead);
@@ -52,12 +52,12 @@ public class ByteBufferOperationSet extends OperationSet {
         this.byteBuffer = byteBuffer;
     }
 
-    public ByteBufferOperationSet(ByteBuffer byteBuffer) {
+    public ByteBufferLogItemSet(ByteBuffer byteBuffer) {
         this.byteBuffer = byteBuffer;
     }
 
-    public ByteBufferOperationSet(Collection<OperationAndOffset> operations) {
-        this.byteBuffer = create(operations);
+    public ByteBufferLogItemSet(Collection<LogItemAndOffset> logItemAndOffsets) {
+        this.byteBuffer = create(logItemAndOffsets);
     }
 
     public int writeFullyTo(GatheringByteChannel gatheringByteChannel) throws IOException {
@@ -90,13 +90,13 @@ public class ByteBufferOperationSet extends OperationSet {
     }
 
     @Override
-    public Iterator<OperationAndOffset> iterator() {
-        return new IteratorTemplate<OperationAndOffset>() {
+    public Iterator<LogItemAndOffset> iterator() {
+        return new IteratorTemplate<LogItemAndOffset>() {
 
             private int location = byteBuffer.position();
 
             @Override
-            protected OperationAndOffset makeNext() {
+            protected LogItemAndOffset makeNext() {
 
                 if (location + LogOverhead >= sizeInBytes()) {// 如果已经到了末尾，返回空
                     return allDone();
@@ -112,12 +112,12 @@ public class ByteBufferOperationSet extends OperationSet {
                 int limitTmp = byteBuffer.limit();
                 byteBuffer.position(location + LogOverhead);
                 byteBuffer.limit(location + LogOverhead + size);
-                ByteBuffer operation = byteBuffer.slice();
+                ByteBuffer logItem = byteBuffer.slice();
                 byteBuffer.limit(limitTmp);
 
                 location += LogOverhead + size;
 
-                return new OperationAndOffset(new LogItem(operation), offset);
+                return new LogItemAndOffset(new LogItem(logItem), offset);
             }
         };
     }
@@ -126,8 +126,8 @@ public class ByteBufferOperationSet extends OperationSet {
         return byteBuffer;
     }
 
-    public static Stream<ByteBufferOperationSet> cast(Collection<OperationAndOffset> operations) {
-        return operations.parallelStream()
+    public static Stream<ByteBufferLogItemSet> cast(Collection<LogItemAndOffset> logItemAndOffsets) {
+        return logItemAndOffsets.parallelStream()
                          .map(oao -> {
                              int allocate = oao.getLogItem()
                                                .totalSize();
@@ -140,23 +140,23 @@ public class ByteBufferOperationSet extends OperationSet {
                              byteBuffer.flip();
                              return byteBuffer;
                          })
-                         .map(ByteBufferOperationSet::new);
+                         .map(ByteBufferLogItemSet::new);
     }
 
-    private static ByteBuffer create(Collection<OperationAndOffset> operations) {
-        int count = operations.size();
-        int needToAllocate = operations.stream()
-                                       .map(operationAndOffset -> operationAndOffset.getLogItem()
-                                                                                    .totalSize())
+    private static ByteBuffer create(Collection<LogItemAndOffset> logItemAndOffsets) {
+        int count = logItemAndOffsets.size();
+        int needToAllocate = logItemAndOffsets.stream()
+                                       .map(logItemAndOffset -> logItemAndOffset.getLogItem()
+                                                                                .totalSize())
                                        .reduce(Integer::sum)
                                        .orElse(0);
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(needToAllocate + count * LogOverhead);
-        for (OperationAndOffset operation : operations) {
-            byteBuffer.putLong(operation.getOffset());
-            byteBuffer.putInt(operation.getLogItem()
+        for (LogItemAndOffset logItemAndOffset : logItemAndOffsets) {
+            byteBuffer.putLong(logItemAndOffset.getOffset());
+            byteBuffer.putInt(logItemAndOffset.getLogItem()
                                        .totalSize());
-            byteBuffer.put(operation.getLogItem()
+            byteBuffer.put(logItemAndOffset.getLogItem()
                                     .getByteBuffer());
         }
 

@@ -77,7 +77,7 @@ class ElectionMetaService {
     var leader: String? = null
 
     /**
-     * 流水号，用于生成 id，集群内每一次由 Leader 发起的关键操作都会生成一个id [.genOperationId] ()}，其中就需要自增 offset 号
+     * 流水号，用于生成 id，集群内每一次由 Leader 发起的关键操作都会生成一个id [.genGenerationAndOffset] ()}，其中就需要自增 offset 号
      */
     @Volatile
     var offset: Long = 0L

@@ -13,7 +13,7 @@ import java.nio.charset.Charset
  * <p>
  * LogItem 是对应最基本的操作，表示这个操作将被写入日志
  * <p>
- * 一个Operation由以下部分组成：
+ * 一个 logItem 由以下部分组成：
  * <p>
  * 　4　   +   4    +    4      + key +    4        +  v
  * CRC32  +  type  + keyLength + key + valueLength +  v
@@ -35,7 +35,7 @@ class LogItem : AbstractStruct {
         val ValueSizeLength = 4
 
         /**
-         * 除去消息头，最小的Operation长度为这个，小于这个不可能构成一条消息，最起码要满足
+         * 除去消息头，最小的 LogItem 长度为这个，小于这个不可能构成一条消息，最起码要满足
          *
          *
          * CRC32 +  type  + (KeySize = 1) + key + (ValueSize = 1)
@@ -43,7 +43,7 @@ class LogItem : AbstractStruct {
         val MinMessageOverhead = KeyOffset + ValueSizeLength + MinKeyLength
 
         /**
-         * 最基础的operation大小
+         * 最基础的 LogItem 大小
          */
         val BaseMessageOverhead = KeyOffset + ValueSizeLength
 
@@ -58,7 +58,7 @@ class LogItem : AbstractStruct {
         this.key = key
         this.kanashiCommand = value
 
-        val operationType = requestTypeEnum.byteSign
+        val requestType = requestTypeEnum.byteSign
         val kBytes = key.toByteArray(Charset.defaultCharset())
         val kSize = kBytes.size
 
@@ -66,7 +66,7 @@ class LogItem : AbstractStruct {
         val byteBuffer = ByteBuffer.allocate(BaseMessageOverhead + kSize + vSize)
 
         byteBuffer.position(AbstractStruct.TypeOffset)
-        byteBuffer.putInt(operationType)
+        byteBuffer.putInt(requestType)
         byteBuffer.putInt(kSize)
         byteBuffer.put(kBytes)
         byteBuffer.putInt(vSize)

@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
  * 不包括 key 部分，则 KanashiEntry为以下部分组成：
  *
  *      1       +        1        +      4     + x
- *  commandType  + operationType  +  valueSize + value.
+ *  commandType  + requestType  +  valueSize + value.
  */
 class ByteBufferKanashiEntry(val byteBuffer: ByteBuffer) {
 

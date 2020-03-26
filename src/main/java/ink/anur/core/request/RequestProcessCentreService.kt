@@ -12,7 +12,6 @@ import ink.anur.core.common.RequestMapping
 import ink.anur.core.common.RequestProcessType
 import ink.anur.core.response.ResponseProcessCentreService
 import ink.anur.mutex.ReentrantReadWriteLocker
-import ink.anur.exception.NetWorkException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigatePostConstruct
@@ -21,12 +20,10 @@ import ink.anur.service.RegisterHandleService
 import ink.anur.timewheel.TimedTask
 import ink.anur.timewheel.Timer
 import io.netty.channel.Channel
-import io.netty.util.internal.StringUtil
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import java.util.function.BiFunction
-import javax.security.auth.callback.Callback
 import kotlin.system.exitProcess
 
 /**
@@ -101,7 +98,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
     /**
      * 接收到消息如何处理
      */
-    fun receive(msg: ByteBuffer, operationTypeEnum: RequestTypeEnum, channel: Channel?) {
+    fun receive(msg: ByteBuffer, requestTypeEnum: RequestTypeEnum, channel: Channel?) {
 
         if (channel == null) {
             logger.error("????????????????????????????????????")
@@ -116,7 +113,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                     var changed = false
                     receiveLog.compute(serverName) { _, timestampMap ->
                         (timestampMap ?: mutableMapOf()).also {
-                            it.compute(operationTypeEnum) { _, timestampBefore ->
+                            it.compute(requestTypeEnum) { _, timestampBefore ->
                                 changed = (timestampBefore == null || requestTimestampCurrent > timestampBefore)
                                 if (changed) requestTimestampCurrent else timestampBefore
                             }
@@ -124,12 +121,12 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                     }
                     changed
                 } -> try {
-                    val requestMapping = requestMappingRegister[operationTypeEnum]
+                    val requestMapping = requestMappingRegister[requestTypeEnum]
                     if (requestMapping != null) {
 
                         requestMapping.handleRequest(serverName, msg, channel)// 收到正常的请求
 
-                        responseCallback[operationTypeEnum]?.also {
+                        responseCallback[requestTypeEnum]?.also {
                             writeLocker {
                                 val iterator = it.iterator()
                                 while (iterator.hasNext()) {
@@ -145,15 +142,15 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                         }
 
                     } else {
-                        logger.error("类型 $operationTypeEnum 消息没有定制化 requestMapping ！！！")
+                        logger.error("类型 $requestTypeEnum 消息没有定制化 requestMapping ！！！")
                         System.exit(1)
                     }
 
                 } catch (e: Exception) {
-                    logger.error("在处理来自节点 $serverName 的 $operationTypeEnum 请求时出现异常", e)
+                    logger.error("在处理来自节点 $serverName 的 $requestTypeEnum 请求时出现异常", e)
                     writeLocker {
                         receiveLog.compute(serverName) { _, timestampMap ->
-                            (timestampMap ?: mutableMapOf()).also { it.remove(operationTypeEnum) }
+                            (timestampMap ?: mutableMapOf()).also { it.remove(requestTypeEnum) }
                         }
                     }
                 }

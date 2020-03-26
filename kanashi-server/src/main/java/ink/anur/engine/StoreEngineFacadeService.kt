@@ -6,11 +6,10 @@ import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.debug.Debugger
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
-import ink.anur.log.common.OperationAndGAO
+import ink.anur.log.common.LogItemAndGAO
 import ink.anur.engine.log.CommitProcessManageService
 import ink.anur.inject.NigatePostConstruct
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -28,7 +27,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
     private lateinit var storeEngineTransmitService: StoreEngineTransmitService
 
     private val logger = Debugger(this::class.java)
-    private val queue = LinkedBlockingQueue<OperationAndGAO>()
+    private val queue = LinkedBlockingQueue<LogItemAndGAO>()
     private val lock = ReentrantLock()
     private val pauseLatch = lock.newCondition()
 
@@ -97,7 +96,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
     /**
      * 追加消息
      */
-    fun append(oaGao: OperationAndGAO) {
+    fun append(oaGao: LogItemAndGAO) {
         queue.put(oaGao)
     }
 }

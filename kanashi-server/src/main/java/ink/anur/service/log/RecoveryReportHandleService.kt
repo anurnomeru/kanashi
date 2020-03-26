@@ -186,9 +186,7 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
 
                     logger.info("已有过半节点提交了最大进度，集群最大进度于节点 $serverName ，进度为 $latestGAO ，Leader 将从其同步最新数据")
 
-                    /*
-                     * 当连接上子节点，开始日志同步，同步具体逻辑在 {@link #howToConsumeFetchResponse}
-                     */
+                    // 开始进行 fetch
                     startToFetchFrom(latestNode)
                 }
             }

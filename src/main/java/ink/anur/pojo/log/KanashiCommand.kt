@@ -57,7 +57,7 @@ class KanashiCommand(val content: ByteBuffer) {
             val bb = ByteBuffer.allocate(
                 ValuesSizeOffset
                     + valuesSizeLengthTotal
-                    + valuesByteArr.map { it.size }.reduce(operation = { i1, i2 -> i1 + i2 }))
+                    + valuesByteArr.map { it.size }.reduce { i1, i2 -> i1 + i2 })
             bb.putLong(trxId ?: NON_TRX)
             bb.put(api)
             bb.put(commandType.byte)

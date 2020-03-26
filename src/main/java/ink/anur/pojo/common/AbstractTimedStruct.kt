@@ -16,17 +16,17 @@ abstract class AbstractTimedStruct : AbstractStruct() {
         val OriginMessageOverhead = TimestampOffset + TimestampLength
     }
 
-    fun init(byteBuffer: ByteBuffer, operationTypeEnum: RequestTypeEnum) {
+    fun init(byteBuffer: ByteBuffer, requestTypeEnum: RequestTypeEnum) {
         buffer = byteBuffer
         byteBuffer.position(TypeOffset)
-        byteBuffer.putInt(operationTypeEnum.byteSign)
+        byteBuffer.putInt(requestTypeEnum.byteSign)
         byteBuffer.putLong(System.currentTimeMillis())
     }
 
-    fun init(capacity: Int, operationTypeEnum: RequestTypeEnum, then: (ByteBuffer) -> Unit) {
+    fun init(capacity: Int, requestTypeEnum: RequestTypeEnum, then: (ByteBuffer) -> Unit) {
         buffer = ByteBuffer.allocate(capacity)
         buffer!!.position(TypeOffset)
-        buffer!!.putInt(operationTypeEnum.byteSign)
+        buffer!!.putInt(requestTypeEnum.byteSign)
         buffer!!.putLong(System.currentTimeMillis())
         then.invoke(buffer!!)
         buffer!!.flip()

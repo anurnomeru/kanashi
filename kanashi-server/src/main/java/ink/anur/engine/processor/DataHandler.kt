@@ -16,7 +16,7 @@ import java.rmi.UnexpectedException
 /**
  * Created by Anur IjuoKaruKas on 2019/12/3
  *
- * 数据控制，需要用到很多数据，进入数据引擎是 Operation（持有一个 kanashiCommand），持久化后又是 kanashiEntry
+ * 数据控制，需要用到很多数据，进入数据引擎是 LogItem（持有一个 kanashiCommand），持久化后又是 kanashiEntry
  *
  * 那么如何节省内存，实际上就是这个类所做的事情
  */
@@ -31,7 +31,7 @@ class DataHandler(private val logItem: LogItem) {
     /////////////////////////////////////////// init
 
     /**
-     * 从 Operation 中直接获取 key
+     * 从 LogItem 中直接获取 key
      */
     val key = logItem.getKey()
 

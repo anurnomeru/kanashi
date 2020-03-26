@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 import com.google.common.collect.Lists;
 import ink.anur.config.LogConfiguration;
+import ink.anur.log.logitemset.ByteBufferLogItemSet;
 import ink.anur.log.persistence.LogSegment;
 import ink.anur.pojo.log.common.GenerationAndOffset;
 import ink.anur.debug.Debugger;
@@ -15,9 +16,8 @@ import ink.anur.exception.LogException;
 import ink.anur.inject.Nigate;
 import ink.anur.inject.NigateInject;
 import ink.anur.log.common.LogUtil;
-import ink.anur.log.common.OperationAndGAO;
-import ink.anur.log.common.OperationAndOffset;
-import ink.anur.log.operationset.ByteBufferOperationSet;
+import ink.anur.log.common.LogItemAndGAO;
+import ink.anur.log.common.LogItemAndOffset;
 import ink.anur.mutex.ReentrantLocker;
 import ink.anur.pojo.log.base.LogItem;
 import ink.anur.log.prelog.PreLogMeta;
@@ -162,17 +162,17 @@ public class Log extends ReentrantLocker {
 
         LogSegment logSegment = maybeRoll(logItem.size());
 
-        ByteBufferOperationSet byteBufferOperationSet = new ByteBufferOperationSet(logItem, offset);
+        ByteBufferLogItemSet byteBufferLogItemSet = new ByteBufferLogItemSet(logItem, offset);
         try {
             // 追加到磁盘
-            logSegment.append(offset, byteBufferOperationSet);
+            logSegment.append(offset, byteBufferLogItemSet);
         } catch (IOException e) {
             throw new LogException("写入日志文件失败：" + logItem.toString());
         }
         currentOffset = offset;
 
         // ×××× 追加到引擎
-        storeEngineFacadeService.append(new OperationAndGAO(logItem, new GenerationAndOffset(generation, offset)));
+        storeEngineFacadeService.append(new LogItemAndGAO(logItem, new GenerationAndOffset(generation, offset)));
     }
 
     /**
@@ -189,13 +189,13 @@ public class Log extends ReentrantLocker {
         int count = 0;
 
         try {
-            for (OperationAndOffset operationAndOffset : preLogMeta.getOao()) {
+            for (LogItemAndOffset logItemAndOffset : preLogMeta.getOao()) {
                 count++;
-                long offset = operationAndOffset.getOffset();
+                long offset = logItemAndOffset.getOffset();
                 if (offset <= currentOffset) {
                     continue;
                 }
-                append(operationAndOffset.getLogItem(), offset);
+                append(logItemAndOffset.getLogItem(), offset);
             }
         } catch (Throwable e) {
             throw new LogException("写入日志文件失败：" + startOffset + " => " + endOffset + " " + e.getMessage());
@@ -257,7 +257,7 @@ public class Log extends ReentrantLocker {
                          .getIndex()
                          .trimToValidSize();
                         e.getValue()
-                         .getFileOperationSet()
+                         .getFileLogItemSet()
                          .trim();
                     });
 

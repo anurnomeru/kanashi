@@ -1,6 +1,6 @@
 package ink.anur.log.common
 
-import ink.anur.log.operationset.FileOperationSet
+import ink.anur.log.logitemset.FileLogItemSet
 
 /**
  * Created by Anur IjuoKaruKas on 2019/7/12
@@ -22,4 +22,4 @@ class FetchDataInfo(
     /**
      * the GAO file in
      */
-    val fos: FileOperationSet)
+    val fos: FileLogItemSet)

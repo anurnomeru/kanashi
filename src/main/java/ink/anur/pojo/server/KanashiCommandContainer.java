@@ -3,8 +3,8 @@ package ink.anur.pojo.server;
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import ink.anur.log.common.FetchDataInfo;
-import ink.anur.log.operationset.ByteBufferOperationSet;
-import ink.anur.log.operationset.FileOperationSet;
+import ink.anur.log.logitemset.ByteBufferLogItemSet;
+import ink.anur.log.logitemset.FileLogItemSet;
 import ink.anur.pojo.common.AbstractTimedStruct;
 import ink.anur.pojo.enumerate.RequestTypeEnum;
 import ink.anur.util.FileIOUtil;
@@ -21,78 +21,78 @@ import io.netty.channel.DefaultFileRegion;
  * <p>
  * 子类可以实现其 content 部分的内容拓展
  */
-public class FetchResponse extends AbstractTimedStruct {
+public class KanashiCommandContainer extends AbstractTimedStruct {
 
     private static final int GenerationOffset = AbstractTimedStruct.Companion.getTimestampOffset() + AbstractTimedStruct.Companion.getTimestampLength();
 
     private static final int GenerationLength = 8;
 
-    private static final int FileOperationSetSizeOffset = GenerationOffset + GenerationLength;
+    private static final int FileLogItemSetSizeOffset = GenerationOffset + GenerationLength;
 
-    private static final int FileOperationSetSizeLength = 4;
+    private static final int FileLogItemSetSizeLength = 4;
 
     /**
-     * 最基础的 FetchResponse 大小 ( 不包括byteBufferOperationSet )
+     * 最基础的 KanashiCommandContainer 大小 ( 不包括byteBufferLogItemSet )
      */
-    private static final int BaseMessageOverhead = FileOperationSetSizeOffset + FileOperationSetSizeLength;
+    private static final int BaseMessageOverhead = FileLogItemSetSizeOffset + FileLogItemSetSizeLength;
 
     public static final long Invalid = -1L;
 
-    private final int fileOperationSetSize;
+    private final int fileLogItemSetSize;
 
-    private FileOperationSet fileOperationSet;
+    private FileLogItemSet fileLogItemSet;
 
-    public FetchResponse(FetchDataInfo fetchDataInfo) {
+    public KanashiCommandContainer(FetchDataInfo fetchDataInfo) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(BaseMessageOverhead);
         init(byteBuffer, RequestTypeEnum.FETCH_RESPONSE);
 
         // 为空代表已无更多更新的消息
         if (fetchDataInfo == null) {
-            fileOperationSetSize = 0;
+            fileLogItemSetSize = 0;
             byteBuffer.putLong(Invalid);
             byteBuffer.putInt((int) Invalid);
         } else {
-            fileOperationSet = fetchDataInfo.getFos();
-            fileOperationSetSize = fileOperationSet.sizeInBytes();
+            fileLogItemSet = fetchDataInfo.getFos();
+            fileLogItemSetSize = fileLogItemSet.sizeInBytes();
             byteBuffer.putLong(fetchDataInfo.getFetchMeta()
                                             .getGeneration());
-            byteBuffer.putInt(fileOperationSetSize);
+            byteBuffer.putInt(fileLogItemSetSize);
         }
 
         byteBuffer.flip();
     }
 
-    public FetchResponse(ByteBuffer byteBuffer) {
+    public KanashiCommandContainer(ByteBuffer byteBuffer) {
         this.setBuffer(byteBuffer);
-        fileOperationSetSize = getBuffer().getInt(FileOperationSetSizeOffset);
+        fileLogItemSetSize = getBuffer().getInt(FileLogItemSetSizeOffset);
     }
 
     public long getGeneration() {
         return getBuffer().getLong(GenerationOffset);
     }
 
-    public ByteBufferOperationSet read() {
+    public ByteBufferLogItemSet read() {
         getBuffer().position(BaseMessageOverhead);
-        return new ByteBufferOperationSet(getBuffer().slice());
+        return new ByteBufferLogItemSet(getBuffer().slice());
     }
 
-    public int getFileOperationSetSize() {
-        return fileOperationSetSize;
+    public int getFileLogItemSetSize() {
+        return fileLogItemSetSize;
     }
 
-    public FileOperationSet getFileOperationSet() {
-        return fileOperationSet;
+    public FileLogItemSet getFileLogItemSet() {
+        return fileLogItemSet;
     }
 
     @Override
     public void writeIntoChannel(Channel channel) {
         channel.write(Unpooled.wrappedBuffer(getBuffer()));
-        if (fileOperationSetSize > 0) {
+        if (fileLogItemSetSize > 0) {
             try {
-                int start = fileOperationSet.getStart();
-                int end = fileOperationSet.getEnd();
+                int start = fileLogItemSet.getStart();
+                int end = fileLogItemSet.getEnd();
                 int count = end - start;
-                channel.write(new DefaultFileRegion(FileIOUtil.openChannel(fileOperationSet.getFile(), false), start, count));
+                channel.write(new DefaultFileRegion(FileIOUtil.openChannel(fileLogItemSet.getFile(), false), start, count));
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -101,11 +101,11 @@ public class FetchResponse extends AbstractTimedStruct {
 
     @Override
     public int totalSize() {
-        return size() + fileOperationSetSize;
+        return size() + fileLogItemSetSize;
     }
 
     @Override
     public String toString() {
-        return "FetchResponse{ gen => " + getGeneration() + ", fileSize => " + totalSize() + " }";
+        return "KanashiCommandContainer{ gen => " + getGeneration() + ", fileSize => " + totalSize() + " }";
     }
 }

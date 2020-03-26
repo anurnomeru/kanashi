@@ -5,9 +5,9 @@ import ink.anur.log.common.LogOffsetMetadata
 import ink.anur.log.common.LogUtil
 import ink.anur.log.common.OffsetAndPosition
 import ink.anur.log.index.OffsetIndex
-import ink.anur.log.operationset.ByteBufferOperationSet
-import ink.anur.log.operationset.FileOperationSet
-import ink.anur.log.operationset.OperationSet
+import ink.anur.log.logitemset.ByteBufferLogItemSet
+import ink.anur.log.logitemset.FileLogItemSet
+import ink.anur.log.logitemset.LogItemSet
 import java.io.File
 import java.io.IOException
 import kotlin.math.max
@@ -18,7 +18,7 @@ import kotlin.math.min
  *
  * 仿照自 Kafka LogSegment
  */
-class LogSegment(val fileOperationSet: FileOperationSet,
+class LogSegment(val fileLogItemSet: FileLogItemSet,
                  val index: OffsetIndex,
                  val baseOffset: Long,
                  private val indexIntervalBytes: Int) {
@@ -31,7 +31,7 @@ class LogSegment(val fileOperationSet: FileOperationSet,
      */
     @Throws(IOException::class)
     constructor(dir: File, startOffset: Long, indexIntervalBytes: Int, maxIndexSize: Int) :
-        this(FileOperationSet(LogUtil.logFilename(dir, startOffset)),
+        this(FileLogItemSet(LogUtil.logFilename(dir, startOffset)),
             OffsetIndex(LogUtil.indexFilename(dir, startOffset),
                 startOffset, maxIndexSize),
             startOffset,
@@ -39,22 +39,22 @@ class LogSegment(val fileOperationSet: FileOperationSet,
 
 
     /**
-     * 将传入的 ByteBufferOperationSet 追加到文件之中，offset的值为 messages 的初始offset
+     * 将传入的 ByteBufferLogItemSet 追加到文件之中，offset的值为 messages 的初始offset
      */
     @Throws(IOException::class)
-    fun append(offset: Long, messages: ByteBufferOperationSet) {
+    fun append(offset: Long, messages: ByteBufferLogItemSet) {
         if (messages.sizeInBytes() > 0) {
             // append an entry to the index (if needed)
             // 追加到了一定的容量，添加索引
             if (bytesSinceLastIndexEntry > indexIntervalBytes) {
 
                 // 追加 offset 以及当前文件的 size，也就是写的 position到索引文件中
-                index.append(offset, fileOperationSet.sizeInBytes())
+                index.append(offset, fileLogItemSet.sizeInBytes())
                 this.bytesSinceLastIndexEntry = 0
             }
-            // 追加消息到 fileOperationSet 中
+            // 追加消息到 fileLogItemSet 中
             // append the messages
-            fileOperationSet.append(messages)
+            fileLogItemSet.append(messages)
             this.bytesSinceLastIndexEntry += messages.sizeInBytes()
         }
     }
@@ -77,11 +77,11 @@ class LogSegment(val fileOperationSet: FileOperationSet,
         val offsetAndPosition = index.lookup(offset)
 
         // 从 startingPosition开始 ，找到第一个大于等于目标offset的物理地址
-        return fileOperationSet.searchFor(offset, max(offsetAndPosition.position, startingPosition))
+        return fileLogItemSet.searchFor(offset, max(offsetAndPosition.position, startingPosition))
     }
 
     fun read(generation: Long, startOffset: Long, maxOffset: Long?, maxSize: Int): FetchDataInfo? {
-        return read(generation, startOffset, maxOffset, maxSize, fileOperationSet.sizeInBytes().toLong())
+        return read(generation, startOffset, maxOffset, maxSize, fileLogItemSet.sizeInBytes().toLong())
     }
 
     /**
@@ -107,7 +107,7 @@ class LogSegment(val fileOperationSet: FileOperationSet,
             throw IllegalArgumentException(String.format("Invalid max size for log read (%d)", maxSize))
         }
 
-        val logSize = fileOperationSet.sizeInBytes() // this may change, need to save a consistent copy
+        val logSize = fileLogItemSet.sizeInBytes() // this may change, need to save a consistent copy
         var startPosition: OffsetAndPosition? = null// 查找第一个大于等于 startOffset 的 Offset 和 Position
 
         try {
@@ -117,7 +117,7 @@ class LogSegment(val fileOperationSet: FileOperationSet,
         }
 
         if (startPosition == null) {
-            return null// 代表 fileOperationSet 里最大的 offset 也没startOffset大
+            return null// 代表 fileLogItemSet 里最大的 offset 也没startOffset大
         }
 
         val logOffsetMetadata = LogOffsetMetadata(generation, startOffset, this.baseOffset, startPosition.position)
@@ -152,7 +152,7 @@ class LogSegment(val fileOperationSet: FileOperationSet,
 
         var fetchDataInfo: FetchDataInfo? = null
         try {
-            fetchDataInfo = FetchDataInfo(logOffsetMetadata, fileOperationSet.read(startPosition.position, length))
+            fetchDataInfo = FetchDataInfo(logOffsetMetadata, fileLogItemSet.read(startPosition.position, length))
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -174,7 +174,7 @@ class LogSegment(val fileOperationSet: FileOperationSet,
         // after truncation, reset and allocate more space for the (new currently  active) index
         index.resize(index.maxIndexSize)
 
-        val bytesTruncated = fileOperationSet.truncateTo(offsetAndPosition.position)
+        val bytesTruncated = fileLogItemSet.truncateTo(offsetAndPosition.position)
 
         //        if(log.sizeInBytes == 0){
         //            // kafka存在删除一整个日志文件的情况
@@ -197,32 +197,32 @@ class LogSegment(val fileOperationSet: FileOperationSet,
 
         var validBytes = 0// 循环到哪个字节了
         var lastIndexEntry = 0// 最后一个索引的字节
-        val iter = fileOperationSet.iterator(maxLogMessageSize)
+        val iter = fileLogItemSet.iterator(maxLogMessageSize)
         while (iter.hasNext()) {
-            val operationAndOffset = iter.next()
+            val logItemAndOffset = iter.next()
 
             // 校验 CRC
-            operationAndOffset.logItem
+            logItemAndOffset.logItem
                 .ensureValid()
 
             if (validBytes - lastIndexEntry > indexIntervalBytes) {
                 // we need to decompress the message, if required, to get the offset of the first uncompressed message
-                val startOffset = operationAndOffset.offset
+                val startOffset = logItemAndOffset.offset
                 index.append(startOffset, validBytes)
                 lastIndexEntry = validBytes
             }
-            validBytes += (OperationSet.LogOverhead + operationAndOffset.logItem
+            validBytes += (LogItemSet.LogOverhead + logItemAndOffset.logItem
                 .size())
         }
 
-        val truncated = fileOperationSet.sizeInBytes() - validBytes
-        fileOperationSet.truncateTo(validBytes)
+        val truncated = fileLogItemSet.sizeInBytes() - validBytes
+        fileLogItemSet.truncateTo(validBytes)
         index.trimToValidSize()
         return truncated
     }
 
     fun size(): Long {
-        return fileOperationSet.sizeInBytes().toLong()
+        return fileLogItemSet.sizeInBytes().toLong()
     }
 
     /**
@@ -233,16 +233,15 @@ class LogSegment(val fileOperationSet: FileOperationSet,
      * 然后取最后一个
      */
     fun lastOffset(gen: Long): Long {
-        val fetchDataInfo = read(gen, index.lastOffset, null, fileOperationSet.sizeInBytes())
+        val fetchDataInfo = read(gen, index.lastOffset, null, fileLogItemSet.sizeInBytes())
         return if (fetchDataInfo == null) {
             baseOffset
         } else {
-            val operationAndOffsetIterator = fetchDataInfo.fos
-                .iterator()
+            val iterator = fetchDataInfo.fos.iterator()
             var lastOffset = baseOffset
 
-            while (operationAndOffsetIterator.hasNext()) {
-                lastOffset = (operationAndOffsetIterator.next()
+            while (iterator.hasNext()) {
+                lastOffset = (iterator.next()
                     .offset)// 因为文件里存储的是相对 offset
             }
             lastOffset
@@ -254,7 +253,7 @@ class LogSegment(val fileOperationSet: FileOperationSet,
      * Flush this log segment to disk
      */
     fun flush() {
-        this.fileOperationSet.flush()
+        this.fileLogItemSet.flush()
         this.index.flush()
     }
 }

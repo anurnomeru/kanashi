@@ -11,7 +11,7 @@ import ink.anur.inject.NigateInject
 import ink.anur.inject.NigateListenerService
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.common.GenerationAndOffset
-import ink.anur.pojo.server.FetchResponse
+import ink.anur.pojo.server.KanashiCommandContainer
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 
@@ -49,8 +49,7 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
 
     override fun handleRequest(fromServer: String, msg: ByteBuffer, channel: Channel) {
         logger.trace("收到节点 {} 返回的 FETCH_RESPONSE", fromServer)
-        val fetchResponse = FetchResponse(msg)
-
+        val commandContainer = KanashiCommandContainer(msg)
 
         if (!electionMetaService.isLeader()) {
 
@@ -58,17 +57,17 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
              * 普通节点收到了日志，只需要简单将其追加到 byteBufPreLog 即可
              */
             logger.trace("收到节点 {} 返回的 FETCH_RESPONSE", fromServer)
-            if (fetchResponse.fileOperationSetSize == 0) return
-            byteBufPreLogService.append(fetchResponse.generation, fetchResponse.read())
+            if (commandContainer.fileLogItemSetSize == 0) return
+            byteBufPreLogService.append(commandContainer.generation, commandContainer.read())
         } else {
             /**
              * leader 收到了日志，说明集群正在恢复阶段，它做的比较特殊，
              * 它直接将日志追加到了 logService 进行刷盘
              */
-            val read = fetchResponse.read()
+            val read = commandContainer.read()
             val iterator = read.iterator()
 
-            val gen = fetchResponse.generation
+            val gen = commandContainer.generation
             val fetchToGen = fetchTo!!.generation
 
             var start: Long? = null
@@ -85,9 +84,6 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
                     val offset = it.offset
                     val fetchToOffset = fetchTo!!.offset
                     if (offset == fetchToOffset) {// 如果已经同步完毕，则通知集群同步完成
-
-//                    cancelTask() TODO
-//                    shuttingWhileRecoveryComplete()
                         nigateListenerService.onEvent(Event.LEADER_FETCH_COMPLETE)
                     }
                 }

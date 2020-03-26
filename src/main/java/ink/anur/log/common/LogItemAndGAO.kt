@@ -6,4 +6,4 @@ import ink.anur.pojo.log.base.LogItem
 /**
  * Created by Anur IjuoKaruKas on 2019/10/11
  */
-class OperationAndGAO(val logItem: LogItem, val GAO: GenerationAndOffset)
+class LogItemAndGAO(val logItem: LogItem, val GAO: GenerationAndOffset)

@@ -1,6 +1,6 @@
 package ink.anur.log.prelog
 
-import ink.anur.log.common.OperationAndOffset
+import ink.anur.log.common.LogItemAndOffset
 import ink.anur.mutex.ReentrantLocker
 import ink.anur.pojo.log.base.LogItem
 import org.slf4j.LoggerFactory
@@ -16,13 +16,13 @@ class ByteBufPreLog(val generation: Long) : ReentrantLocker() {
 
     private val logger = LoggerFactory.getLogger(ByteBufPreLog::class.java)
 
-    private val preLog: ConcurrentNavigableMap<Long, OperationAndOffset> = ConcurrentSkipListMap()
+    private val preLog: ConcurrentNavigableMap<Long, LogItemAndOffset> = ConcurrentSkipListMap()
 
     /**
      * 将消息添加到内存中
      */
     fun append(logItem: LogItem, offset: Long) {
-        preLog[offset] = OperationAndOffset(logItem, offset)
+        preLog[offset] = LogItemAndOffset(logItem, offset)
     }
 
     /**

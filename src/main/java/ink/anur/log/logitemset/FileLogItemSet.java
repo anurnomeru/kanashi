@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package ink.anur.log.operationset;
+package ink.anur.log.logitemset;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import ink.anur.exception.LogException;
 import ink.anur.log.common.OffsetAndPosition;
 import ink.anur.pojo.log.base.LogItem;
-import ink.anur.log.common.OperationAndOffset;
+import ink.anur.log.common.LogItemAndOffset;
 import ink.anur.util.FileIOUtil;
 import ink.anur.util.IteratorTemplate;
 
@@ -36,7 +36,7 @@ import ink.anur.util.IteratorTemplate;
  *
  * 高仿kafka FileMessageSet 写的，是操作日志在磁盘的映射类。
  */
-public class FileOperationSet extends OperationSet {
+public class FileLogItemSet extends LogItemSet {
 
     /**
      * 用于读写日志，是此文件的 channel
@@ -44,17 +44,17 @@ public class FileOperationSet extends OperationSet {
     private final FileChannel fileChannel;
 
     /**
-     * OperationSet 开始的绝对位置的下界
+     * LogItemSet 开始的绝对位置的下界
      */
     private final int start;
 
     /**
-     * OperationSet 结束的绝对位置的上限
+     * LogItemSet 结束的绝对位置的上限
      */
     private final int end;
 
     /**
-     * 本FileOperationSet的大小
+     * 本FileLogItem的大小
      */
     private final AtomicInteger _size;
 
@@ -69,9 +69,9 @@ public class FileOperationSet extends OperationSet {
     private boolean isSlice;
 
     /**
-     * 基础构造函数 => 创建一个 FileOperationSet
+     * 基础构造函数 => 创建一个 FileLogItemSet
      */
-    private FileOperationSet(File file, FileChannel fileChannel, int start, int end, boolean isSlice) throws IOException {
+    private FileLogItemSet(File file, FileChannel fileChannel, int start, int end, boolean isSlice) throws IOException {
         this.file = file;
         this.fileChannel = fileChannel;
         this.start = start;
@@ -105,38 +105,38 @@ public class FileOperationSet extends OperationSet {
     }
 
     /**
-     * 创建一个非分片的FileOperationSet
+     * 创建一个非分片的FileLogItemSet
      */
-    public FileOperationSet(File file, FileChannel fileChannel) throws IOException {
+    public FileLogItemSet(File file, FileChannel fileChannel) throws IOException {
         this(file, fileChannel, 0, Integer.MAX_VALUE, false);
     }
 
     /**
-     * 创建一个非分片的FileOperationSet
+     * 创建一个非分片的FileOLogItemSet
      */
-    public FileOperationSet(File file) throws IOException {
+    public FileLogItemSet(File file) throws IOException {
         this(file, FileIOUtil.openChannel(file, true));
     }
 
     /**
      * Create a file message set with mutable option
      */
-    public FileOperationSet(File file, boolean mutable) throws IOException {
+    public FileLogItemSet(File file, boolean mutable) throws IOException {
         this(file, FileIOUtil.openChannel(file, mutable));
     }
 
     /**
      * Create a slice view of the file message set that begins and ends at the given byte offsets
      */
-    public FileOperationSet(File file, FileChannel channel, int start, int end) throws IOException {
+    public FileLogItemSet(File file, FileChannel channel, int start, int end) throws IOException {
         this(file, channel, start, end, true);
     }
 
     /**
      * 将操作记录添加到文件中
      */
-    public void append(ByteBufferOperationSet byteBufferOperationSet) throws IOException {
-        int written = byteBufferOperationSet.writeFullyTo(this.fileChannel);
+    public void append(ByteBufferLogItemSet byteBufferLogItemSet) throws IOException {
+        int written = byteBufferLogItemSet.writeFullyTo(this.fileChannel);
         this._size.getAndAdd(written);
     }
 
@@ -154,14 +154,14 @@ public class FileOperationSet extends OperationSet {
      *
      * @return A sliced wrapper on this message set limited based on the given position and size
      */
-    public FileOperationSet read(int position, int size) throws IOException {
+    public FileLogItemSet read(int position, int size) throws IOException {
         if (position < 0) {
             throw new IllegalArgumentException("Invalid position: " + position);
         }
         if (size < 0) {
             throw new IllegalArgumentException("Invalid size: " + size);
         }
-        return new FileOperationSet(file,
+        return new FileLogItemSet(file,
             fileChannel,
             this.start + position,
             Math.min(this.start + position + size, sizeInBytes()));
@@ -249,7 +249,7 @@ public class FileOperationSet extends OperationSet {
         // 进行边界检查
         int newSize = Math.min((int) fileChannel.size(), end) - start;
         if (newSize < _size.get()) {
-            throw new LogException(String.format("FileOperationSet 的文件大小 %s 在写的过程中被截断了：之前的文件大小为 %d, 现在的文件大小为 %d", file.getAbsolutePath(), _size.get(), newSize));
+            throw new LogException(String.format("FileLogItemSet 的文件大小 %s 在写的过程中被截断了：之前的文件大小为 %d, 现在的文件大小为 %d", file.getAbsolutePath(), _size.get(), newSize));
         }
         int position = start + (int) writePosition; // The position in the message set to begin writing from.
         int count = Math.min(size, sizeInBytes());
@@ -262,22 +262,22 @@ public class FileOperationSet extends OperationSet {
      * 获取各种消息的迭代器
      */
     @Override
-    public Iterator<OperationAndOffset> iterator() {
+    public Iterator<LogItemAndOffset> iterator() {
         return this.iterator(Integer.MAX_VALUE);
     }
 
     /**
      * 获取某个文件的迭代器
      */
-    public Iterator<OperationAndOffset> iterator(int maxMessageSize) {
-        return new IteratorTemplate<OperationAndOffset>() {
+    public Iterator<LogItemAndOffset> iterator(int maxMessageSize) {
+        return new IteratorTemplate<LogItemAndOffset>() {
 
             private int location = start;
 
             private ByteBuffer sizeOffsetBuffer = ByteBuffer.allocate(LogOverhead);
 
             @Override
-            protected OperationAndOffset makeNext() {
+            protected LogItemAndOffset makeNext() {
                 if (location + LogOverhead >= end) {// 如果已经到了末尾，返回空
                     return allDone();
                 }
@@ -319,7 +319,7 @@ public class FileOperationSet extends OperationSet {
 
                 // increment the location and return the item
                 location += size + LogOverhead;
-                return new OperationAndOffset(new LogItem(buffer), offset);
+                return new LogItemAndOffset(new LogItem(buffer), offset);
             }
         };
     }

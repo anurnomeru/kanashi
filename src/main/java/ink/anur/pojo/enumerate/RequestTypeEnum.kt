@@ -13,7 +13,7 @@ import ink.anur.pojo.log.CommitResponse
 import ink.anur.pojo.log.RecoveryComplete
 import ink.anur.pojo.log.RecoveryReporter
 import ink.anur.pojo.log.base.LogItem
-import ink.anur.pojo.server.FetchResponse
+import ink.anur.pojo.server.KanashiCommandContainer
 import ink.anur.pojo.server.Fetch
 import java.util.HashMap
 
@@ -60,7 +60,7 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
     /**
      * fetch 结果
      */
-    FETCH_RESPONSE(20001, FetchResponse::class.java),
+    FETCH_RESPONSE(20001, KanashiCommandContainer::class.java),
 
     /**
      * 上报recovery进度
@@ -87,7 +87,12 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
     /**
      *  LogItem 是对应最基本的操作，表示这个操作将被写入日志
      */
-    LOG_ITEM(-100, LogItem::class.java)
+    LOG_ITEM(-100, LogItem::class.java),
+
+    /**
+     * 从客户端发来的指令
+     */
+    COMMAND(99999, KanashiCommandContainer::class.java)
     ;
 
     companion object {
@@ -97,7 +102,7 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
             val unique = mutableSetOf<Int>()
             for (value in values()) {
                 if (!unique.add(value.byteSign)) {
-                    throw KanashiException("OperationTypeEnum 中，byteSign 不可重复。");
+                    throw KanashiException("RequestTypeEnum 中，byteSign 不可重复。");
                 }
                 byteSignMap[value.byteSign] = value;
             }

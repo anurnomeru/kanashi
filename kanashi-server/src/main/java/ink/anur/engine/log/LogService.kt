@@ -146,11 +146,11 @@ class LogService {
     fun appendWhileClusterValid(logItem: LogItem) {
         appendLock.writeLocker {
             explicitLock.writeLocker {
-                val operationId = raftCenterController.genOperationId()
+                val gao = raftCenterController.genGenerationAndOffset()
 
-                currentGAO = operationId
-                val log = maybeRoll(operationId.generation, true)
-                log.append(logItem, operationId.offset)
+                currentGAO = gao
+                val log = maybeRoll(gao.generation, true)
+                log.append(logItem, gao.offset)
             }
         }
     }
@@ -352,8 +352,8 @@ class LogService {
 
             logger.info("当前需删除 $GAO 往后的日志，故世代 $needDeleteGen 日志将全部删去")
             logSegmentIterable.forEach {
-                it.fileOperationSet.fileChannel.close()
-                val needToDelete = it.fileOperationSet.file
+                it.fileLogItemSet.fileChannel.close()
+                val needToDelete = it.fileLogItemSet.file
                 logger.debug("删除日志分片 ${needToDelete.absoluteFile} "
                     + (if (needToDelete.delete()) "成功" else "失败")
                     + "。删除对应索引文件"
@@ -375,10 +375,10 @@ class LogService {
             logSegmentIterable.forEach {
                 if (it.baseOffset <= offset && offset <= it.lastOffset(needDeleteGen)) {
                     it.truncateTo(offset)
-                    logger.debug("删除日志分片 ${it.fileOperationSet.file} 中大于等于 $offset 的记录移除")
+                    logger.debug("删除日志分片 ${it.fileLogItemSet.file} 中大于等于 $offset 的记录移除")
                 } else {
-                    it.fileOperationSet.fileChannel.close()
-                    val needToDelete = it.fileOperationSet.file
+                    it.fileLogItemSet.fileChannel.close()
+                    val needToDelete = it.fileLogItemSet.file
                     logger.debug("删除日志分片 ${needToDelete.absoluteFile}" + if (needToDelete.delete()) "成功" else "失败")
                 }
             }
@@ -391,8 +391,8 @@ class LogService {
         if (log.currentOffset == 0L) {
             val logSegments = log.getLogSegments(0, Long.MAX_VALUE)
             for (logSegment in logSegments) {
-                logSegment.fileOperationSet.fileChannel.close()
-                logSegment.fileOperationSet.file.delete()
+                logSegment.fileLogItemSet.fileChannel.close()
+                logSegment.fileLogItemSet.file.delete()
 
                 logSegment.index.delete()
             }
