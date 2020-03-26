@@ -41,7 +41,7 @@ object Bootstrap {
 //                    KanashiCommand.generator(
 //                        transactionAllocator.allocate(), TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, "kanashiValue-中文-"))
 
-                val logItem = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
+                val logItem = LogItem(RequestTypeEnum.COMMAND, "AnurKey",
                     KanashiCommand.generator(
                         Long.MAX_VALUE, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SELECT))
 

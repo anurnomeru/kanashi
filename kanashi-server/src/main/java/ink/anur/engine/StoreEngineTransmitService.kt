@@ -47,7 +47,6 @@ class StoreEngineTransmitService {
         var trxId = dataHandler.getTrxId()
 
         try {
-
             var selectOperate = false
 
             /*
@@ -121,6 +120,7 @@ class StoreEngineTransmitService {
             doRollBack(trxId)
             engineExecutor.exceptionCaught(e)
         }
+
     }
 
     /**

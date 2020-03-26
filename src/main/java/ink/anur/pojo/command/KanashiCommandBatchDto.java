@@ -1,4 +1,4 @@
-package ink.anur.pojo.server;
+package ink.anur.pojo.command;
 
 import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
@@ -21,7 +21,7 @@ import io.netty.channel.DefaultFileRegion;
  * <p>
  * 子类可以实现其 content 部分的内容拓展
  */
-public class KanashiCommandContainer extends AbstractTimedStruct {
+public class KanashiCommandBatchDto extends AbstractTimedStruct {
 
     private static final int GenerationOffset = AbstractTimedStruct.Companion.getTimestampOffset() + AbstractTimedStruct.Companion.getTimestampLength();
 
@@ -32,7 +32,7 @@ public class KanashiCommandContainer extends AbstractTimedStruct {
     private static final int FileLogItemSetSizeLength = 4;
 
     /**
-     * 最基础的 KanashiCommandContainer 大小 ( 不包括byteBufferLogItemSet )
+     * 最基础的 KanashiCommandBatchDto 大小 ( 不包括byteBufferLogItemSet )
      */
     private static final int BaseMessageOverhead = FileLogItemSetSizeOffset + FileLogItemSetSizeLength;
 
@@ -42,7 +42,7 @@ public class KanashiCommandContainer extends AbstractTimedStruct {
 
     private FileLogItemSet fileLogItemSet;
 
-    public KanashiCommandContainer(FetchDataInfo fetchDataInfo) {
+    public KanashiCommandBatchDto(FetchDataInfo fetchDataInfo) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(BaseMessageOverhead);
         init(byteBuffer, RequestTypeEnum.FETCH_RESPONSE);
 
@@ -62,7 +62,7 @@ public class KanashiCommandContainer extends AbstractTimedStruct {
         byteBuffer.flip();
     }
 
-    public KanashiCommandContainer(ByteBuffer byteBuffer) {
+    public KanashiCommandBatchDto(ByteBuffer byteBuffer) {
         this.setBuffer(byteBuffer);
         fileLogItemSetSize = getBuffer().getInt(FileLogItemSetSizeOffset);
     }
@@ -106,6 +106,6 @@ public class KanashiCommandContainer extends AbstractTimedStruct {
 
     @Override
     public String toString() {
-        return "KanashiCommandContainer{ gen => " + getGeneration() + ", fileSize => " + totalSize() + " }";
+        return "KanashiCommandBatchDto{ gen => " + getGeneration() + ", fileSize => " + totalSize() + " }";
     }
 }

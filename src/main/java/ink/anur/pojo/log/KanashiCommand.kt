@@ -2,6 +2,7 @@ package ink.anur.pojo.log
 
 import ink.anur.exception.KanashiException
 import ink.anur.pojo.log.common.CommandTypeEnum
+import ink.anur.pojo.log.common.StrApiTypeEnum
 import ink.anur.pojo.log.common.TransactionTypeEnum
 import java.nio.ByteBuffer
 import javax.annotation.concurrent.NotThreadSafe
@@ -78,35 +79,41 @@ class KanashiCommand(val content: ByteBuffer) {
     /**
      * 事务 id
      */
-    fun getTrxId(): Long {
-        return content.getLong(TrxIdOffset)
-    }
+    val trxId = content.getLong(TrxIdOffset)
 
     /**
      * 是否开启了（长）事务
      */
-    fun getTransactionType(): Byte {
-        return content.get(TransactionSignOffset)
-    }
+    val transactionType = TransactionTypeEnum.map(content.get(TransactionSignOffset))
 
     /**
      * 操作类型，目前仅支持String类操作，第一版不要做那么复杂
      */
-    fun getCommandType(): Byte {
-        return content.get(CommandTypeOffset)
-    }
+    val commandType = CommandTypeEnum.map(content.get(CommandTypeOffset))
 
     /**
-     * 操作具体的api是哪个，比如增删改查之类的
+     * 操作具体的api是哪个，比如增删改查之类的，每个操作类型都有自己的 api 类型，比如 字符串类型 str 的在 StrApiTypeEnum
      */
-    fun getApi(): Byte {
-        return content.get(ApiOffset)
-    }
+    val api = content.get(ApiOffset)
 
     /**
-     * 获取非第一个参数的额外参数们
+     * 获取非第一个参数的额外参数们，第一个参数放在 value 里面
      */
-    fun getExtraValues(): MutableList<String> {
+    val extraParams: MutableList<String>
+
+    /**
+     * 通过 kanashiCommand 来生成一个 ByteBufferKanashiEntry
+     *
+     * 调用后，limit会发生变化，第一个参数之后的数据将丢失
+     */
+    val kanashiEntry: ByteBufferKanashiEntry
+
+    /**
+     * 只有查询指令可以对从节点操作
+     */
+    val isQueryCommand: Boolean
+
+    init {
         val list = mutableListOf<String>()
         content.mark()
         content.position(ValuesSizeOffset)
@@ -117,38 +124,38 @@ class KanashiCommand(val content: ByteBuffer) {
             content.get(param)
             list.add(String(param))
         }
+        extraParams = list
         content.reset()
-        return list
-    }
 
-    /**
-     * 通过 kanashiCommand 来生成一个 ByteBufferKanashiEntry
-     *
-     * 调用后，limit会发生变化，第一个参数之后的数据将丢失
-     */
-    fun getKanashiEntry(): ByteBufferKanashiEntry {
-        val byteBuffer = content
-        byteBuffer.mark()
-
-        byteBuffer.position(ValuesSizeOffset)
-        val mainParamSize = byteBuffer.getInt()
+        content.mark()
+        content.position(ValuesSizeOffset)
 
         val from = CommandTypeOffset
         val to = ValuesSizeOffset + ValuesSizeLength + mainParamSize
 
-        byteBuffer.position(from)
-        byteBuffer.limit(to)
+        content.position(from)
+        content.limit(to)
 
-        val kanashiEntry = ByteBufferKanashiEntry(byteBuffer.slice())
-        byteBuffer.reset()
-        return kanashiEntry
+        kanashiEntry = ByteBufferKanashiEntry(content.slice())
+        content.reset()
+
+        isQueryCommand = when (commandType) {
+            CommandTypeEnum.STR -> {
+                when (api) {
+                    StrApiTypeEnum.SELECT -> true
+                    else -> false
+                }
+            }
+            else -> false
+        }
     }
+
 
     override fun toString(): String {
         return "KanashiEntry{" +
-            "trxId='" + getTrxId() + '\'' +
-            ", type='" + getCommandType() + '\'' +
-            ", api='" + getApi() + '\'' +
+            "trxId='" + trxId + '\'' +
+            ", type='" + commandType + '\'' +
+            ", api='" + api + '\'' +
             "}"
     }
 }

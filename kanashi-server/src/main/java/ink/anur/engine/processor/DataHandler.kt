@@ -40,7 +40,7 @@ class DataHandler(private val logItem: LogItem) {
      *
      * 如果是长事务，则如果没有激活过事务，需要进行事务的激活(创建快照)
      */
-    val shortTransaction = TransactionTypeEnum.map(logItem.getKanashiCommand().getTransactionType()) == TransactionTypeEnum.SHORT
+    val shortTransaction = logItem.getKanashiCommand().transactionType == TransactionTypeEnum.SHORT
 
     /**
      * 短事务不需要快照，长事务则是有快照就用快照，没有就创建一个快照
@@ -81,8 +81,8 @@ class DataHandler(private val logItem: LogItem) {
         }
 
         // 取出额外参数
-        extraParams = logItem.getKanashiCommand().getExtraValues()
-        byteBufferKanashiEntry = logItem.getKanashiCommand().getKanashiEntry()
+        extraParams = logItem.getKanashiCommand().extraParams
+        byteBufferKanashiEntry = logItem.getKanashiCommand().kanashiEntry
 
         // 这后面的内存可以释放掉了
         logItem.getKanashiCommand().content.limit(KanashiCommand.TransactionSignOffset)
@@ -93,17 +93,17 @@ class DataHandler(private val logItem: LogItem) {
     /**
      * 从 kanashiCommand 中的 byteBuffer 中获取 trxId
      */
-    fun getTrxId(): Long = logItem.getKanashiCommand().getTrxId()
+    fun getTrxId(): Long = logItem.getKanashiCommand().trxId
 
     /**
      * 从 kanashiCommand 中的 byteBuffer 中获取 commandType
      */
-    fun getCommandType() = CommandTypeEnum.map(logItem.getKanashiCommand().getCommandType())
+    fun getCommandType() = logItem.getKanashiCommand().commandType
 
     /**
      * 从 kanashiCommand 中的 byteBuffer 中获取具体请求的 api
      */
-    fun getApi() = logItem.getKanashiCommand().getApi()
+    fun getApi() = logItem.getKanashiCommand().api
 
     /**
      * 除了select操作，其余操作必须指定这个

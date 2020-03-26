@@ -12,8 +12,8 @@ import ink.anur.mutex.ReentrantReadWriteLocker
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.Commit
 import ink.anur.pojo.log.common.GenerationAndOffset
-import ink.anur.pojo.server.Fetch
-import ink.anur.pojo.server.KanashiCommandContainer
+import ink.anur.pojo.command.Fetch
+import ink.anur.pojo.command.KanashiCommandBatchDto
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentSkipListMap
@@ -112,7 +112,7 @@ class FetchHandlerService : AbstractRequestMapping() {
         // 为什么要。next，因为 fetch 过来的是客户端最新的 GAO 进度，而获取的要从 GAO + 1开始
         val fetchDataInfo = logService.getAfter(fetcher.fetchGAO.next())
         if (fetchDataInfo != null) {
-            requestProcessCentreService.send(fromServer, KanashiCommandContainer(fetchDataInfo))
+            requestProcessCentreService.send(fromServer, KanashiCommandBatchDto(fetchDataInfo))
         }
     }
 }

@@ -13,8 +13,8 @@ import ink.anur.pojo.log.CommitResponse
 import ink.anur.pojo.log.RecoveryComplete
 import ink.anur.pojo.log.RecoveryReporter
 import ink.anur.pojo.log.base.LogItem
-import ink.anur.pojo.server.KanashiCommandContainer
-import ink.anur.pojo.server.Fetch
+import ink.anur.pojo.command.KanashiCommandBatchDto
+import ink.anur.pojo.command.Fetch
 import java.util.HashMap
 
 /**
@@ -60,7 +60,7 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
     /**
      * fetch 结果
      */
-    FETCH_RESPONSE(20001, KanashiCommandContainer::class.java),
+    FETCH_RESPONSE(20001, KanashiCommandBatchDto::class.java),
 
     /**
      * 上报recovery进度
@@ -85,14 +85,9 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
     COMMIT_RESPONSE(20005, CommitResponse::class.java),
 
     /**
-     *  LogItem 是对应最基本的操作，表示这个操作将被写入日志
-     */
-    LOG_ITEM(-100, LogItem::class.java),
-
-    /**
      * 从客户端发来的指令
      */
-    COMMAND(99999, KanashiCommandContainer::class.java)
+    COMMAND(99999, KanashiCommandBatchDto::class.java)
     ;
 
     companion object {

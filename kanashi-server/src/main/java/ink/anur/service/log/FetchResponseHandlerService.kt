@@ -11,7 +11,7 @@ import ink.anur.inject.NigateInject
 import ink.anur.inject.NigateListenerService
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.common.GenerationAndOffset
-import ink.anur.pojo.server.KanashiCommandContainer
+import ink.anur.pojo.command.KanashiCommandBatchDto
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 
@@ -49,7 +49,7 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
 
     override fun handleRequest(fromServer: String, msg: ByteBuffer, channel: Channel) {
         logger.trace("收到节点 {} 返回的 FETCH_RESPONSE", fromServer)
-        val commandContainer = KanashiCommandContainer(msg)
+        val commandContainer = KanashiCommandBatchDto(msg)
 
         if (!electionMetaService.isLeader()) {
 

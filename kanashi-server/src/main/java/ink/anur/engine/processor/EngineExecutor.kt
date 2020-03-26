@@ -19,7 +19,7 @@ class EngineExecutor() {
 
     private var dataHandler: DataHandler? = null
 
-    val engineResult: EngineResult = EngineResult()
+    private val engineResult: EngineResult = EngineResult()
 
     fun kanashiEntry(): ByteBufferKanashiEntry? = engineResult.getKanashiEntry()
 

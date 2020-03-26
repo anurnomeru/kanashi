@@ -170,9 +170,6 @@ public class Log extends ReentrantLocker {
             throw new LogException("写入日志文件失败：" + logItem.toString());
         }
         currentOffset = offset;
-
-        // ×××× 追加到引擎
-        storeEngineFacadeService.append(new LogItemAndGAO(logItem, new GenerationAndOffset(generation, offset)));
     }
 
     /**

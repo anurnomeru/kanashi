@@ -1,4 +1,4 @@
-package ink.anur.pojo.server;
+package ink.anur.pojo.command;
 
 import java.nio.ByteBuffer;
 import ink.anur.pojo.common.AbstractTimedStruct;

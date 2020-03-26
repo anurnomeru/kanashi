@@ -18,7 +18,7 @@ import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.RecoveryComplete
 import ink.anur.pojo.log.RecoveryReporter
 import ink.anur.pojo.log.common.GenerationAndOffset
-import ink.anur.pojo.server.Fetch
+import ink.anur.pojo.command.Fetch
 import ink.anur.util.TimeUtil
 import io.netty.channel.Channel
 import java.nio.ByteBuffer

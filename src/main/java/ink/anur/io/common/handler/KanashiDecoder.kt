@@ -1,7 +1,5 @@
 package ink.anur.io.common.handler
 
-import ink.anur.pojo.common.AbstractStruct
-import ink.anur.pojo.enumerate.RequestTypeEnum
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
