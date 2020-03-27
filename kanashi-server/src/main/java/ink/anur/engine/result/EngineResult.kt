@@ -15,7 +15,7 @@ open class EngineResult {
     /**
      * 是否操作成功，比如插入失败，则为 false
      */
-    var result: Boolean = true
+    var success: Boolean = true
 
     /**
      * result 为 false 才会有 err
@@ -45,7 +45,7 @@ open class EngineResult {
     fun expect(str: String?) {
         val value = getKanashiEntry()?.getValue()
         if (value?.equals(str) == false) {
-            throw UnexpectedException("预期值为 $str 但实际为 [${value}] 数据来自 $queryExecutorDefinition")
+            throw UnexpectedException("预期值为 $str 但实际为 [$value] 数据来自 $queryExecutorDefinition")
         }
     }
 }

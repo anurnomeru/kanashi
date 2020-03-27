@@ -2,16 +2,13 @@ package ink.anur.engine
 
 import ink.anur.debug.Debugger
 import ink.anur.engine.memory.MemoryMVCCStorageUnCommittedPart
-import ink.anur.engine.processor.DataHandler
 import ink.anur.engine.processor.EngineExecutor
 import ink.anur.engine.queryer.EngineDataQueryer
-import ink.anur.engine.result.EngineResult
 import ink.anur.engine.trx.lock.TrxFreeQueuedSynchronizer
 import ink.anur.engine.trx.manager.TransactionManageService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.pojo.log.ByteBufferKanashiEntry
-import ink.anur.pojo.log.base.LogItem
 import ink.anur.pojo.log.common.CommandTypeEnum
 import ink.anur.pojo.log.common.CommonApiTypeEnum
 import ink.anur.pojo.log.common.StrApiTypeEnum
@@ -39,12 +36,9 @@ class StoreEngineTransmitService {
     @NigateInject
     private lateinit var memoryMVCCStorageUnCommittedPart: MemoryMVCCStorageUnCommittedPart
 
-    // 返回值仅用于测试校验
-    fun commandInvoke(logItem: LogItem, engineExecutor: EngineExecutor = EngineExecutor()) {
-        val dataHandler = DataHandler(logItem)
-        engineExecutor.setDataHandler(dataHandler)
-
-        var trxId = dataHandler.getTrxId()
+    fun commandInvoke(engineExecutor: EngineExecutor) {
+        val dataHandler = engineExecutor.getDataHandler()
+        val trxId = dataHandler.getTrxId()
 
         try {
             var selectOperate = false
@@ -121,6 +115,12 @@ class StoreEngineTransmitService {
             engineExecutor.exceptionCaught(e)
         }
 
+        if (engineExecutor.fromClient != null) {
+            val engineResult = engineExecutor.getEngineResult()
+            if (engineResult.success) {
+                engineResult.getKanashiEntry()
+            }
+        }
     }
 
     /**

@@ -24,9 +24,6 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
     @NigateInject
     private lateinit var logService: LogService
 
-    @NigateInject
-    private lateinit var
-
     override fun typeSupport(): RequestTypeEnum {
         return RequestTypeEnum.COMMAND
     }
@@ -39,7 +36,8 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
         } else if (kanashiCommand.isQueryCommand) {
 
         } else {
-
+            // 如果是普通的请求，则直接存成日志，等待集群commit，返回成功
+            logService.appendForLeader(logItem)
         }
     }
 }

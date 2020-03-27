@@ -46,7 +46,7 @@ object Bootstrap {
                         Long.MAX_VALUE, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SELECT))
 
                 val logService = Nigate.getBeanByClass(LogService::class.java)
-                logService.appendWhileClusterValid(logItem)
+                logService.appendForLeader(logItem)
             }
 
             println("append complete")

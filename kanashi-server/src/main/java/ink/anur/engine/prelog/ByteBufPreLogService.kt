@@ -135,7 +135,7 @@ class ByteBufPreLogService : ReentrantReadWriteLocker() {
                     val preLogMeta = getBefore(canCommit) ?: throw LogException("有bug请注意排查！！，不应该出现这个情况")
 
                     // 追加到磁盘
-                    logService.append(preLogMeta, canCommit.generation, preLogMeta.startOffset, preLogMeta.endOffset)
+                    logService.appendForFollower(preLogMeta, canCommit.generation, preLogMeta.startOffset, preLogMeta.endOffset)
 
                     // 强制刷盘
                     logService.activeLog().flush(preLogMeta.endOffset)

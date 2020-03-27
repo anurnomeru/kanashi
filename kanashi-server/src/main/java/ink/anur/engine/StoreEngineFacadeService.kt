@@ -8,6 +8,8 @@ import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.log.common.LogItemAndGAO
 import ink.anur.engine.log.CommitProcessManageService
+import ink.anur.engine.processor.DataHandler
+import ink.anur.engine.processor.EngineExecutor
 import ink.anur.inject.NigatePostConstruct
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.locks.ReentrantLock
@@ -36,14 +38,15 @@ class StoreEngineFacadeService : KanashiRunnable() {
         this.start()
     }
 
+    /**
+     * 这里主要解决的矛盾是，判断何时可以往引擎写数据
+     */
     override fun run() {
-        // 启动锁
-
         KanashiExecutors.execute(Runnable {
             var currentNum = counter
             while (true) {
                 Thread.sleep(1000)
-                var nowNum = counter
+                val nowNum = counter
                 logger.debug("| - 存储引擎控制中心 - | 每秒流速 ->> ${nowNum - currentNum}")
                 currentNum = nowNum
             }
@@ -55,7 +58,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
 
             try {
                 blockCheckIter(take.GAO)
-                storeEngineTransmitService.commandInvoke(take.logItem)
+                storeEngineTransmitService.commandInvoke(EngineExecutor(DataHandler(take.logItem)))
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -96,7 +99,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
     /**
      * 追加消息
      */
-    fun append(oaGao: LogItemAndGAO) {
-        queue.put(oaGao)
+    fun append(logItemAndGAO: LogItemAndGAO) {
+        queue.put(logItemAndGAO)
     }
 }

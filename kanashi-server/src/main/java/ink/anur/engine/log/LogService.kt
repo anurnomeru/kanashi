@@ -143,7 +143,7 @@ class LogService {
     /**
      * 追加操作日志到磁盘，只有当集群可用时，才可以进行追加
      */
-    fun appendWhileClusterValid(logItem: LogItem) {
+    fun appendForLeader(logItem: LogItem) {
         appendLock.writeLocker {
             explicitLock.writeLocker {
                 val gao = raftCenterController.genGenerationAndOffset()
@@ -155,13 +155,25 @@ class LogService {
         }
     }
 
+    /**
+     * 追加操作日志到磁盘，如果集群不可用，不会阻塞，供follower 将 byteBuffer log 写入磁盘用
+     */
+    fun appendForFollower(preLogMeta: PreLogMeta, generation: Long, startOffset: Long, endOffset: Long) {
+        explicitLock.writeLocker {
+            val log = maybeRoll(generation, false)
+            logger.debug("欲追加 世代 {}，实际世代 {}", generation, log.generation)
+            log.append(preLogMeta, startOffset, endOffset)
+
+            currentGAO = GenerationAndOffset(generation, endOffset)
+        }
+    }
 
     /**
      * 追加操作日志到磁盘，如果集群不可用，不会阻塞，供内部集群恢复时调用
      *
      * 允许插入到以前的世代
      */
-    fun append(gen: Long, offset: Long, logItem: LogItem) {
+    fun appendWhileRecovery(gen: Long, offset: Long, logItem: LogItem) {
         explicitLock.writeLocker {
             val insertion = GenerationAndOffset(gen, offset)
             if (insertion > currentGAO) {
@@ -172,19 +184,6 @@ class LogService {
 
             // 追加到磁盘
             log.append(logItem, offset)
-        }
-    }
-
-    /**
-     * 追加操作日志到磁盘，如果集群不可用，不会阻塞，供内部集群恢复时调用
-     */
-    fun append(preLogMeta: PreLogMeta, generation: Long, startOffset: Long, endOffset: Long) {
-        explicitLock.writeLocker {
-            val log = maybeRoll(generation, false)
-            logger.debug("欲追加 世代 {}，实际世代 {}", generation, log.generation)
-            log.append(preLogMeta, startOffset, endOffset)
-
-            currentGAO = GenerationAndOffset(generation, endOffset)
         }
     }
 

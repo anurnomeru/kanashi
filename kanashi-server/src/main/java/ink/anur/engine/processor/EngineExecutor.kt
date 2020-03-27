@@ -4,36 +4,33 @@ import ink.anur.debug.Debugger
 import ink.anur.debug.DebuggerLevel
 import ink.anur.engine.result.EngineResult
 import ink.anur.pojo.log.ByteBufferKanashiEntry
-import java.rmi.UnexpectedException
 
 /**
  * Created by Anur IjuoKaruKas on 2019/12/3
  *
  * 辅助访问访问数据层的媒介
  */
-class EngineExecutor() {
+class EngineExecutor(private val dataHandler: DataHandler) {
+
+    var fromClient: String? = null
 
     companion object {
         val logger = Debugger(this.javaClass).switch(DebuggerLevel.INFO)
     }
 
-    private var dataHandler: DataHandler? = null
-
     private val engineResult: EngineResult = EngineResult()
 
     fun kanashiEntry(): ByteBufferKanashiEntry? = engineResult.getKanashiEntry()
 
-    fun setDataHandler(dataHandler: DataHandler) {
-        this.dataHandler = dataHandler
-    }
+    fun getDataHandler(): DataHandler = dataHandler
 
-    fun getDataHandler(): DataHandler = dataHandler ?: throw UnexpectedException("参数没有设置？？？？")
+    fun getEngineResult() = engineResult
 
     /**
      * 标记为失败
      */
     fun shotFailure() {
-        engineResult.result = false
+        engineResult.success = false
     }
 
     /**
@@ -41,6 +38,6 @@ class EngineExecutor() {
      */
     fun exceptionCaught(e: Throwable) {
         engineResult.err = e
-        engineResult.result = false
+        engineResult.success = false
     }
 }
