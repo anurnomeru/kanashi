@@ -60,6 +60,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
                 blockCheckIter(take.GAO)
                 val engineExecutor = EngineExecutor(DataHandler(take.logItem))
                 engineExecutor.fromClient = take.fromServer
+
                 storeEngineTransmitService.commandInvoke(engineExecutor)
             } catch (e: Exception) {
                 e.printStackTrace()

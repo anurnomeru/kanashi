@@ -20,6 +20,11 @@ class EngineExecutor(private val dataHandler: DataHandler) {
     var fromClient: String? = null
 
     /**
+     * 消息时间，只是用于请求方辨别是哪个请求的回复用
+     */
+    var msgTime: Long = 0L
+
+    /**
      * 整个操作是否完成的锁
      */
     val cdl = CountDownLatch(1)

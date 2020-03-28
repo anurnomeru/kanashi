@@ -45,7 +45,7 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
             val gao = logService.appendForLeader(logItem)
 
             // 添加到引擎，等待commit，commit后，会自动给请求方一个答复
-            storeEngineFacadeService.appendToEngine(EngineProcessEntry(logItem, gao, fromServer))
+            storeEngineFacadeService.appendToEngine(EngineProcessEntry(logItem, gao, fromServer, logItem.getTimeMillis()))
         }
     }
 }
