@@ -17,8 +17,10 @@ class RequestExtProcessor(
     val listenOnRequestTypeEnum: RequestTypeEnum? = null,
     /*
      * 并在收到此请求时触发该回调
+     *
+     * 如果 byteBuffer 为空，代表没有正确收到回复
      */
-    private val howToConsumeResponse: (() -> Unit)? = null,
+    private val howToConsumeResponse: ((ByteBuffer?) -> Unit)? = null,
     /*
      * 这个请求是只发一次，还是无限发送
      */
@@ -40,11 +42,11 @@ class RequestExtProcessor(
     /**
      * 已经完成了此任务
      */
-    fun complete() = writeLockSupplier {
+    fun complete(msg: ByteBuffer?) = writeLockSupplier {
         if (!complete) {
             complete = true
             howToConsumeResponse?.let {
-                KanashiExecutors.execute(Runnable { it.invoke() })
+                KanashiExecutors.execute(Runnable { it.invoke(msg) })
             }
         }
     }

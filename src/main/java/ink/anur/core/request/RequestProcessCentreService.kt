@@ -5,7 +5,6 @@ import ink.anur.common.pool.EventDriverPool
 import ink.anur.common.struct.Request
 import ink.anur.config.CoordinateConfig
 import ink.anur.pojo.common.AbstractStruct
-import ink.anur.pojo.common.AbstractTimedStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.core.common.RequestExtProcessor
 import ink.anur.core.common.RequestMapping
@@ -103,7 +102,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
         if (channel == null) {
             logger.error("????????????????????????????????????")
         } else {
-            val requestTimestampCurrent = msg.getLong(AbstractTimedStruct.TimestampOffset)
+            val requestTimestampCurrent = msg.getLong(AbstractStruct.TimestampOffset)
             val serverName = channelService.getChannelName(channel)
 
             // serverName 是不会为空的，但是有一种情况例外，便是服务还未注册时 这里做特殊处理
@@ -123,27 +122,24 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                 } -> try {
                     val requestMapping = requestMappingRegister[requestTypeEnum]
                     if (requestMapping != null) {
-
                         requestMapping.handleRequest(serverName, msg, channel)// 收到正常的请求
-
-                        responseCallback[requestTypeEnum]?.also {
-                            writeLocker {
-                                val iterator = it.iterator()
-                                while (iterator.hasNext()) {
-                                    val requestExtProcessor = iterator.next()
-                                    requestExtProcessor.complete()
-                                    val inFlightRequestType = requestExtProcessor.requestType
-
-                                    removing(inFlight, serverName, inFlightRequestType)?.complete()
-                                    removing(reSendTask, serverName, inFlightRequestType)?.cancel()
-                                    iterator.remove()
-                                }
-                            }
-                        }
-
                     } else {
                         logger.error("类型 $requestTypeEnum 消息没有定制化 requestMapping ！！！")
-                        System.exit(1)
+                    }
+
+                    responseCallback[requestTypeEnum]?.also {
+                        writeLocker {
+                            val iterator = it.iterator()
+                            while (iterator.hasNext()) {
+                                val requestExtProcessor = iterator.next()
+                                requestExtProcessor.complete(msg)
+                                val inFlightRequestType = requestExtProcessor.requestType
+
+                                removing(inFlight, serverName, inFlightRequestType)?.complete(null)
+                                removing(reSendTask, serverName, inFlightRequestType)?.cancel()
+                                iterator.remove()
+                            }
+                        }
                     }
 
                 } catch (e: Exception) {
@@ -174,7 +170,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
         } else {
             writeLocker {
                 // 发送之前，移除之前可能遗留的任务
-                removing(inFlight, serverName, typeEnum)?.complete()
+                removing(inFlight, serverName, typeEnum)?.complete(null)
                 removing(reSendTask, serverName, typeEnum)?.cancel()
                 requestProcessor.listenOnRequestTypeEnum?.let {
                     responseCallback.compute(
@@ -208,7 +204,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
 
                     // 如果不需要回复，直接触发其 complete
                     if (requestProcessor.listenOnRequestTypeEnum == null) {
-                        requestProcessor.complete()
+                        requestProcessor.complete(null)
                     }
                 } // ignore
 

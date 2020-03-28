@@ -1,6 +1,6 @@
 package ink.anur.pojo.coordinate
 
-import ink.anur.pojo.common.AbstractTimedStruct
+import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
  *
  * 投票 ~
  */
-class Voting : AbstractTimedStruct {
+class Voting : AbstractStruct {
 
     companion object {
         val AgreedSignOffset = OriginMessageOverhead

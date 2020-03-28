@@ -1,6 +1,6 @@
 package ink.anur.pojo
 
-import ink.anur.pojo.common.AbstractTimedStruct
+import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -12,7 +12,7 @@ import java.nio.charset.Charset
  *
  * 用于协调节点向 Leader 注册自己
  */
-open class Register : AbstractTimedStruct {
+open class Register : AbstractStruct {
 
     companion object {
         val SizeOffset = OriginMessageOverhead

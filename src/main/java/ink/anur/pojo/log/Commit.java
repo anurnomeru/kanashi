@@ -1,7 +1,7 @@
 package ink.anur.pojo.log;
 
 import java.nio.ByteBuffer;
-import ink.anur.pojo.common.AbstractTimedStruct;
+import ink.anur.pojo.common.AbstractStruct;
 import ink.anur.pojo.enumerate.RequestTypeEnum;
 import ink.anur.pojo.log.common.GenerationAndOffset;
 import io.netty.buffer.Unpooled;
@@ -15,9 +15,9 @@ import io.netty.channel.Channel;
  * 集群成员收到 COMMIT 消息时,需要回复一个 COMMIT RESPONSE,表明自己的 commit 进度, leader
  * 则会 cover 自身 commit 进度
  */
-public class Commit extends AbstractTimedStruct {
+public class Commit extends AbstractStruct {
 
-    public static final int CanCommitGenerationOffset = AbstractTimedStruct.Companion.getTimestampOffset() + AbstractTimedStruct.Companion.getTimestampLength();
+    public static final int CanCommitGenerationOffset = AbstractStruct.Companion.getOriginMessageOverhead();
 
     public static final int CanCommitGenerationLength = 8;
 

@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import ink.anur.log.common.FetchDataInfo;
 import ink.anur.log.logitemset.ByteBufferLogItemSet;
 import ink.anur.log.logitemset.FileLogItemSet;
-import ink.anur.pojo.common.AbstractTimedStruct;
+import ink.anur.pojo.common.AbstractStruct;
 import ink.anur.pojo.enumerate.RequestTypeEnum;
 import ink.anur.util.FileIOUtil;
 import io.netty.buffer.Unpooled;
@@ -21,9 +21,9 @@ import io.netty.channel.DefaultFileRegion;
  * <p>
  * 子类可以实现其 content 部分的内容拓展
  */
-public class KanashiCommandBatchDto extends AbstractTimedStruct {
+public class KanashiCommandBatchDto extends AbstractStruct {
 
-    private static final int GenerationOffset = AbstractTimedStruct.Companion.getTimestampOffset() + AbstractTimedStruct.Companion.getTimestampLength();
+    private static final int GenerationOffset = AbstractStruct.Companion.getOriginMessageOverhead();
 
     private static final int GenerationLength = 8;
 

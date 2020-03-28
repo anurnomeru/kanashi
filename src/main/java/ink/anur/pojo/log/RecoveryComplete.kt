@@ -1,6 +1,6 @@
 package ink.anur.pojo.log
 
-import ink.anur.pojo.common.AbstractTimedStruct
+import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.common.GenerationAndOffset
 import io.netty.buffer.Unpooled
@@ -12,7 +12,7 @@ import java.nio.ByteBuffer
  *
  * 集群恢复完毕后，leader 告诉 从节点，其世代最大 GAO 为多少
  */
-class RecoveryComplete : AbstractTimedStruct {
+class RecoveryComplete : AbstractStruct {
 
     private val CommitedGenerationLength = 8
 

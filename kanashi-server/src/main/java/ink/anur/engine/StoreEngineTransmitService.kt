@@ -11,7 +11,7 @@ import ink.anur.engine.trx.manager.TransactionManageService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.pojo.command.KanashiCommandFail
-import ink.anur.pojo.command.KanashiCommandSuccess
+import ink.anur.pojo.command.KanashiCommandResponse
 import ink.anur.pojo.log.ByteBufferKanashiEntry
 import ink.anur.pojo.log.KanashiCommand.Companion.NON_TRX
 import ink.anur.pojo.log.common.CommandTypeEnum
@@ -59,7 +59,7 @@ class StoreEngineTransmitService {
             if (it.fromClient != null) {
                 val engineResult = it.getEngineResult()
                 if (engineResult.success) {
-                    requestProcessCentreService.send(it.fromClient!!, KanashiCommandSuccess(engineResult.getKanashiEntry()))
+                    requestProcessCentreService.send(it.fromClient!!, KanashiCommandResponse(engineResult.getKanashiEntry()))
                 } else {
                     requestProcessCentreService.send(it.fromClient!!, KanashiCommandFail())
                 }

@@ -1,6 +1,6 @@
 package ink.anur.pojo
 
-import ink.anur.pojo.common.AbstractTimedStruct
+import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -9,7 +9,7 @@ import java.nio.ByteBuffer
 /**
  * Created by Anur IjuoKaruKas on 2020/2/28
  */
-class HeartBeat : AbstractTimedStruct {
+class HeartBeat : AbstractStruct {
 
     companion object {
         val GenerationOffset = OriginMessageOverhead

@@ -18,10 +18,10 @@ import java.nio.charset.Charset
  * 　4　   +   4    +    4      + key +    4        +  v
  * CRC32  +  type  + keyLength + key + valueLength +  v
  */
-class LogItem : AbstractStruct {
+open class LogItem : AbstractStruct {
 
     companion object {
-        val KeySizeOffset = AbstractStruct.TypeOffset + AbstractStruct.TypeLength
+        val KeySizeOffset = TypeOffset + TypeLength
 
         val KeySizeLength = 4
 

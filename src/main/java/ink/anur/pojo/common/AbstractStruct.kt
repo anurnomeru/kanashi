@@ -26,9 +26,11 @@ abstract class AbstractStruct {
         val CrcLength = 4
         val TypeOffset = CrcOffset + CrcLength
         val TypeLength = 4
+        val TimestampOffset = TypeOffset + TypeLength
+        val TimestampLength = 8
+        val OriginMessageOverhead = TimestampOffset + TimestampLength
 
-
-        val truely: Byte = 1
+        const val truely: Byte = 1
     }
 
     fun translateToByte(boolean: Boolean): Byte {
@@ -73,6 +75,29 @@ abstract class AbstractStruct {
 
     fun getRequestType(): RequestTypeEnum {
         return RequestTypeEnum.parseByByteSign(buffer!!.getInt(TypeOffset))
+    }
+
+    fun init(byteBuffer: ByteBuffer, requestTypeEnum: RequestTypeEnum) {
+        buffer = byteBuffer
+        byteBuffer.position(TypeOffset)
+        byteBuffer.putInt(requestTypeEnum.byteSign)
+        byteBuffer.putLong(System.currentTimeMillis())
+    }
+
+    fun init(capacity: Int, requestTypeEnum: RequestTypeEnum, then: (ByteBuffer) -> Unit) {
+        buffer = ByteBuffer.allocate(capacity)
+        buffer!!.position(TypeOffset)
+        buffer!!.putInt(requestTypeEnum.byteSign)
+        buffer!!.putLong(System.currentTimeMillis())
+        then.invoke(buffer!!)
+        buffer!!.flip()
+    }
+
+    /**
+     * 时间戳用于防止同一次请求的 “多次请求”，保证幂等性
+     */
+    fun getTimeMillis(): Long {
+        return buffer!!.getLong(TimestampOffset)
     }
 
     /**

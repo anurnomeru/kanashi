@@ -1,6 +1,6 @@
 package ink.anur.pojo
 
-import ink.anur.pojo.common.AbstractTimedStruct
+import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
  *
  * 注册的 response 里面是空的 只是回复一下
  */
-open class RegisterResponse : AbstractTimedStruct {
+open class RegisterResponse : AbstractStruct {
 
     companion object {
         val SizeOffset = OriginMessageOverhead

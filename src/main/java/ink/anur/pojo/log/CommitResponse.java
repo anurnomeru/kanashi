@@ -1,7 +1,7 @@
 package ink.anur.pojo.log;
 
 import java.nio.ByteBuffer;
-import ink.anur.pojo.common.AbstractTimedStruct;
+import ink.anur.pojo.common.AbstractStruct;
 import ink.anur.pojo.enumerate.RequestTypeEnum;
 import ink.anur.pojo.log.common.GenerationAndOffset;
 import io.netty.buffer.Unpooled;
@@ -12,9 +12,9 @@ import io.netty.channel.Channel;
  * <p>
  * 当收到leader发来的可提交进度时,进行进度提交,并且进行当前最大提交进度的回包
  */
-public class CommitResponse extends AbstractTimedStruct {
+public class CommitResponse extends AbstractStruct {
 
-    public static final int CommitGenerationOffset = AbstractTimedStruct.Companion.getTimestampOffset() + AbstractTimedStruct.Companion.getTimestampLength();
+    public static final int CommitGenerationOffset = AbstractStruct.Companion.getOriginMessageOverhead();
 
     public static final int CommitGenerationLength = 8;
 

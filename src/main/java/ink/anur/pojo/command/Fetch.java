@@ -1,7 +1,7 @@
 package ink.anur.pojo.command;
 
 import java.nio.ByteBuffer;
-import ink.anur.pojo.common.AbstractTimedStruct;
+import ink.anur.pojo.common.AbstractStruct;
 import ink.anur.pojo.enumerate.RequestTypeEnum;
 import ink.anur.pojo.log.common.GenerationAndOffset;
 import io.netty.buffer.Unpooled;
@@ -12,9 +12,9 @@ import io.netty.channel.Channel;
  * <p>
  * 用于向协调 Leader 拉取消息，并告知自己的提交进度
  */
-public class Fetch extends AbstractTimedStruct {
+public class Fetch extends AbstractStruct {
 
-    public static final int FetchGenerationOffset = AbstractTimedStruct.Companion.getTimestampOffset() + AbstractTimedStruct.Companion.getTimestampLength();
+    public static final int FetchGenerationOffset = AbstractStruct.Companion.getOriginMessageOverhead();
 
     public static final int FetchGenerationLength = 8;
 

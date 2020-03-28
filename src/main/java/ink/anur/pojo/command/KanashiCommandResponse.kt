@@ -1,6 +1,6 @@
 package ink.anur.pojo.command
 
-import ink.anur.pojo.common.AbstractTimedStruct
+import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.ByteBufferKanashiEntry
 import io.netty.channel.Channel
@@ -11,13 +11,22 @@ import java.nio.ByteBuffer
  *
  * 成功的回复
  */
-class KanashiCommandSuccess : AbstractTimedStruct {
+class KanashiCommandResponse : AbstractStruct {
 
     val kanashiEntry: ByteBufferKanashiEntry?
 
-    constructor(entry: ByteBufferKanashiEntry?) {
+    val success: Boolean
+
+    companion object {
+        val SuccessOffset = OriginMessageOverhead
+        val SuccessLength = 1
+        val Capacity = SuccessOffset + SuccessLength
+    }
+
+    constructor(b: Boolean, entry: ByteBufferKanashiEntry?) {
         kanashiEntry = entry
-        init(ByteBuffer.allocate(OriginMessageOverhead), RequestTypeEnum.COMMAND_SUCCESS)
+        init(Capacity, RequestTypeEnum.COMMAND_RESPONSE) { it.put(translateToByte(b)) }
+        success = b
         buffer!!.flip()
     }
 
@@ -28,6 +37,7 @@ class KanashiCommandSuccess : AbstractTimedStruct {
             byteBuffer.position(OriginMessageOverhead)
             kanashiEntry = ByteBufferKanashiEntry(byteBuffer.slice())
         }
+        success = translateToBool(byteBuffer.get(SuccessOffset))
         byteBuffer.position(0)
         byteBuffer.limit(OriginMessageOverhead)
         buffer = byteBuffer.slice()

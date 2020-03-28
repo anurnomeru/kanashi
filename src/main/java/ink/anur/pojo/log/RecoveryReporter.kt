@@ -1,6 +1,6 @@
 package ink.anur.pojo.log
 
-import ink.anur.pojo.common.AbstractTimedStruct
+import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.common.GenerationAndOffset
 import io.netty.buffer.Unpooled
@@ -12,7 +12,7 @@ import java.nio.ByteBuffer
  *
  * 当选主成功后，从节点需要像主节点汇报自己最大的 offset
  */
-class RecoveryReporter : AbstractTimedStruct {
+class RecoveryReporter : AbstractStruct {
 
     private val CommitedGenerationLength = 8
 

@@ -8,7 +8,7 @@ import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.log.common.EngineProcessEntry
 import ink.anur.pojo.enumerate.RequestTypeEnum
-import ink.anur.pojo.command.KanashiCommandDto
+import ink.anur.pojo.log.base.LogItem
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 
@@ -34,7 +34,7 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
     }
 
     override fun handleRequest(fromServer: String, msg: ByteBuffer, channel: Channel) {
-        val logItem = KanashiCommandDto(msg).logItem
+        val logItem = LogItem(msg)
         val kanashiCommand = logItem.getKanashiCommand()
         if (!kanashiCommand.isQueryCommand && !electionMetaService.isLeader()) {
             // 发送谁才是leader
