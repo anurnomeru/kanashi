@@ -43,7 +43,7 @@ class MemoryMVCCStorageUnCommittedPart {
     fun commonOperate(dataHandler: DataHandler) {
         val key = dataHandler.key
         val trxId = dataHandler.getTrxId()
-        val kanashiEntry = dataHandler.genKanashiEntry()
+        val kanashiEntry = dataHandler.getKanashiEntry()
         if (treeMap.containsKey(key) && treeMap[key]!!.trxId != trxId) {
             throw MemoryMVCCStorageUnCommittedPartException("mvcc uc部分出现了奇怪的bug，讲道理一个 key 只会对应一个 val，注意无锁控制 TrxFreeQueuedSynchronizer 是否有问题！")
         } else {

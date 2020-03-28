@@ -22,8 +22,9 @@ class MemoryLSMQueryChain : QueryerChain() {
         val dataHandler = engineExecutor.getDataHandler()
         memoryLSMService.get(dataHandler.key)
             ?.also {
-                engineExecutor.engineResult.setKanashiEntry(it)
-                engineExecutor.engineResult.queryExecutorDefinition = QueryerDefinition.MEMORY_LSM
+                engineExecutor.getEngineResult().setKanashiEntry(it)
+                engineExecutor.getEngineResult().setQueryExecutorDefinition(QueryerDefinition.MEMORY_LSM)
+                engineExecutor.shotSuccess()
             }
     }
 }

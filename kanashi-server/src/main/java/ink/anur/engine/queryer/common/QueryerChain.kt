@@ -21,12 +21,19 @@ abstract class QueryerChain {
      * 如果到了最后一层都找不到，则返回此结果
      */
     private fun keyNotFoundTilEnd(engineExecutor: EngineExecutor) {
-        engineExecutor.engineResult.queryExecutorDefinition = QueryerDefinition.TIL_END
+        engineExecutor.getEngineResult().setQueryExecutorDefinition(QueryerDefinition.TIL_END)
     }
 
     fun query(engineExecutor: EngineExecutor) {
-        doQuery(engineExecutor).let { engineExecutor.engineResult.getKanashiEntry() }
-            ?: next?.query(engineExecutor).let { engineExecutor.engineResult.getKanashiEntryOrigin() }
+        // 优先执行 本层的 doQuery
+        doQuery(engineExecutor)
+            // 如果拿到结果则返回结果
+            .let { engineExecutor.getEngineResult().getKanashiEntry() }
+
+        // 否则执行下一层
+            ?: next?.query(engineExecutor).let { engineExecutor.getEngineResult().getKanashiEntry() }
+
+            // 最后执行兜底
             ?: keyNotFoundTilEnd(engineExecutor)
     }
 }

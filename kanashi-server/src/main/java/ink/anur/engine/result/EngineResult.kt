@@ -27,25 +27,20 @@ open class EngineResult {
     /**
      * 查询来自引擎的哪个部分
      */
-    var queryExecutorDefinition: QueryerDefinition? = null
+    private var queryExecutorDefinition: QueryerDefinition? = null
 
     /**
      * 查询结果
      */
     private var kanashiEntry: ByteBufferKanashiEntry? = null
 
+    fun setQueryExecutorDefinition(queryerDefinition: QueryerDefinition) {
+        queryExecutorDefinition = queryerDefinition
+    }
+
     fun setKanashiEntry(kanashiEntry: ByteBufferKanashiEntry) {
         this.kanashiEntry = kanashiEntry
     }
 
-    fun getKanashiEntry(): ByteBufferKanashiEntry? = kanashiEntry?.takeIf { it.getOperateType() == ByteBufferKanashiEntry.Companion.OperateType.ENABLE }
-
-    fun getKanashiEntryOrigin(): ByteBufferKanashiEntry? = kanashiEntry
-
-    fun expect(str: String?) {
-        val value = getKanashiEntry()?.getValue()
-        if (value?.equals(str) == false) {
-            throw UnexpectedException("预期值为 $str 但实际为 [$value] 数据来自 $queryExecutorDefinition")
-        }
-    }
+    fun getKanashiEntry(): ByteBufferKanashiEntry? = kanashiEntry
 }

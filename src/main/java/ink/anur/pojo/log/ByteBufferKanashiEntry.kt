@@ -18,53 +18,19 @@ import java.nio.ByteBuffer
  */
 class ByteBufferKanashiEntry(val byteBuffer: ByteBuffer) {
 
-    /**
-     * 对整个 ByteBufferKanashiEntry 大小的预估
-     */
-    val expectedSize: Int = byteBuffer.limit()
-
-    var operateTypeSet = false
-
-    /**
-     *设置 operateType
-     */
-    fun setOperateType(operateType: OperateType) {
-        byteBuffer.mark()
-        byteBuffer.position(OperateTypeOffset)
-        byteBuffer.put(operateType.byte)
-        byteBuffer.reset()
-        operateTypeSet = true
-    }
-
-    /**
-     * 操作类型
-     */
-    fun getOperateType() = Companion.OperateType.map(byteBuffer.get(OperateTypeOffset))
-
-    /**
-     * STR操作还是LIST还是什么别的
-     */
-    fun getCommandType() = CommandTypeEnum.map(byteBuffer.get(CommandTypeOffset))
-
-    @Deprecated("不要返回字符串")
-    fun getValue(): String {
-        byteBuffer.mark()
-        byteBuffer.position(ValueSizeOffset)
-        val mainParamSize = byteBuffer.getInt()
-
-        val valueArray = ByteArray(mainParamSize)
-        byteBuffer.get(valueArray)
-        byteBuffer.reset()
-        return String(valueArray)
-    }
-
     companion object {
 
-        val NONE: ByteBufferKanashiEntry
+        val SENTINEL = allocateEmptyKanashiEntry()
 
-        init {
-            val allocate = ByteBuffer.allocate(1)
-            NONE = ByteBufferKanashiEntry(allocate)
+        /**
+         * 申请一个空值
+         */
+        fun allocateEmptyKanashiEntry(): ByteBufferKanashiEntry {
+            val allocate = ByteBuffer.allocate(5)
+            allocate.put(CommandTypeEnum.NONE.byte)
+            allocate.putInt(0)
+            allocate.flip()
+            return ByteBufferKanashiEntry(allocate)
         }
 
         // 理论上key 可以支持到很大，但是一个key 2g = = 玩呢？
@@ -76,15 +42,9 @@ class ByteBufferKanashiEntry(val byteBuffer: ByteBuffer) {
         const val CommandTypeLength = 1
 
         /**
-         * 标记此值是否被删除
-         */
-        const val OperateTypeOffset = CommandTypeOffset + CommandTypeLength
-        const val OperateTypeLength = 1
-
-        /**
          * value 长度标识
          */
-        const val ValueSizeOffset = OperateTypeOffset + OperateTypeLength
+        const val ValueSizeOffset = CommandTypeOffset + CommandTypeLength
         const val ValueSizeLength = 4
 
         const val ValueOffset = ValueSizeOffset + ValueSizeLength
@@ -110,5 +70,31 @@ class ByteBufferKanashiEntry(val byteBuffer: ByteBuffer) {
                 }
             }
         }
+    }
+
+    /**
+     * 对整个 ByteBufferKanashiEntry 大小的预估
+     */
+    val expectedSize: Int = byteBuffer.limit()
+
+    /**
+     * STR操作还是LIST还是什么别的
+     */
+    fun getCommandType() = CommandTypeEnum.map(byteBuffer.get(CommandTypeOffset))
+
+    /**
+     * 是否是一个被删除的值
+     */
+    fun isDelete(): Boolean = getCommandType() == CommandTypeEnum.NONE
+
+    fun getValueString(): String {
+        byteBuffer.mark()
+        byteBuffer.position(ValueSizeOffset)
+        val mainParamSize = byteBuffer.getInt()
+
+        val valueArray = ByteArray(mainParamSize)
+        byteBuffer.get(valueArray)
+        byteBuffer.reset()
+        return String(valueArray)
     }
 }

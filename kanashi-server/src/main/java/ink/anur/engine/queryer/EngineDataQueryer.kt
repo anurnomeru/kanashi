@@ -1,5 +1,6 @@
 package ink.anur.engine.queryer
 
+import ink.anur.common.KanashiExecutors
 import ink.anur.common.pool.EventDriverPool
 import ink.anur.engine.processor.EngineExecutor
 import ink.anur.inject.NigateBean
@@ -28,12 +29,7 @@ class EngineDataQueryer {
     private fun init() {
         ucChain.next = cChain
         cChain.next = mChain
-
-        EventDriverPool.register(EngineExecutor::class.java, Runtime.getRuntime()
-            .availableProcessors(), 20L, TimeUnit.MILLISECONDS) {
-            ucChain.query(it)
-        }
     }
 
-    fun doQuery(engineExecutor: EngineExecutor) = EventDriverPool.offer(engineExecutor)
+    fun doQuery(engineExecutor: EngineExecutor) = KanashiExecutors.execute(Runnable { ucChain.query(engineExecutor) })
 }

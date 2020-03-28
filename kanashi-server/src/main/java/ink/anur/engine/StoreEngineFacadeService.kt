@@ -6,7 +6,7 @@ import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.debug.Debugger
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
-import ink.anur.log.common.LogItemAndGAO
+import ink.anur.log.common.EngineProcessEntry
 import ink.anur.engine.log.CommitProcessManageService
 import ink.anur.engine.processor.DataHandler
 import ink.anur.engine.processor.EngineExecutor
@@ -29,7 +29,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
     private lateinit var storeEngineTransmitService: StoreEngineTransmitService
 
     private val logger = Debugger(this::class.java)
-    private val queue = LinkedBlockingQueue<LogItemAndGAO>()
+    private val queue = LinkedBlockingQueue<EngineProcessEntry>()
     private val lock = ReentrantLock()
     private val pauseLatch = lock.newCondition()
 
@@ -58,7 +58,9 @@ class StoreEngineFacadeService : KanashiRunnable() {
 
             try {
                 blockCheckIter(take.GAO)
-                storeEngineTransmitService.commandInvoke(EngineExecutor(DataHandler(take.logItem)))
+                val engineExecutor = EngineExecutor(DataHandler(take.logItem))
+                engineExecutor.fromClient = take.fromServer
+                storeEngineTransmitService.commandInvoke(engineExecutor)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -99,7 +101,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
     /**
      * 追加消息
      */
-    fun append(logItemAndGAO: LogItemAndGAO) {
-        queue.put(logItemAndGAO)
+    fun appendToEngine(engineProcessEntry: EngineProcessEntry) {
+        queue.put(engineProcessEntry)
     }
 }

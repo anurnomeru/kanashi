@@ -65,7 +65,7 @@ class LogItem : AbstractStruct {
         val vSize = value.contentLength
         val byteBuffer = ByteBuffer.allocate(BaseMessageOverhead + kSize + vSize)
 
-        byteBuffer.position(AbstractStruct.TypeOffset)
+        byteBuffer.position(TypeOffset)
         byteBuffer.putInt(requestType)
         byteBuffer.putInt(kSize)
         byteBuffer.put(kBytes)

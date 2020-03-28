@@ -55,7 +55,7 @@ class DataHandler(private val logItem: LogItem) {
     /**
      * kanashi Entry，里面存储着数据本身的类型（str，还是其他的，是否被删除，以及 value）
      */
-    private val byteBufferKanashiEntry: ByteBufferKanashiEntry
+    private var byteBufferKanashiEntry: ByteBufferKanashiEntry
 
     init {
         Nigate.injectOnly(this)
@@ -106,17 +106,14 @@ class DataHandler(private val logItem: LogItem) {
     fun getApi() = logItem.getKanashiCommand().api
 
     /**
-     * 除了select操作，其余操作必须指定这个
+     * 在正式操作引擎之前将值设置为被删除
      */
-    fun setOperateType(operateType: ByteBufferKanashiEntry.Companion.OperateType) {
-        byteBufferKanashiEntry.setOperateType(operateType)
+    fun markKanashiEntryAsDeleteBeforeOperate() {
+        byteBufferKanashiEntry = ByteBufferKanashiEntry.allocateEmptyKanashiEntry()
     }
 
     @Synchronized
-    fun genKanashiEntry(): ByteBufferKanashiEntry {
-        if (!byteBufferKanashiEntry.operateTypeSet) {
-            throw UnexpectedException("operateType 在进行非查询操作时必须指定！ 估计是代码哪里有 bug 导致没有指定！")
-        }
+    fun getKanashiEntry(): ByteBufferKanashiEntry {
         return byteBufferKanashiEntry
     }
 

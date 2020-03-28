@@ -132,7 +132,7 @@ class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
     /**
      * 单链表哨兵，它没有别的作用，就是方便写代码用的
      */
-    private val SENTINEL = VerAndKanashiEntry(0, ByteBufferKanashiEntry.NONE)
+    private val SENTINEL = VerAndKanashiEntry(0, ByteBufferKanashiEntry.SENTINEL)
 
     /**
      * 递归提交某个VAHE，及其更早的版本

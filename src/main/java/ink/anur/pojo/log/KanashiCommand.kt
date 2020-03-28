@@ -99,7 +99,7 @@ class KanashiCommand(val content: ByteBuffer) {
     /**
      * 获取非第一个参数的额外参数们，第一个参数放在 value 里面
      */
-    val extraParams: MutableList<String>
+    val extraParams: MutableList<String> = mutableListOf()
 
     /**
      * 通过 kanashiCommand 来生成一个 ByteBufferKanashiEntry
@@ -114,31 +114,29 @@ class KanashiCommand(val content: ByteBuffer) {
     val isQueryCommand: Boolean
 
     init {
-        val list = mutableListOf<String>()
         content.mark()
         content.position(ValuesSizeOffset)
         val mainParamSize = content.getInt()
-        content.position(ValuesSizeOffset + ValuesSizeLength + mainParamSize)
+
+        val kanashiEntryFrom = TransactionSignOffset
+        val kanashiEntryTo = ValuesSizeOffset + ValuesSizeLength + mainParamSize
+
+        // 首先取出额外参数
+        content.position(kanashiEntryTo)
         while (content.position() < contentLength) {
             val param = ByteArray(content.getInt())
             content.get(param)
-            list.add(String(param))
+            extraParams.add(String(param))
         }
-        extraParams = list
-        content.reset()
 
-        content.mark()
-        content.position(ValuesSizeOffset)
-
-        val from = CommandTypeOffset
-        val to = ValuesSizeOffset + ValuesSizeLength + mainParamSize
-
-        content.position(from)
-        content.limit(to)
-
+        // 其次取出 kanashiEntry
+        content.position(kanashiEntryFrom)
+        content.limit(kanashiEntryTo)
         kanashiEntry = ByteBufferKanashiEntry(content.slice())
+
         content.reset()
 
+        // 判断是否查询指令
         isQueryCommand = when (commandType) {
             CommandTypeEnum.STR -> {
                 when (api) {

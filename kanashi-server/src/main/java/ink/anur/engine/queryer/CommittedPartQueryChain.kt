@@ -19,14 +19,15 @@ import ink.anur.inject.NigateInject
 class CommittedPartQueryChain : QueryerChain() {
 
     @NigateInject
-    private lateinit var memoryMVCCStorageCommittedPart:MemoryMVCCStorageCommittedPart
+    private lateinit var memoryMVCCStorageCommittedPart: MemoryMVCCStorageCommittedPart
 
     override fun doQuery(engineExecutor: EngineExecutor) {
         val dataHandler = engineExecutor.getDataHandler()
         memoryMVCCStorageCommittedPart.queryKeyInTrx(dataHandler.getTrxId(), dataHandler.key, dataHandler.waterMarker)
-                ?.also {
-                    engineExecutor.engineResult.setKanashiEntry(it)
-                    engineExecutor.engineResult.queryExecutorDefinition = QueryerDefinition.COMMIT_PART
-                }
+            ?.also {
+                engineExecutor.getEngineResult().setKanashiEntry(it)
+                engineExecutor.getEngineResult().setQueryExecutorDefinition(QueryerDefinition.COMMIT_PART)
+                engineExecutor.shotSuccess()
+            }
     }
 }

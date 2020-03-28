@@ -143,14 +143,15 @@ class LogService {
     /**
      * 追加操作日志到磁盘，只有当集群可用时，才可以进行追加
      */
-    fun appendForLeader(logItem: LogItem) {
-        appendLock.writeLocker {
-            explicitLock.writeLocker {
+    fun appendForLeader(logItem: LogItem): GenerationAndOffset {
+        return appendLock.writeLockSupplierCompel {
+            return@writeLockSupplierCompel explicitLock.writeLockSupplierCompel {
                 val gao = raftCenterController.genGenerationAndOffset()
 
                 currentGAO = gao
                 val log = maybeRoll(gao.generation, true)
                 log.append(logItem, gao.offset)
+                return@writeLockSupplierCompel gao
             }
         }
     }

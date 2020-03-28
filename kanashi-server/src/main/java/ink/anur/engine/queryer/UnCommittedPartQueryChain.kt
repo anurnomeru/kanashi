@@ -21,9 +21,10 @@ class UnCommittedPartQueryChain : QueryerChain() {
     override fun doQuery(engineExecutor: EngineExecutor) {
         val dataHandler = engineExecutor.getDataHandler()
         memoryMVCCStorageUnCommittedPart.queryKeyInTrx(dataHandler.getTrxId(), dataHandler.key)
-                ?.also {
-                    engineExecutor.engineResult.setKanashiEntry(it)
-                    engineExecutor.engineResult.queryExecutorDefinition = QueryerDefinition.UN_COMMIT_PART
-                }
+            ?.also {
+                engineExecutor.getEngineResult().setKanashiEntry(it)
+                engineExecutor.getEngineResult().setQueryExecutorDefinition(QueryerDefinition.UN_COMMIT_PART)
+                engineExecutor.shotSuccess()
+            }
     }
 }

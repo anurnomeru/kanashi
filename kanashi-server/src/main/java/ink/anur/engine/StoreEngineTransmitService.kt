@@ -1,5 +1,6 @@
 package ink.anur.engine
 
+import ink.anur.common.pool.EventDriverPool
 import ink.anur.debug.Debugger
 import ink.anur.engine.memory.MemoryMVCCStorageUnCommittedPart
 import ink.anur.engine.processor.EngineExecutor
@@ -8,10 +9,11 @@ import ink.anur.engine.trx.lock.TrxFreeQueuedSynchronizer
 import ink.anur.engine.trx.manager.TransactionManageService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
-import ink.anur.pojo.log.ByteBufferKanashiEntry
+import ink.anur.pojo.log.KanashiCommand.Companion.NON_TRX
 import ink.anur.pojo.log.common.CommandTypeEnum
 import ink.anur.pojo.log.common.CommonApiTypeEnum
 import ink.anur.pojo.log.common.StrApiTypeEnum
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -36,26 +38,35 @@ class StoreEngineTransmitService {
     @NigateInject
     private lateinit var memoryMVCCStorageUnCommittedPart: MemoryMVCCStorageUnCommittedPart
 
+    init {
+        EventDriverPool.register(EngineExecutor::class.java, Runtime.getRuntime().availableProcessors() * 2, 20, TimeUnit.MILLISECONDS) {
+            if (it.fromClient != null) {
+                it.await()
+                val engineResult = it.getEngineResult()
+                if (engineResult.success) {
+                    val kanashiEntry = engineResult.getKanashiEntry()
+
+                }
+            }
+        }
+    }
+
     fun commandInvoke(engineExecutor: EngineExecutor) {
-        val dataHandler = engineExecutor.getDataHandler()
-        val trxId = dataHandler.getTrxId()
+        val trxId = engineExecutor.getDataHandler().getTrxId()
 
         try {
-            var selectOperate = false
-
             /*
              * common 操作比较特殊，它直接会有些特殊交互，比如开启一个事务，关闭一个事务等。
              */
-            when (dataHandler.getCommandType()) {
+            when (engineExecutor.getDataHandler().getCommandType()) {
                 CommandTypeEnum.COMMON -> {
-                    when (dataHandler.getApi()) {
+                    when (engineExecutor.getDataHandler().getApi()) {
                         CommonApiTypeEnum.START_TRX -> {
-//                            logger.trace("事务 [{}] 已经开启", trxId)
-                            return
+                            engineExecutor.shotSuccess()
                         }
                         CommonApiTypeEnum.COMMIT_TRX -> {
                             doCommit(trxId)
-                            return
+                            engineExecutor.shotSuccess()
                         }
                         CommonApiTypeEnum.ROLL_BACK -> {
 //                            throw RollbackException() todo 还没写
@@ -64,40 +75,40 @@ class StoreEngineTransmitService {
                 }
 
                 CommandTypeEnum.STR -> {
-                    when (dataHandler.getApi()) {
+                    when (engineExecutor.getDataHandler().getApi()) {
                         StrApiTypeEnum.SELECT -> {
-                            selectOperate = true
                             engineDataQueryer.doQuery(engineExecutor)
                         }
                         StrApiTypeEnum.DELETE -> {
-                            doAcquire(engineExecutor, ByteBufferKanashiEntry.Companion.OperateType.DISABLE)
+                            engineExecutor.getDataHandler().markKanashiEntryAsDeleteBeforeOperate()
+                            doAcquire(engineExecutor)
                         }
                         StrApiTypeEnum.SET -> {
-                            doAcquire(engineExecutor, ByteBufferKanashiEntry.Companion.OperateType.ENABLE)
+                            doAcquire(engineExecutor)
                         }
                         StrApiTypeEnum.SET_EXIST -> {
                             engineDataQueryer.doQuery(engineExecutor)
                             engineExecutor.kanashiEntry()
                                 ?.also { engineExecutor.shotFailure() }
                                 ?: also {
-                                    doAcquire(engineExecutor, ByteBufferKanashiEntry.Companion.OperateType.ENABLE)
+                                    doAcquire(engineExecutor)
                                 }
                         }
                         StrApiTypeEnum.SET_NOT_EXIST -> {
                             engineDataQueryer.doQuery(engineExecutor)
                             engineExecutor.kanashiEntry()
                                 ?.also {
-                                    doAcquire(engineExecutor, ByteBufferKanashiEntry.Companion.OperateType.ENABLE)
+                                    doAcquire(engineExecutor)
                                 }
                                 ?: also { engineExecutor.shotFailure() }
                         }
                         StrApiTypeEnum.SET_IF -> {
                             engineDataQueryer.doQuery(engineExecutor)
-                            val currentValue = engineExecutor.kanashiEntry()?.getValue()
-                            val expectValue = dataHandler.extraParams[0]
+                            val currentValue = engineExecutor.kanashiEntry()?.getValueString()
+                            val expectValue = engineExecutor.getDataHandler().extraParams[0]
 
                             if (expectValue == currentValue) {
-                                doAcquire(engineExecutor, ByteBufferKanashiEntry.Companion.OperateType.ENABLE)
+                                doAcquire(engineExecutor)
                             } else {
                                 engineExecutor.shotFailure()
                             }
@@ -106,20 +117,16 @@ class StoreEngineTransmitService {
                 }
             }
 
-            if (dataHandler.shortTransaction && !selectOperate) doCommit(trxId)
+            if (engineExecutor.getDataHandler().shortTransaction) {
+                engineExecutor.await()// 必须等待操作完才能 commit
+                doCommit(trxId)
+            }
         } catch (e: Throwable) {
             logger.error("存储引擎执行出错，将执行回滚，原因 [{}]", e.message)
             e.printStackTrace()
 
             doRollBack(trxId)
             engineExecutor.exceptionCaught(e)
-        }
-
-        if (engineExecutor.fromClient != null) {
-            val engineResult = engineExecutor.getEngineResult()
-            if (engineResult.success) {
-                engineResult.getKanashiEntry()
-            }
         }
     }
 
@@ -128,15 +135,14 @@ class StoreEngineTransmitService {
      *
      * 如果拿到锁，则调用api，将数据插入 未提交部分(uc)
      */
-    private fun doAcquire(engineExecutor: EngineExecutor, operateType: ByteBufferKanashiEntry.Companion.OperateType) {
+    private fun doAcquire(engineExecutor: EngineExecutor) {
         val dataHandler = engineExecutor.getDataHandler()
         val trxId = dataHandler.getTrxId()
 
-        dataHandler.setOperateType(operateType)
         trxFreeQueuedSynchronizer.acquire(trxId, dataHandler.key) {
             memoryMVCCStorageUnCommittedPart.commonOperate(dataHandler)
         }
-//        logger.trace("事务 [{}] 将 key [{}] 设置为了新值", trxId, engineExecutor.getDataHandler().key)
+        engineExecutor.shotSuccess()
     }
 
     /**
@@ -146,12 +152,14 @@ class StoreEngineTransmitService {
      * 3、通知事务控制器，事务已经被销毁
      */
     private fun doCommit(trxId: Long) {
+        if (trxId == NON_TRX) {
+            return
+        }
+
         trxFreeQueuedSynchronizer.release(trxId) { keys ->
             keys?.let { memoryMVCCStorageUnCommittedPart.flushToCommittedPart(trxId, it) }
             transactionManageService.releaseTrx(trxId)
         }
-
-//        logger.trace("事务 [{}] 已经提交", trxId)
     }
 
     private fun doRollBack(trxId: Long) {
