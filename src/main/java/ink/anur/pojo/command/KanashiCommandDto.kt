@@ -40,6 +40,6 @@ class KanashiCommandDto : AbstractTimedStruct {
     }
 
     override fun totalSize(): Int {
-        return size() + logItem.getByteBuffer().limit()
+        return size() + logItem.getByteBuffer()!!.limit()
     }
 }

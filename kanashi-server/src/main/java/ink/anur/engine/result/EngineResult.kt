@@ -38,7 +38,7 @@ open class EngineResult {
         queryExecutorDefinition = queryerDefinition
     }
 
-    fun setKanashiEntry(kanashiEntry: ByteBufferKanashiEntry) {
+    fun setKanashiEntry(kanashiEntry: ByteBufferKanashiEntry?) {
         this.kanashiEntry = kanashiEntry
     }
 

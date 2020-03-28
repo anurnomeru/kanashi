@@ -5,6 +5,7 @@ import ink.anur.engine.processor.EngineExecutor
 import ink.anur.engine.queryer.common.QueryerChain
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.pojo.log.ByteBufferKanashiEntry
 import ink.anurengine.result.QueryerDefinition
 
 /**
@@ -18,13 +19,7 @@ class MemoryLSMQueryChain : QueryerChain() {
     @NigateInject
     private lateinit var memoryLSMService: MemoryLSMService
 
-    override fun doQuery(engineExecutor: EngineExecutor) {
-        val dataHandler = engineExecutor.getDataHandler()
-        memoryLSMService.get(dataHandler.key)
-            ?.also {
-                engineExecutor.getEngineResult().setKanashiEntry(it)
-                engineExecutor.getEngineResult().setQueryExecutorDefinition(QueryerDefinition.MEMORY_LSM)
-                engineExecutor.shotSuccess()
-            }
+    override fun doQuery(engineExecutor: EngineExecutor): ByteBufferKanashiEntry? {
+        return memoryLSMService.get(engineExecutor.getDataHandler().key)
     }
 }

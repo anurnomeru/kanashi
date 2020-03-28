@@ -15,6 +15,8 @@ import ink.anur.pojo.log.RecoveryReporter
 import ink.anur.pojo.log.base.LogItem
 import ink.anur.pojo.command.KanashiCommandBatchDto
 import ink.anur.pojo.command.Fetch
+import ink.anur.pojo.command.KanashiCommandFail
+import ink.anur.pojo.command.KanashiCommandSuccess
 import java.util.HashMap
 
 /**
@@ -87,7 +89,17 @@ enum class RequestTypeEnum(val byteSign: Int, val clazz: Class<out AbstractStruc
     /**
      * 从客户端发来的指令
      */
-    COMMAND(99999, KanashiCommandBatchDto::class.java)
+    COMMAND(99999, KanashiCommandBatchDto::class.java),
+
+    /**
+     * 成功回复
+     */
+    COMMAND_SUCCESS(99998, KanashiCommandSuccess::class.java),
+
+    /**
+     * 失败回复
+     */
+    COMMAND_FAIL(99997, KanashiCommandFail::class.java),
     ;
 
     companion object {

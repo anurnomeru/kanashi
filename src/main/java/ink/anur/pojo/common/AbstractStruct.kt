@@ -47,8 +47,8 @@ abstract class AbstractStruct {
 
     protected var buffer: ByteBuffer? = null
 
-    fun getByteBuffer(): ByteBuffer {
-        return buffer!!
+    fun getByteBuffer(): ByteBuffer? {
+        return buffer
     }
 
     fun size(): Int {

@@ -5,6 +5,7 @@ import ink.anur.common.pool.EventDriverPool
 import ink.anur.engine.processor.EngineExecutor
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.pojo.log.ByteBufferKanashiEntry
 import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
 
@@ -31,5 +32,6 @@ class EngineDataQueryer {
         cChain.next = mChain
     }
 
-    fun doQuery(engineExecutor: EngineExecutor) = KanashiExecutors.execute(Runnable { ucChain.query(engineExecutor) })
+    fun doQuery(engineExecutor: EngineExecutor, afterQuery: (ByteBufferKanashiEntry?) -> Unit) =
+        KanashiExecutors.execute(Runnable { ucChain.query(engineExecutor, afterQuery) })
 }

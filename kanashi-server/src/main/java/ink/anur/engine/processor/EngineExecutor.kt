@@ -14,20 +14,26 @@ import java.util.concurrent.CountDownLatch
  */
 class EngineExecutor(private val dataHandler: DataHandler) {
 
+    /**
+     * 是否由客户端直接请求过来，如果是，要进行回复
+     */
     var fromClient: String? = null
 
+    /**
+     * 整个操作是否完成的锁
+     */
     val cdl = CountDownLatch(1)
-
-    companion object {
-        val logger = Debugger(this.javaClass).switch(DebuggerLevel.INFO)
-    }
 
     private val engineResult: EngineResult = EngineResult()
 
-    fun kanashiEntry(): ByteBufferKanashiEntry? = engineResult.getKanashiEntry()
-
+    /**
+     * dataHandler 包含所有操作时需要的数据
+     */
     fun getDataHandler(): DataHandler = dataHandler
 
+    /**
+     * 用于封装操作结果
+     */
     fun getEngineResult() = engineResult
 
     fun await() {
@@ -56,5 +62,9 @@ class EngineExecutor(private val dataHandler: DataHandler) {
         cdl.countDown()
         engineResult.err = e
         shotFailure()
+    }
+
+    companion object {
+        val logger = Debugger(this.javaClass).switch(DebuggerLevel.INFO)
     }
 }

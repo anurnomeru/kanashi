@@ -5,6 +5,7 @@ import ink.anur.engine.processor.EngineExecutor
 import ink.anur.engine.queryer.common.QueryerChain
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.pojo.log.ByteBufferKanashiEntry
 import ink.anurengine.result.QueryerDefinition
 
 /**
@@ -18,13 +19,8 @@ class UnCommittedPartQueryChain : QueryerChain() {
     @NigateInject
     private lateinit var memoryMVCCStorageUnCommittedPart: MemoryMVCCStorageUnCommittedPart
 
-    override fun doQuery(engineExecutor: EngineExecutor) {
+    override fun doQuery(engineExecutor: EngineExecutor): ByteBufferKanashiEntry? {
         val dataHandler = engineExecutor.getDataHandler()
-        memoryMVCCStorageUnCommittedPart.queryKeyInTrx(dataHandler.getTrxId(), dataHandler.key)
-            ?.also {
-                engineExecutor.getEngineResult().setKanashiEntry(it)
-                engineExecutor.getEngineResult().setQueryExecutorDefinition(QueryerDefinition.UN_COMMIT_PART)
-                engineExecutor.shotSuccess()
-            }
+        return memoryMVCCStorageUnCommittedPart.queryKeyInTrx(dataHandler.getTrxId(), dataHandler.key)
     }
 }
