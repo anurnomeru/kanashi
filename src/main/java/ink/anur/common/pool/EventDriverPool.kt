@@ -1,12 +1,12 @@
 package ink.anur.common.pool
 
-import ink.anur.common.KanashiRunnable
 import ink.anur.common.Shutdownable
 import ink.anur.exception.DuplicateHandlerPoolException
 import ink.anur.exception.NoSuchHandlerPoolException
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
@@ -60,17 +60,17 @@ class EventDriverPool<T> private constructor(private val clazz: Class<T>,
         }
     }
 
+    private val pool = Executors.newFixedThreadPool(poolSize)
+
     private val handlers = mutableListOf<PoolHandler<T>>()
 
     private val requestQueue: ArrayBlockingQueue<T> = ArrayBlockingQueue(Runtime.getRuntime().availableProcessors() * 2)
 
     init {
         for (i in 0 until poolSize) {
-            PoolHandler(clazz, consumeInternal, timeUnit, howToConsumeItem, initLatch).let { ph ->
-                ph.name = "HandlePool - [$clazz] - $i"
-                ph.start()
-                handlers.add(ph)
-            }
+            val poolHandler = PoolHandler(clazz, consumeInternal, timeUnit, howToConsumeItem, initLatch);
+            handlers.add(poolHandler)
+            pool.submit(poolHandler)
         }
     }
 
@@ -99,7 +99,7 @@ class EventDriverPool<T> private constructor(private val clazz: Class<T>,
         private val timeUnit: TimeUnit,
         private val howToConsumeItem: ((T) -> Unit)?,
         private val initLatch: CountDownLatch
-    ) : Runnable, Shutdownable, KanashiRunnable() {
+    ) : Runnable, Shutdownable {
 
         @Volatile
         private var shutdown = false

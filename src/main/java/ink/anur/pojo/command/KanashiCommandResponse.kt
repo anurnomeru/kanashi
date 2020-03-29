@@ -17,16 +17,24 @@ class KanashiCommandResponse : AbstractStruct {
 
     val success: Boolean
 
+    val msgTime: Long
+
     companion object {
         val SuccessOffset = OriginMessageOverhead
         val SuccessLength = 1
-        val Capacity = SuccessOffset + SuccessLength
+        val msgTimeOffset = SuccessOffset + SuccessLength
+        val msgTimeLength = 8
+        val Capacity = msgTimeOffset + msgTimeLength
     }
 
-    constructor(b: Boolean, entry: ByteBufferKanashiEntry?) {
+    constructor(msgTime: Long, b: Boolean, entry: ByteBufferKanashiEntry?) {
         kanashiEntry = entry
-        init(Capacity, RequestTypeEnum.COMMAND_RESPONSE) { it.put(translateToByte(b)) }
-        success = b
+        init(Capacity, RequestTypeEnum.COMMAND_RESPONSE) {
+            it.put(translateToByte(b))
+            it.putLong(msgTime)
+        }
+        this.msgTime = msgTime
+        this.success = b
         buffer!!.flip()
     }
 
@@ -37,7 +45,8 @@ class KanashiCommandResponse : AbstractStruct {
             byteBuffer.position(OriginMessageOverhead)
             kanashiEntry = ByteBufferKanashiEntry(byteBuffer.slice())
         }
-        success = translateToBool(byteBuffer.get(SuccessOffset))
+        this.success = translateToBool(byteBuffer.get(SuccessOffset))
+        this.msgTime = byteBuffer.getLong(msgTimeOffset)
         byteBuffer.position(0)
         byteBuffer.limit(OriginMessageOverhead)
         buffer = byteBuffer.slice()

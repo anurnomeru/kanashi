@@ -79,7 +79,7 @@ public class Log extends ReentrantLocker {
     private long load() throws IOException {
         // 如果目录不存在，则创建此目录
         dir.mkdirs();
-        logger.info("正在读取日志文件目录 {}", dir.getPath());
+        logger.info("正在读取日志文件目录 {}", dir.getAbsolutePath());
 
         for (File file : dir.listFiles()) {
             if (file.isFile()) {

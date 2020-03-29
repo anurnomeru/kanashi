@@ -39,7 +39,7 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
         if (!kanashiCommand.isQueryCommand && !electionMetaService.isLeader()) {
             // 发送谁才是leader
         } else if (kanashiCommand.isQueryCommand) {
-
+            storeEngineFacadeService.appendToEngine(EngineProcessEntry(logItem, null, fromServer, logItem.getTimeMillis()))
         } else {
             // 如果是普通的请求，则直接存成日志，等待集群commit，返回成功
             val gao = logService.appendForLeader(logItem)

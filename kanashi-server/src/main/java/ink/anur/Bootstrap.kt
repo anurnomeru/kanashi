@@ -30,26 +30,26 @@ object Bootstrap {
 
         try {
 
-            Thread.sleep(5000)
+//            Thread.sleep(5000)
 
 //            for (i in 0..99999999) {
-            for (i in 0..1000000) {
-
-                val transactionAllocator = Nigate.getBeanByClass(TransactionAllocator::class.java)
-
-//                val logItem = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
+//            for (i in 0..1000000) {
+//
+//                val transactionAllocator = Nigate.getBeanByClass(TransactionAllocator::class.java)
+//
+////                val logItem = LogItem(RequestTypeEnum.LOG_ITEM, "AnurKey",
+////                    KanashiCommand.generator(
+////                        transactionAllocator.allocate(), TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, "kanashiValue-中文-"))
+//
+//                val logItem = LogItem(RequestTypeEnum.COMMAND, "AnurKey",
 //                    KanashiCommand.generator(
-//                        transactionAllocator.allocate(), TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, "kanashiValue-中文-"))
+//                        Long.MAX_VALUE, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SELECT))
+//
+//                val logService = Nigate.getBeanByClass(LogService::class.java)
+//                logService.appendForLeader(logItem)
+//            }
 
-                val logItem = LogItem(RequestTypeEnum.COMMAND, "AnurKey",
-                    KanashiCommand.generator(
-                        Long.MAX_VALUE, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SELECT))
-
-                val logService = Nigate.getBeanByClass(LogService::class.java)
-                logService.appendForLeader(logItem)
-            }
-
-            println("append complete")
+//            println("append complete")
         } catch (e: Exception) {
             throw e
         }

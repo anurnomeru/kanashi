@@ -1,12 +1,12 @@
 package ink.anur.demo;
 
+import javax.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
 /**
  * Created by Anur IjuoKaruKas on 2020/3/3
- * <p>
- * 简单的本地定时器 demo
  */
 @Component
 public class SimpleDemo {
+
 }

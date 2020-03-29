@@ -101,6 +101,15 @@ abstract class AbstractStruct {
     }
 
     /**
+     * 重设时间戳，用于防止两个请求的时间戳相同
+     */
+    fun resetTimeMillis(): Long {
+        val neo = System.currentTimeMillis()
+        buffer!!.putLong(TimestampLength, neo)
+        return neo
+    }
+
+    /**
      * 如何写入 Channel
      */
     abstract fun writeIntoChannel(channel: Channel)

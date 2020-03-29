@@ -1,6 +1,7 @@
 package ink.anur.engine
 
 import ink.anur.common.pool.EventDriverPool
+import ink.anur.core.common.RequestExtProcessor
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.debug.Debugger
 import ink.anur.engine.memory.MemoryMVCCStorageUnCommittedPart
@@ -10,7 +11,6 @@ import ink.anur.engine.trx.lock.TrxFreeQueuedSynchronizer
 import ink.anur.engine.trx.manager.TransactionManageService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
-import ink.anur.pojo.command.KanashiCommandFail
 import ink.anur.pojo.command.KanashiCommandResponse
 import ink.anur.pojo.log.ByteBufferKanashiEntry
 import ink.anur.pojo.log.KanashiCommand.Companion.NON_TRX
@@ -50,7 +50,7 @@ class StoreEngineTransmitService {
         /**
          * 用于返回客户端的结果
          */
-        EventDriverPool.register(EngineExecutor::class.java, Runtime.getRuntime().availableProcessors() * 2, 20, TimeUnit.MILLISECONDS) {
+        EventDriverPool.register(EngineExecutor::class.java, Runtime.getRuntime().availableProcessors(), 20, TimeUnit.MILLISECONDS) {
             it.await()
             if (it.getDataHandler().shortTransaction) {
                 doCommit(it.getDataHandler().getTrxId())
@@ -58,11 +58,8 @@ class StoreEngineTransmitService {
 
             if (it.fromClient != null) {
                 val engineResult = it.getEngineResult()
-                if (engineResult.success) {
-                    requestProcessCentreService.send(it.fromClient!!, KanashiCommandResponse(engineResult.getKanashiEntry()))
-                } else {
-                    requestProcessCentreService.send(it.fromClient!!, KanashiCommandFail())
-                }
+                requestProcessCentreService.send(it.fromClient!!, KanashiCommandResponse(it.msgTime!!, engineResult.success, engineResult.getKanashiEntry()),
+                    RequestExtProcessor(), keepCurrentSendTask = false, keepError = true)
             }
         }
     }
@@ -168,6 +165,8 @@ class StoreEngineTransmitService {
             doRollBack(trxId)
             engineExecutor.exceptionCaught(e)
         }
+
+        EventDriverPool.offer(engineExecutor)
     }
 
     /**

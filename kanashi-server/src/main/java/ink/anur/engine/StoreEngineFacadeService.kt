@@ -47,7 +47,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
             while (true) {
                 Thread.sleep(1000)
                 val nowNum = counter
-                logger.debug("| - 存储引擎控制中心 - | 每秒流速 ->> ${nowNum - currentNum}")
+//                logger.debug("| - 存储引擎控制中心 - | 每秒流速 ->> ${nowNum - currentNum}")
                 currentNum = nowNum
             }
         })
@@ -57,9 +57,10 @@ class StoreEngineFacadeService : KanashiRunnable() {
             val take = queue.take()
 
             try {
-                blockCheckIter(take.GAO)
+                take.GAO?.let { blockCheckIter(it) }
                 val engineExecutor = EngineExecutor(DataHandler(take.logItem))
                 engineExecutor.fromClient = take.fromServer
+                engineExecutor.msgTime = take.msgTime
 
                 storeEngineTransmitService.commandInvoke(engineExecutor)
             } catch (e: Exception) {

@@ -1,5 +1,6 @@
 package ink.anur.core.request
 
+import ink.anur.common.Constant
 import ink.anur.common.Resetable
 import ink.anur.common.pool.EventDriverPool
 import ink.anur.common.struct.Request
@@ -75,7 +76,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
     @NigatePostConstruct
     private fun init() {
         EventDriverPool.register(Request::class.java,
-            8,
+            4,
             300,
             TimeUnit.MILLISECONDS
         ) {
@@ -109,16 +110,24 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
             when {
                 serverName == null -> registerHandleService.handleRequest("", msg, channel)
                 writeLockSupplierCompel {
-                    var changed = false
-                    receiveLog.compute(serverName) { _, timestampMap ->
-                        (timestampMap ?: mutableMapOf()).also {
-                            it.compute(requestTypeEnum) { _, timestampBefore ->
-                                changed = (timestampBefore == null || requestTimestampCurrent > timestampBefore)
-                                if (changed) requestTimestampCurrent else timestampBefore
+                    when (requestTypeEnum) {
+                        // command 类型不需要防止重发的问题，可以无限重发
+                        RequestTypeEnum.COMMAND_RESPONSE -> true
+                        RequestTypeEnum.COMMAND -> true
+                        else -> {
+                            var changed = false
+                            receiveLog.compute(serverName) { _, timestampMap ->
+                                (timestampMap ?: mutableMapOf()).also {
+                                    it.compute(requestTypeEnum) { _, timestampBefore ->
+                                        changed = (timestampBefore == null || requestTimestampCurrent > timestampBefore)
+                                        if (changed) requestTimestampCurrent else timestampBefore
+                                    }
+                                }
                             }
+                            changed
                         }
                     }
-                    changed
+
                 } -> try {
                     val requestMapping = requestMappingRegister[requestTypeEnum]
                     if (requestMapping != null) {
@@ -132,10 +141,10 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                             val iterator = it.iterator()
                             while (iterator.hasNext()) {
                                 val requestExtProcessor = iterator.next()
-                                requestExtProcessor.complete(msg)
+                                requestExtProcessor.complete()
                                 val inFlightRequestType = requestExtProcessor.requestType
 
-                                removing(inFlight, serverName, inFlightRequestType)?.complete(null)
+                                removing(inFlight, serverName, inFlightRequestType)?.complete()
                                 removing(reSendTask, serverName, inFlightRequestType)?.cancel()
                                 iterator.remove()
                             }
@@ -154,6 +163,10 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
         }
     }
 
+    fun sendToServer(msg: AbstractStruct) {
+        send(Constant.SERVER, msg, RequestExtProcessor(), false)
+    }
+
     /**
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue
      */
@@ -170,7 +183,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
         } else {
             writeLocker {
                 // 发送之前，移除之前可能遗留的任务
-                removing(inFlight, serverName, typeEnum)?.complete(null)
+                removing(inFlight, serverName, typeEnum)?.complete()
                 removing(reSendTask, serverName, typeEnum)?.cancel()
                 requestProcessor.listenOnRequestTypeEnum?.let {
                     responseCallback.compute(
@@ -204,7 +217,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
 
                     // 如果不需要回复，直接触发其 complete
                     if (requestProcessor.listenOnRequestTypeEnum == null) {
-                        requestProcessor.complete(null)
+                        requestProcessor.complete()
                     }
                 } // ignore
 

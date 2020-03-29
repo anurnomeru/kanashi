@@ -20,7 +20,7 @@ class RequestExtProcessor(
      *
      * 如果 byteBuffer 为空，代表没有正确收到回复
      */
-    private val howToConsumeResponse: ((ByteBuffer?) -> Unit)? = null,
+    private val howToConsumeResponse: (() -> Unit)? = null,
     /*
      * 这个请求是只发一次，还是无限发送
      */
@@ -42,11 +42,11 @@ class RequestExtProcessor(
     /**
      * 已经完成了此任务
      */
-    fun complete(msg: ByteBuffer?) = writeLockSupplier {
+    fun complete() = writeLockSupplier {
         if (!complete) {
             complete = true
             howToConsumeResponse?.let {
-                KanashiExecutors.execute(Runnable { it.invoke(msg) })
+                KanashiExecutors.execute(Runnable { it.invoke() })
             }
         }
     }
