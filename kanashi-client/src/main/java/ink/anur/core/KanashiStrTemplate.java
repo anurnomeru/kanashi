@@ -49,16 +49,16 @@ public class KanashiStrTemplate {
                     me.delete("Anur");
                     System.out.println("期待空：" + me.get("Anur"));
 
-                    me.setNotExist("Anur","2");
+                    me.setNotExist("Anur", "2");
                     System.out.println("期待2：" + me.get("Anur"));
 
-                    me.setExist("Anur","3");
+                    me.setExist("Anur", "3");
                     System.out.println("期待3：" + me.get("Anur"));
 
-                    me.setIf("Anur","4","4");
+                    me.setIf("Anur", "4", "4");
                     System.out.println("期待3：" + me.get("Anur"));
 
-                    me.setIf("Anur", "4","3");
+                    me.setIf("Anur", "4", "3");
                     System.out.println("期待4：" + me.get("Anur"));
                 }
             }
@@ -80,53 +80,43 @@ public class KanashiStrTemplate {
         }
     }
 
-    public void delete(String key) {
+    public boolean delete(String key) {
         KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
             new KanashiCommandDto(key,
                 KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.DELETE, "")));
 
-        if (!acquire.getSuccess()) {
-            throw new RuntimeException();
-        }
+        return acquire.getSuccess();
     }
 
-    public void set(String key, String value) {
+    public boolean set(String key, String value) {
         KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
             new KanashiCommandDto(key,
                 KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, value)));
 
-        if (!acquire.getSuccess()) {
-            throw new RuntimeException();
-        }
+        return acquire.getSuccess();
     }
 
-    public void setExist(String key, String value) {
+    public boolean setExist(String key, String value) {
         KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
             new KanashiCommandDto(key,
                 KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET_EXIST, value)));
 
-        if (!acquire.getSuccess()) {
-            throw new RuntimeException();
-        }
+        return acquire.getSuccess();
     }
 
-    public void setNotExist(String key, String value) {
+    public boolean setNotExist(String key, String value) {
         KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
             new KanashiCommandDto(key,
                 KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET_NOT_EXIST, value)));
 
-        if (!acquire.getSuccess()) {
-            throw new RuntimeException();
-        }
+        return acquire.getSuccess();
     }
 
-    public void setIf(String key, String value, String expect) {
+    public boolean setIf(String key, String value, String expect) {
         KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
             new KanashiCommandDto(key,
                 KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET_IF, value, expect)));
 
-        if (!acquire.getSuccess()) {
-            throw new RuntimeException();
-        }
+        return acquire.getSuccess();
     }
 }
