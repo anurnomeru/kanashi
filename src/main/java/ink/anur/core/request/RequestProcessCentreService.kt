@@ -172,7 +172,6 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
      */
     fun send(serverName: String, msg: AbstractStruct, requestProcessor: RequestExtProcessor = RequestExtProcessor(), keepCurrentSendTask: Boolean = true, keepError: Boolean = false): Boolean {
         val typeEnum = msg.getRequestType()
-
         // 标记此次请求时什么请求类型
         requestProcessor.requestType = typeEnum
 

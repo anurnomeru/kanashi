@@ -58,6 +58,7 @@ class ResponseProcessCentreService {
         val lock = getLock(serverName)
         try {
             lock.lock()
+            println("正在向节点 $serverName 发送")
             val channel = channelService.getChannel(serverName)
 
             if (channel == null) {

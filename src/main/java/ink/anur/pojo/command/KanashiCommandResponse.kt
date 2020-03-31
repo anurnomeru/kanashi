@@ -35,7 +35,6 @@ class KanashiCommandResponse : AbstractStruct {
         }
         this.msgTime = msgTime
         this.success = b
-        buffer!!.flip()
     }
 
     constructor(byteBuffer: ByteBuffer) {
@@ -58,7 +57,6 @@ class KanashiCommandResponse : AbstractStruct {
         kanashiEntry?.let {
             channel.write(it.byteBuffer)
         }
-        channel.flush()
     }
 
     override fun totalSize(): Int {

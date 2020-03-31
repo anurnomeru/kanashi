@@ -57,6 +57,7 @@ class StoreEngineTransmitService {
             }
 
             if (it.fromClient != null) {
+                println("from client ${it.fromClient}")
                 val engineResult = it.getEngineResult()
                 requestProcessCentreService.send(it.fromClient!!, KanashiCommandResponse(it.msgTime!!, engineResult.success, engineResult.getKanashiEntry()),
                     RequestExtProcessor(), keepCurrentSendTask = false, keepError = true)

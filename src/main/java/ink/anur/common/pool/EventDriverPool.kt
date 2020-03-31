@@ -1,12 +1,15 @@
 package ink.anur.common.pool
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import ink.anur.common.Shutdownable
+import ink.anur.common._KanashiExecutors
 import ink.anur.exception.DuplicateHandlerPoolException
 import ink.anur.exception.NoSuchHandlerPoolException
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 
 /**
@@ -60,7 +63,8 @@ class EventDriverPool<T> private constructor(private val clazz: Class<T>,
         }
     }
 
-    private val pool = Executors.newFixedThreadPool(poolSize)
+    private val pool = _KanashiExecutors(logger, poolSize, poolSize, 60, TimeUnit.SECONDS, LinkedBlockingDeque(), ThreadFactoryBuilder().setNameFormat("EventDriverPool - $clazz")
+        .build())
 
     private val handlers = mutableListOf<PoolHandler<T>>()
 
