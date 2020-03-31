@@ -48,7 +48,6 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
     }
 
     override fun handleRequest(fromServer: String, msg: ByteBuffer, channel: Channel) {
-        logger.trace("收到节点 {} 返回的 FETCH_RESPONSE", fromServer)
         val commandContainer = KanashiCommandBatchDto(msg)
 
         if (!electionMetaService.isLeader()) {
@@ -56,7 +55,6 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
             /**
              * 普通节点收到了日志，只需要简单将其追加到 byteBufPreLog 即可
              */
-            logger.trace("收到节点 {} 返回的 FETCH_RESPONSE", fromServer)
             if (commandContainer.fileLogItemSetSize == 0) return
             byteBufPreLogService.append(commandContainer.generation, commandContainer.read())
         } else {

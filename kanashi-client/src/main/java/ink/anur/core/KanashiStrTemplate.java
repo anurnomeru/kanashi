@@ -1,5 +1,6 @@
 package ink.anur.core;
 
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import ink.anur.inject.Nigate;
 import ink.anur.inject.NigateInject;
 import ink.anur.pojo.command.KanashiCommandDto;
 import ink.anur.pojo.command.KanashiCommandResponse;
+import ink.anur.pojo.log.ByteBufferKanashiEntry;
 import ink.anur.pojo.log.KanashiCommand;
 import ink.anur.pojo.log.common.CommandTypeEnum;
 import ink.anur.pojo.log.common.StrApiTypeEnum;
@@ -43,10 +45,11 @@ public class KanashiStrTemplate {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    System.out.println(me.get("Anur"));
+                    //                    System.out.println("正在----请求");
+                    //                    System.out.println("期待空：" + me.get("Anur111"));
                     me.set("Anur", "Zzzz");
-                    System.out.println(me.get("Anur"));
-                    System.out.println(me.get("aaa"));
+                    System.out.println("期待空zzzz：" + me.get("Zzzz"));
+                    //                    System.out.println("期待空：" + me.get("aaaaa"));
                 }
             }
         };
@@ -59,8 +62,9 @@ public class KanashiStrTemplate {
                 KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SELECT, "")));
 
         if (acquire.getSuccess()) {
-            return acquire.getKanashiEntry()
-                          .getValueString();
+            return Optional.ofNullable(acquire.getKanashiEntry())
+                           .map(ByteBufferKanashiEntry::getValueString)
+                           .orElse(null);
         } else {
             throw new RuntimeException();
         }

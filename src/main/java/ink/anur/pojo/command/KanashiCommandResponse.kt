@@ -3,6 +3,7 @@ package ink.anur.pojo.command
 import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.ByteBufferKanashiEntry
+import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 
@@ -38,24 +39,24 @@ class KanashiCommandResponse : AbstractStruct {
     }
 
     constructor(byteBuffer: ByteBuffer) {
-        if (byteBuffer.limit() == OriginMessageOverhead) {
+        if (byteBuffer.limit() == Capacity) {
             kanashiEntry = null
         } else {
-            byteBuffer.position(OriginMessageOverhead)
+            byteBuffer.position(Capacity)
             kanashiEntry = ByteBufferKanashiEntry(byteBuffer.slice())
         }
         this.success = translateToBool(byteBuffer.get(SuccessOffset))
         this.msgTime = byteBuffer.getLong(msgTimeOffset)
         byteBuffer.position(0)
-        byteBuffer.limit(OriginMessageOverhead)
+        byteBuffer.limit(Capacity)
         buffer = byteBuffer.slice()
     }
 
     override fun writeIntoChannel(channel: Channel) {
         kanashiEntry?.byteBuffer?.position(0)
-        channel.write(getByteBuffer())
+        channel.write(Unpooled.wrappedBuffer(getByteBuffer()))
         kanashiEntry?.let {
-            channel.write(it.byteBuffer)
+            channel.write(Unpooled.wrappedBuffer(it.byteBuffer))
         }
     }
 

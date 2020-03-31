@@ -79,7 +79,7 @@ class KanashiCommand(val content: ByteBuffer) {
     /**
      * 事务 id
      */
-    val trxId = content.getLong(TrxIdOffset)
+    var trxId = content.getLong(TrxIdOffset)
 
     /**
      * 是否开启了（长）事务
