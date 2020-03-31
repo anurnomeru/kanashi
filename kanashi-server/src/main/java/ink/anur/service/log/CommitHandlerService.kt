@@ -22,8 +22,6 @@ import java.nio.ByteBuffer
 @NigateBean
 class CommitHandlerService : AbstractRequestMapping() {
 
-    private val logger = Debugger(this.javaClass)
-
     @NigateInject
     private lateinit var byteBufPreLogService: ByteBufPreLogService
 
@@ -36,7 +34,6 @@ class CommitHandlerService : AbstractRequestMapping() {
 
     override fun handleRequest(fromServer: String, msg: ByteBuffer, channel: Channel) {
         val commit = Commit(msg)
-
         byteBufPreLogService.commit(commit.canCommitGAO)
 
         val commitGAO = byteBufPreLogService.getCommitGAO()

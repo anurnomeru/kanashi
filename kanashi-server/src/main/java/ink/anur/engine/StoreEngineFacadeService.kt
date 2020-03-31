@@ -58,9 +58,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
 
             try {
                 take.GAO?.let { blockCheckIter(it) }
-                val engineExecutor = EngineExecutor(DataHandler(take.logItem))
-                engineExecutor.fromClient = take.fromServer
-                engineExecutor.msgTime = take.msgTime
+                val engineExecutor = EngineExecutor(DataHandler(take))
 
                 storeEngineTransmitService.commandInvoke(engineExecutor)
             } catch (e: Exception) {
@@ -69,11 +67,19 @@ class StoreEngineFacadeService : KanashiRunnable() {
         }
     }
 
+    /**
+     * 追加消息
+     */
+    fun append(engineProcessEntry: EngineProcessEntry) {
+        queue.put(engineProcessEntry)
+    }
+
+
     @Volatile
     private var counter: Int = 0
 
     /**
-     * 检查是否需要阻塞
+     * 检查是否需要阻塞，它只会消费已经提交的进度
      */
     private fun blockCheckIter(Gao: GenerationAndOffset) {
         val latestCommitted = commitProcessManageService.load()
@@ -98,12 +104,5 @@ class StoreEngineFacadeService : KanashiRunnable() {
         commitProcessManageService.cover(Gao)
         pauseLatch.signalAll()
         lock.unlock()
-    }
-
-    /**
-     * 追加消息
-     */
-    fun appendToEngine(engineProcessEntry: EngineProcessEntry) {
-        queue.put(engineProcessEntry)
     }
 }

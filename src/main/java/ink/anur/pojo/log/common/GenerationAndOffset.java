@@ -44,6 +44,11 @@ public class GenerationAndOffset implements Comparable<GenerationAndOffset> {
     }
 
     @Override
+    public int hashCode() {
+        return (int) (generation * 17 + offset * 17);
+    }
+
+    @Override
     public int compareTo(GenerationAndOffset o) {
         if (this.generation > o.generation) {
             return 1;

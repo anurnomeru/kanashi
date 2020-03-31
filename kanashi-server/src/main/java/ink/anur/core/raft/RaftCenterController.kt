@@ -6,6 +6,7 @@ import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.exception.KanashiException
+import ink.anur.exception.NotLeaderException
 import ink.anur.mutex.ReentrantLocker
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
@@ -412,7 +413,7 @@ class RaftCenterController : KanashiRunnable() {
 
                 return@lockSupplierCompel GenerationAndOffset(gen, offset)
             } else {
-                throw KanashiException("不是 Leader 的节点无法生成id号")
+                throw NotLeaderException("不是 Leader 的节点无法生成id号")
             }
         }
     }

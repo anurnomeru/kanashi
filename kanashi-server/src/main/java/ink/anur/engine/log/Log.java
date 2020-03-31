@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 import com.google.common.collect.Lists;
 import ink.anur.config.LogConfiguration;
+import ink.anur.log.common.EngineProcessEntry;
 import ink.anur.log.logitemset.ByteBufferLogItemSet;
 import ink.anur.log.persistence.LogSegment;
 import ink.anur.debug.Debugger;
@@ -19,6 +20,7 @@ import ink.anur.log.common.LogItemAndOffset;
 import ink.anur.mutex.ReentrantLocker;
 import ink.anur.pojo.log.base.LogItem;
 import ink.anur.log.prelog.PreLogMeta;
+import ink.anur.pojo.log.common.GenerationAndOffset;
 
 /**
  * Created by Anur IjuoKaruKas on 2019/3/6
@@ -167,7 +169,9 @@ public class Log extends ReentrantLocker {
         } catch (IOException e) {
             throw new LogException("写入日志文件失败：" + logItem.toString());
         }
+
         currentOffset = offset;
+        storeEngineFacadeService.append(new EngineProcessEntry(logItem, new GenerationAndOffset(generation, offset)));
     }
 
     /**

@@ -6,6 +6,7 @@ import ink.anur.engine.trx.watermark.common.WaterMarker
 import ink.anur.exception.WaterMarkCreationException
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
+import ink.anur.log.common.EngineProcessEntry
 import ink.anur.pojo.log.ByteBufferKanashiEntry
 import ink.anur.pojo.log.KanashiCommand
 import ink.anur.pojo.log.base.LogItem
@@ -20,7 +21,7 @@ import java.rmi.UnexpectedException
  *
  * 那么如何节省内存，实际上就是这个类所做的事情
  */
-class DataHandler(private val logItem: LogItem) {
+class DataHandler(private val engineProcessEntry: EngineProcessEntry) {
 
     @NigateInject
     private lateinit var waterMarkRegistry: WaterMarkRegistry
@@ -29,6 +30,10 @@ class DataHandler(private val logItem: LogItem) {
     private lateinit var transactionManageService: TransactionManageService
 
     /////////////////////////////////////////// init
+
+    private val logItem = engineProcessEntry.logItem
+
+    val gao = engineProcessEntry.GAO
 
     /**
      * 从 LogItem 中直接获取 key

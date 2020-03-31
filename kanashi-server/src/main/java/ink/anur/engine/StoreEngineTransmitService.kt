@@ -6,6 +6,7 @@ import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.debug.Debugger
 import ink.anur.engine.memory.MemoryMVCCStorageUnCommittedPart
 import ink.anur.engine.processor.EngineExecutor
+import ink.anur.engine.processor.ResponseRegister
 import ink.anur.engine.queryer.EngineDataQueryer
 import ink.anur.engine.trx.lock.TrxFreeQueuedSynchronizer
 import ink.anur.engine.trx.manager.TransactionManageService
@@ -16,7 +17,9 @@ import ink.anur.pojo.log.ByteBufferKanashiEntry
 import ink.anur.pojo.log.KanashiCommand.Companion.NON_TRX
 import ink.anur.pojo.log.common.CommandTypeEnum
 import ink.anur.pojo.log.common.CommonApiTypeEnum
+import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.pojo.log.common.StrApiTypeEnum
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -50,18 +53,45 @@ class StoreEngineTransmitService {
         /**
          * 用于返回客户端的结果
          */
-        EventDriverPool.register(EngineExecutor::class.java, Runtime.getRuntime().availableProcessors(), 20, TimeUnit.MILLISECONDS) {
+        EventDriverPool.register(EngineExecutor::class.java, 4, 20, TimeUnit.MILLISECONDS) {
             it.await()
             if (it.getDataHandler().shortTransaction) {
                 doCommit(it.getDataHandler().getTrxId())
             }
 
-            if (it.fromClient != null) {
+            /**
+             * 这是普通的查询回复，直接回复即可
+             */
+            if (it.responseRegister != null) {
+                val responseRegister = it.responseRegister
                 val engineResult = it.getEngineResult()
-                requestProcessCentreService.send(it.fromClient!!, KanashiCommandResponse(it.msgTime!!, engineResult.success, engineResult.getKanashiEntry()),
+                requestProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()),
                     RequestExtProcessor(), keepCurrentSendTask = false, keepError = true)
             }
+
+            /**
+             * 对于 leader 这是非查询操作的回复
+             */
+            if (responseMap[it.getDataHandler().gao] != null) {
+                val responseRegister = responseMap[it.getDataHandler().gao]!!
+                val engineResult = it.getEngineResult()
+                requestProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()),
+                    RequestExtProcessor(), keepCurrentSendTask = false, keepError = true)
+
+                responseMap.remove(it.getDataHandler().gao)
+            }
         }
+    }
+
+    private val responseMap = ConcurrentHashMap<GenerationAndOffset, ResponseRegister>()
+
+    /**
+     * 由于提交给 leader 的指令须要等半数提交才能回复
+     * 所以暂存一份待回复信息在此
+     *
+     */
+    fun waitForResponse(gao: GenerationAndOffset, responseRegister: ResponseRegister) {
+        responseMap[gao] = responseRegister
     }
 
     fun commandInvoke(engineExecutor: EngineExecutor) {
@@ -203,4 +233,5 @@ class StoreEngineTransmitService {
     private fun doRollBack(trxId: Long) {
         // todo 还没写 懒得写
     }
+
 }

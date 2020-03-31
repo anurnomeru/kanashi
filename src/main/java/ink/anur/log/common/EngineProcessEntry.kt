@@ -12,4 +12,4 @@ import ink.anur.pojo.log.base.LogItem
  *
  * 没有gao 代表这是一条查询指令 没有必要保存
  */
-class EngineProcessEntry(val logItem: LogItem, val GAO: GenerationAndOffset? = null, val fromServer: String? = null, val msgTime: Long? = null)
+class EngineProcessEntry(val logItem: LogItem, val GAO: GenerationAndOffset? = null)
