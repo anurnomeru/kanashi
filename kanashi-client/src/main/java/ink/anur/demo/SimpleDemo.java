@@ -1,6 +1,5 @@
 package ink.anur.demo;
 
-import javax.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
 /**

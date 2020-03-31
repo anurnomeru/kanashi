@@ -116,7 +116,7 @@ class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
      * 将 uc 部分的数据提交到 mvcc 临界控制区，这部分需要做好隔离性控制
      */
     fun commonOperate(trxId: Long, pairs: List<VerAndKanashiEntryWithKeyPair>) {
-//        logger.trace("事务 {} 已经进入 MVCC 临界控制区，其所属的所有 key {} 将进入 commit part ", trxId, pairs)
+        logger.trace("事务 {} 已经进入 MVCC 临界控制区，其所属的所有 key {} 将进入 commit part ", trxId, pairs)
         for (pair in pairs) {
             locker.lockSupplier {
                 synchronized(pair.key) {
@@ -146,7 +146,7 @@ class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
                 return
             currentVer.trxId == removeEntry.trxId -> {// 只需要提交最新的key即可
                 memoryLSMService.put(key, currentVer.kanashiEntry)
-//                logger.trace("由事务 {} 提交的 key [{}] 正式提交到 LSM 树，此 key 上早于 {} 的事务将失效", currentVer.trxId, key, currentVer.trxId)
+                logger.trace("由事务 {} 提交的 key [{}] 正式提交到 LSM 树，此 key 上早于 {} 的事务将失效", currentVer.trxId, key, currentVer.trxId)
                 prev.currentVersion = null// 抹除当前版本
                 currentVer.currentVersion = null// 将小于此版本的抹除
             }

@@ -43,7 +43,7 @@ class TransactionManageService {
             if (!waterHolder.activateTrx(trxId)) {
                 logger.error("事务 [$trxId] 不应该被激活，因为已经激活过了")
             }
-//            logger.trace("事务 [$trxId] 已经激活")
+            logger.trace("事务 [$trxId] 已经激活")
         }
     }
 

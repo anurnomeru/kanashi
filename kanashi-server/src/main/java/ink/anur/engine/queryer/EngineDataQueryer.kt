@@ -1,13 +1,11 @@
 package ink.anur.engine.queryer
 
 import ink.anur.common.KanashiExecutors
-import ink.anur.common.pool.EventDriverPool
 import ink.anur.engine.processor.EngineExecutor
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.inject.NigatePostConstruct
 import ink.anur.pojo.log.ByteBufferKanashiEntry
-import java.util.concurrent.TimeUnit
-import javax.annotation.PostConstruct
 
 /**
  * Created by Anur IjuoKaruKas on 2019/10/31
@@ -26,12 +24,15 @@ class EngineDataQueryer {
     @NigateInject
     private lateinit var mChain: MemoryLSMQueryChain
 
-    @PostConstruct
+    @NigatePostConstruct
     private fun init() {
         ucChain.next = cChain
         cChain.next = mChain
     }
 
     fun doQuery(engineExecutor: EngineExecutor, afterQuery: (ByteBufferKanashiEntry?) -> Unit) =
-        KanashiExecutors.execute(Runnable { ucChain.query(engineExecutor, afterQuery) })
+        KanashiExecutors.execute(Runnable {
+            val query = ucChain.query(engineExecutor)
+            afterQuery.invoke(query)
+        })
 }

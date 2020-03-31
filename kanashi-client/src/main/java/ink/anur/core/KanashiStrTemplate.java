@@ -4,8 +4,6 @@ import java.util.Optional;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ink.anur.common.Constant;
-import ink.anur.core.request.RequestProcessCentreService;
 import ink.anur.inject.Nigate;
 import ink.anur.inject.NigateInject;
 import ink.anur.pojo.command.KanashiCommandDto;
@@ -48,7 +46,7 @@ public class KanashiStrTemplate {
                     //                    System.out.println("正在----请求");
                     //                    System.out.println("期待空：" + me.get("Anur111"));
                     me.set("Anur", "Zzzz");
-                    System.out.println("期待空zzzz：" + me.get("Zzzz"));
+                    System.out.println("期待空zzzz：" + me.get("Anur"));
                     //                    System.out.println("期待空：" + me.get("aaaaa"));
                 }
             }
