@@ -21,7 +21,7 @@ import java.nio.charset.Charset
 open class LogItem : AbstractStruct {
 
     companion object {
-        val KeySizeOffset = TypeOffset + TypeLength
+        val KeySizeOffset = OriginMessageOverhead
 
         val KeySizeLength = 4
 
@@ -54,34 +54,22 @@ open class LogItem : AbstractStruct {
 
     private var kanashiCommand: KanashiCommand? = null
 
-    constructor(requestTypeEnum: RequestTypeEnum, key: String, value: KanashiCommand) {
+    constructor(key: String, value: KanashiCommand) {
+
         this.key = key
         this.kanashiCommand = value
 
-        val requestType = requestTypeEnum.byteSign
         val kBytes = key.toByteArray(Charset.defaultCharset())
         val kSize = kBytes.size
 
-        val vSize = value.contentLength
-        val byteBuffer = ByteBuffer.allocate(BaseMessageOverhead + kSize + vSize)
-
-        byteBuffer.position(TypeOffset)
-        byteBuffer.putInt(requestType)
-        byteBuffer.putInt(kSize)
-        byteBuffer.put(kBytes)
-        byteBuffer.putInt(vSize)
-
-        val content = value.content
-        byteBuffer.put(content)
-        content.flip()
-
-        buffer = byteBuffer
-        val crc = computeChecksum()
-
-        byteBuffer.position(0)
-        byteBuffer.putInt(crc.toInt())
-
-        byteBuffer.rewind()
+        val vSize = value.contentLimit
+        init(BaseMessageOverhead + kSize + vSize, RequestTypeEnum.COMMAND) {
+            it.putInt(kSize)
+            it.put(kBytes)
+            it.putInt(vSize)
+            it.put(value.content)
+        }
+        setCheckSum()
     }
 
     constructor(buffer: ByteBuffer) {
@@ -119,6 +107,7 @@ open class LogItem : AbstractStruct {
     }
 
     override fun writeIntoChannel(channel: Channel) {
+        buffer!!.position(0)
         channel.write(Unpooled.wrappedBuffer(buffer!!))
     }
 

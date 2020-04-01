@@ -1,6 +1,8 @@
 package ink.anur.pojo.log
 
 import ink.anur.exception.KanashiException
+import ink.anur.pojo.enumerate.RequestTypeEnum
+import ink.anur.pojo.log.base.LogItem
 import ink.anur.pojo.log.common.CommandTypeEnum
 import ink.anur.pojo.log.common.StrApiTypeEnum
 import ink.anur.pojo.log.common.TransactionTypeEnum
@@ -74,7 +76,7 @@ class KanashiCommand(val content: ByteBuffer) {
         }
     }
 
-    val contentLength = content.limit()
+    val contentLimit = content.limit()
 
     /**
      * 事务 id
@@ -123,7 +125,7 @@ class KanashiCommand(val content: ByteBuffer) {
 
         // 首先取出额外参数
         content.position(kanashiEntryTo)
-        while (content.position() < contentLength) {
+        while (content.position() < contentLimit) {
             val param = ByteArray(content.getInt())
             content.get(param)
             extraParams.add(String(param))
@@ -134,7 +136,8 @@ class KanashiCommand(val content: ByteBuffer) {
         content.limit(kanashiEntryTo)
         kanashiEntry = ByteBufferKanashiEntry(content.slice())
 
-        content.reset()
+        content.position(0)
+        content.limit(contentLimit)
 
         // 判断是否查询指令
         isQueryCommand = when (commandType) {

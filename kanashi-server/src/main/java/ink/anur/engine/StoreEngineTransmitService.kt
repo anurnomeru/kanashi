@@ -53,7 +53,7 @@ class StoreEngineTransmitService {
         /**
          * 用于返回客户端的结果
          */
-        EventDriverPool.register(EngineExecutor::class.java, 4, 20, TimeUnit.MILLISECONDS) {
+        EventDriverPool.register(EngineExecutor::class.java, 2, 20, TimeUnit.MILLISECONDS) {
             it.await()
             if (it.getDataHandler().shortTransaction) {
                 doCommit(it.getDataHandler().getTrxId())
@@ -144,7 +144,7 @@ class StoreEngineTransmitService {
                             }
                             cdl.await()
 
-                            if (result == null) {
+                            if (result == null || (result != null && result!!.isDelete())) {
                                 engineExecutor.shotFailure()
                             } else {
                                 doAcquire(engineExecutor)
@@ -160,7 +160,7 @@ class StoreEngineTransmitService {
                             }
                             cdl.await()
 
-                            if (result != null) {
+                            if (result != null && !result!!.isDelete()) {
                                 engineExecutor.shotFailure()
                             } else {
                                 doAcquire(engineExecutor)

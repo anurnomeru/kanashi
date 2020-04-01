@@ -163,8 +163,8 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
         }
     }
 
-    fun sendToServer(msg: AbstractStruct) {
-        send(Constant.SERVER, msg, RequestExtProcessor(), false)
+    fun sendToServer(msg: AbstractStruct): Boolean {
+        return send(Constant.SERVER, msg, RequestExtProcessor(), false)
     }
 
     /**
@@ -195,9 +195,13 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
 
             }
             val error = sendImpl(serverName, msg, typeEnum, requestProcessor)
-            if (keepError && error != null) {
-                logger.error("尝试发送到节点 $serverName 的 $typeEnum 任务失败", error)
+            if (error != null) {
+                if (keepError) {
+                    logger.error("尝试发送到节点 $serverName 的 $typeEnum 任务失败", error)
+                }
+                return false
             }
+
             true
         }
     }

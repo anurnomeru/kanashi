@@ -39,10 +39,11 @@ public class KanashiStrTemplate {
             public void run() {
                 while (true) {
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(5000L);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+
                     me.set("Anur", "1");
                     System.out.println("期待1：" + me.get("Anur"));
 

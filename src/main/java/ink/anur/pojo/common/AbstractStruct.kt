@@ -73,6 +73,13 @@ abstract class AbstractStruct {
         return ByteBufferUtil.crc32(buffer!!.array(), buffer!!.arrayOffset() + TypeOffset, buffer!!.limit() - TypeOffset)
     }
 
+    fun setCheckSum(){
+        val crc = computeChecksum()
+        buffer!!.position(0)
+        buffer!!.putInt(crc.toInt())
+    }
+
+
     fun getRequestType(): RequestTypeEnum {
         return RequestTypeEnum.parseByByteSign(buffer!!.getInt(TypeOffset))
     }
@@ -86,11 +93,12 @@ abstract class AbstractStruct {
 
     fun init(capacity: Int, requestTypeEnum: RequestTypeEnum, then: (ByteBuffer) -> Unit) {
         buffer = ByteBuffer.allocate(capacity)
+        buffer!!.mark()
         buffer!!.position(TypeOffset)
         buffer!!.putInt(requestTypeEnum.byteSign)
         buffer!!.putLong(System.currentTimeMillis())
         then.invoke(buffer!!)
-        buffer!!.flip()
+        buffer!!.reset()
     }
 
     /**
@@ -105,7 +113,9 @@ abstract class AbstractStruct {
      */
     fun resetTimeMillis(): Long {
         val neo = System.currentTimeMillis()
-        buffer!!.putLong(TimestampLength, neo)
+        val bf = buffer!!
+        bf.putLong(TimestampOffset, neo)
+        setCheckSum()
         return neo
     }
 

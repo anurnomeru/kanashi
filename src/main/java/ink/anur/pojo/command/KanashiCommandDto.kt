@@ -12,5 +12,5 @@ class KanashiCommandDto : LogItem {
 
     constructor(byteBuffer: ByteBuffer) : super(byteBuffer)
 
-    constructor(key: String, value: KanashiCommand) : super(RequestTypeEnum.COMMAND, key, value)
+    constructor(key: String, value: KanashiCommand) : super(key, value)
 }

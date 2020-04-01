@@ -236,6 +236,27 @@ object Nigate {
             }
         }
 
+        fun afterBootStrap(beans: MutableCollection<Any>) {
+            for (bean in beans) {
+                for (memberFunction in bean::class.memberFunctions) {
+                    for (annotation in memberFunction.annotations) {
+                        if (annotation.annotationClass == NigateAfterBootStrap::class) {
+                            annotation as NigateAfterBootStrap
+                            try {
+                                memberFunction.isAccessible = true
+                                memberFunction.call(bean)
+                            } catch (e: Exception) {
+                                logger.error("class [${bean::class}] invoke after bootstrap method [${memberFunction.name}] error : ${e.message}")
+                                e.printStackTrace()
+                            }
+                            val name = BEAN_TO_NAME_MAPPING[bean] ?: throw NoSuchBeanException("无法根据类 ${bean.javaClass.simpleName} 找到唯一的 Bean 找到指定的 BeanName")
+                            hasBeanPostConstruct.add(name)
+                        }
+                    }
+                }
+            }
+        }
+
         fun getClasses(packagePath: String) {
             val path = packagePath.replace(".", "/")
             val resources = Thread.currentThread().contextClassLoader.getResources(path)
@@ -304,6 +325,8 @@ object Nigate {
         fun doScan() {
             getClasses("ink.anur")
         }
+
+
     }
 
     class NigateBeanDefinition(
@@ -350,8 +373,11 @@ object Nigate {
             }
             logger.info("Nigate ==> Register complete")
 
-
             logger.info("Nigate Started in ${(System.currentTimeMillis() - start) / 1000f} seconds")
+
+            logger.info("Nigate ==> Notify after bootstrap")
+            beanContainer.afterBootStrap(allBeans)
+
         } catch (e: Exception) {
             e.printStackTrace()
             exitProcess(1)

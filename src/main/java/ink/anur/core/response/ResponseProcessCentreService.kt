@@ -79,6 +79,7 @@ class ResponseProcessCentreService {
             channel.flush()
         } catch (t: Throwable) {
             logger.error("向节点发送 [$serverName] 关于 ${body.getRequestType()} 的请求失败： ${t.message}")
+            t.printStackTrace()
             return t
         } finally {
             lock.unlock()

@@ -2,6 +2,7 @@ package ink.anur.service.command
 
 import ink.anur.core.common.AbstractRequestMapping
 import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.inject.NigateAfterBootStrap
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.pojo.command.KanashiCommandDto
@@ -17,8 +18,16 @@ import java.util.concurrent.CountDownLatch
 @NigateBean
 class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
 
+    private val nigateActivateLatch = CountDownLatch(1)
+
     @NigateInject
     private lateinit var requestProcessCentreService: RequestProcessCentreService
+
+
+    @NigateAfterBootStrap
+    private fun afterBootStrap() {
+        nigateActivateLatch.countDown()
+    }
 
     /**
      * 返回的结果会保存在这个 map 里面
@@ -29,7 +38,6 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
      * 通知调用线程唤醒的 map
      */
     private val notifyMap = mutableMapOf<Long, CountDownLatch>()
-
 
     override fun typeSupport(): RequestTypeEnum {
         return RequestTypeEnum.COMMAND_RESPONSE
@@ -45,6 +53,7 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
     }
 
     fun acquire(kanashiCommandDto: KanashiCommandDto): KanashiCommandResponse {
+        nigateActivateLatch.await()
         val timeMillis = kanashiCommandDto.getTimeMillis()
 
         var reCall = false
@@ -58,12 +67,17 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
                 notifyMap[timeMillis] = waitForResponse
             }
         }
-        return if (reCall) {
+        return if (reCall) {// 针对时间重复的要重新递归请求一次
             acquire(kanashiCommandDto)
         } else {
-            requestProcessCentreService.sendToServer(kanashiCommandDto)
-            waitForResponse.await()
-            responseMap.remove(timeMillis)!!
+            if (requestProcessCentreService.sendToServer(kanashiCommandDto)) {
+                waitForResponse.await()
+                responseMap.remove(timeMillis)!!
+            } else {
+                // TODO 做有限次数的尝试
+                Thread.sleep(200L)
+                return acquire(kanashiCommandDto)
+            }
         }
     }
 }
