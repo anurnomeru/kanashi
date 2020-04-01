@@ -8,6 +8,7 @@ import ink.anur.exception.MemoryMVCCStorageUnCommittedPartException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.pojo.log.ByteBufferKanashiEntry
+import ink.anur.pojo.log.common.GenerationAndOffset
 import java.util.*
 
 /**
@@ -64,6 +65,16 @@ class MemoryMVCCStorageUnCommittedPart {
         memoryMVCCStorageCommittedPart.flushTo(trxId, verAndKanashiEntryWithKeyPairList)
 
         // 必须要先拿出来，存到 commit 的才可以删除，不然查询的时候可能会有疏漏
+        holdKeys.forEach { treeMap.remove(it) }
+    }
+
+    /**
+     * 将未提交的数据丢弃
+     */
+    fun discard(trxId: Long, holdKeys: MutableSet<String>) {
+        logger.debug("事务 $trxId 已回滚")
+
+        // 直接将所有的曾在这个事务里操作的key都移除掉
         holdKeys.forEach { treeMap.remove(it) }
     }
 }

@@ -21,9 +21,9 @@ import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.pojo.log.common.StrApiTypeEnum
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-
 
 /**
  * Created by anur. IjuoKaruKas on 2019/10/24
@@ -49,6 +49,11 @@ class StoreEngineTransmitService {
 
     @NigateInject
     private lateinit var requestProcessCentreService: RequestProcessCentreService
+
+    /**
+     * 一切未提交的事务都在这里有一个存档
+     */
+    private val unCommitGao = ConcurrentHashMap<Long, Boolean>()
 
     init {
         /**
@@ -97,6 +102,7 @@ class StoreEngineTransmitService {
 
     fun commandInvoke(engineExecutor: EngineExecutor) {
         val trxId = engineExecutor.getDataHandler().getTrxId()
+        unCommitGao.putIfAbsent(trxId, true)
 
         try {
 
@@ -118,7 +124,8 @@ class StoreEngineTransmitService {
                             engineExecutor.shotSuccess()
                         }
                         CommonApiTypeEnum.ROLL_BACK -> {
-//                            throw RollbackException() todo 还没写
+                            doRollBack(trxId)
+                            engineExecutor.shotSuccess()
                         }
                     }
                 }
@@ -236,12 +243,19 @@ class StoreEngineTransmitService {
         }
 
         trxFreeQueuedSynchronizer.release(trxId) { keys ->
-            keys?.let { memoryMVCCStorageUnCommittedPart.flushToCommittedPart(trxId, it) }
+            keys?.let {
+                if (unCommitGao[trxId] == true) {
+                    memoryMVCCStorageUnCommittedPart.flushToCommittedPart(trxId, it)
+                } else {
+                    memoryMVCCStorageUnCommittedPart.discard(trxId, it)
+                }
+            }
             transactionManageService.releaseTrx(trxId)
         }
     }
 
     private fun doRollBack(trxId: Long) {
-        // todo 还没写 懒得写
+        unCommitGao[trxId] = false
+        doCommit(trxId)
     }
 }

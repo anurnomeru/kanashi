@@ -169,4 +169,12 @@ public class KanashiStrTemplate {
 
         return acquire.getSuccess();
     }
+
+    public boolean rollbackTransaction(long trxId) {
+        KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
+            new KanashiCommandDto("",
+                KanashiCommand.Companion.generator(trxId, TransactionTypeEnum.LONG, CommandTypeEnum.COMMON, CommonApiTypeEnum.ROLL_BACK, "")));
+
+        return acquire.getSuccess();
+    }
 }

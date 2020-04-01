@@ -50,9 +50,18 @@ public class TestWithTrx {
         assert kanashiStrTemplate.get(trx2, key)
                                  .equals("Trx1");
 
-        // 以 Trx1 去 setIf 成功
+        // 事务2 setIf 成功
         assert kanashiStrTemplate.setIf(trx2, key, "Trx2", "Trx1");
 
-        kanashiStrTemplate.commitTransaction(trx2);
+        // 由于修改成功，事务2 读取到原来 key = Trx2
+        assert kanashiStrTemplate.get(trx2,key)
+                                 .equals("Trx2");
+
+        // 虽然事务2 已经成功将 key 改为 Trx2，但是进行了回滚
+        kanashiStrTemplate.rollbackTransaction(trx2);
+
+        // 此时再读，读取到原来 key = Trx1，而不是 Trx2
+        assert kanashiStrTemplate.get(key)
+                                 .equals("Trx1");
     }
 }
