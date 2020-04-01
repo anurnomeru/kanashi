@@ -115,7 +115,7 @@ class MemoryMVCCStorageCommittedPart : KanashiRunnable() {
     /**
      * 将 uc 部分的数据提交到 mvcc 临界控制区，这部分需要做好隔离性控制
      */
-    fun commonOperate(trxId: Long, pairs: List<VerAndKanashiEntryWithKeyPair>) {
+    fun flushTo(trxId: Long, pairs: List<VerAndKanashiEntryWithKeyPair>) {
         logger.trace("事务 {} 已经进入 MVCC 临界控制区，其所属的所有 key {} 将进入 commit part ", trxId, pairs)
         for (pair in pairs) {
             locker.lockSupplier {

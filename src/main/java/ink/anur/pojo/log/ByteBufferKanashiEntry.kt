@@ -16,8 +16,7 @@ import java.nio.ByteBuffer
  *      1       +        1        +      4     + x
  *  commandType  + requestType  +  valueSize + value.
  */
-class ByteBufferKanashiEntry(val byteBuffer: ByteBuffer) {
-
+class ByteBufferKanashiEntry {
     companion object {
 
         val SENTINEL = allocateEmptyKanashiEntry()
@@ -72,20 +71,40 @@ class ByteBufferKanashiEntry(val byteBuffer: ByteBuffer) {
         }
     }
 
+    constructor(byteBuffer: ByteBuffer) {
+        this.byteBuffer = byteBuffer
+        expectedSize = byteBuffer.limit()
+        commandType = CommandTypeEnum.map(byteBuffer.get(CommandTypeOffset))
+    }
+
+    constructor(commandType: CommandTypeEnum, byteBuffer: ByteBuffer) {
+        val size = byteBuffer.limit()
+        val allocate = ByteBuffer.allocate(size + ValueOffset)
+        allocate.put(commandType.byte)
+        allocate.putInt(size)
+        allocate.put(byteBuffer)
+        allocate.flip()
+        this.byteBuffer = allocate
+        expectedSize = byteBuffer.limit()
+        this.commandType = commandType
+    }
+
+    val byteBuffer: ByteBuffer
+
     /**
      * 对整个 ByteBufferKanashiEntry 大小的预估
      */
-    val expectedSize: Int = byteBuffer.limit()
+    val expectedSize: Int
 
     /**
      * STR操作还是LIST还是什么别的
      */
-    fun getCommandType() = CommandTypeEnum.map(byteBuffer.get(CommandTypeOffset))
+    val commandType: CommandTypeEnum
 
     /**
      * 是否是一个被删除的值
      */
-    fun isDelete(): Boolean = getCommandType() == CommandTypeEnum.NONE
+    fun isDelete(): Boolean = commandType == CommandTypeEnum.NONE
 
     fun getValueString(): String {
         byteBuffer.mark()
@@ -96,5 +115,13 @@ class ByteBufferKanashiEntry(val byteBuffer: ByteBuffer) {
         byteBuffer.get(valueArray)
         byteBuffer.reset()
         return String(valueArray)
+    }
+
+    fun getValueLong(): Long {
+        byteBuffer.mark()
+        byteBuffer.position(ValueSizeOffset + 4)
+        val result = byteBuffer.getLong()
+        byteBuffer.reset()
+        return result
     }
 }

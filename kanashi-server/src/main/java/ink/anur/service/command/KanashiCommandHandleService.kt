@@ -18,6 +18,7 @@ import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.KanashiCommand
 import ink.anur.pojo.log.base.LogItem
 import ink.anur.pojo.log.common.CommandTypeEnum
+import ink.anur.pojo.log.common.CommonApiTypeEnum
 import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.pojo.log.common.StrApiTypeEnum
 import ink.anur.pojo.log.common.TransactionTypeEnum
@@ -69,8 +70,12 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
                     kanashiCommand.trxId = transactionAllocator.allocate()
                 } else {
                     if (kanashiCommand.trxId == KanashiCommand.NON_TRX) {
-                        // 不允许长事务不带事务id
-                        // todo 抛出异常告知失败
+                        if (kanashiCommand.commandType==CommandTypeEnum.COMMON && kanashiCommand.api==CommonApiTypeEnum.START_TRX){
+                            kanashiCommand.trxId = transactionAllocator.allocate()
+                        }else{
+                            // 不允许长事务不带事务id
+                            // todo 抛出异常告知失败
+                        }
                     }
                 }
 

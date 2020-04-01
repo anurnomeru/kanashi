@@ -11,6 +11,7 @@ import ink.anur.pojo.command.KanashiCommandResponse;
 import ink.anur.pojo.log.ByteBufferKanashiEntry;
 import ink.anur.pojo.log.KanashiCommand;
 import ink.anur.pojo.log.common.CommandTypeEnum;
+import ink.anur.pojo.log.common.CommonApiTypeEnum;
 import ink.anur.pojo.log.common.StrApiTypeEnum;
 import ink.anur.pojo.log.common.TransactionTypeEnum;
 import ink.anur.service.command.KanashiCommandResponseHandlerService;
@@ -32,39 +33,20 @@ public class KanashiStrTemplate {
     @PostConstruct
     public void init() {
         Nigate.INSTANCE.injectOnly(this);
+    }
 
-        Runnable runnable = new Runnable() {
+    public String get(long trxId, String key) {
+        KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
+            new KanashiCommandDto(key,
+                KanashiCommand.Companion.generator(trxId, TransactionTypeEnum.LONG, CommandTypeEnum.STR, StrApiTypeEnum.SELECT, "")));
 
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        Thread.sleep(5000L);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                    me.set("Anur", "1");
-                    System.out.println("期待1：" + me.get("Anur"));
-
-                    me.delete("Anur");
-                    System.out.println("期待空：" + me.get("Anur"));
-
-                    me.setNotExist("Anur", "2");
-                    System.out.println("期待2：" + me.get("Anur"));
-
-                    me.setExist("Anur", "3");
-                    System.out.println("期待3：" + me.get("Anur"));
-
-                    me.setIf("Anur", "4", "4");
-                    System.out.println("期待3：" + me.get("Anur"));
-
-                    me.setIf("Anur", "4", "3");
-                    System.out.println("期待4：" + me.get("Anur"));
-                }
-            }
-        };
-        new Thread(runnable).start();
+        if (acquire.getSuccess()) {
+            return Optional.ofNullable(acquire.getKanashiEntry())
+                           .map(ByteBufferKanashiEntry::getValueString)
+                           .orElse(null);
+        } else {
+            throw new RuntimeException();
+        }
     }
 
     public String get(String key) {
@@ -81,10 +63,26 @@ public class KanashiStrTemplate {
         }
     }
 
+    public boolean delete(long trxId, String key) {
+        KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
+            new KanashiCommandDto(key,
+                KanashiCommand.Companion.generator(trxId, TransactionTypeEnum.LONG, CommandTypeEnum.STR, StrApiTypeEnum.DELETE, "")));
+
+        return acquire.getSuccess();
+    }
+
     public boolean delete(String key) {
         KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
             new KanashiCommandDto(key,
                 KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.DELETE, "")));
+
+        return acquire.getSuccess();
+    }
+
+    public boolean set(long trxId, String key, String value) {
+        KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
+            new KanashiCommandDto(key,
+                KanashiCommand.Companion.generator(trxId, TransactionTypeEnum.LONG, CommandTypeEnum.STR, StrApiTypeEnum.SET, value)));
 
         return acquire.getSuccess();
     }
@@ -97,10 +95,26 @@ public class KanashiStrTemplate {
         return acquire.getSuccess();
     }
 
+    public boolean setExist(long trxId, String key, String value) {
+        KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
+            new KanashiCommandDto(key,
+                KanashiCommand.Companion.generator(trxId, TransactionTypeEnum.LONG, CommandTypeEnum.STR, StrApiTypeEnum.SET_EXIST, value)));
+
+        return acquire.getSuccess();
+    }
+
     public boolean setExist(String key, String value) {
         KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
             new KanashiCommandDto(key,
                 KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET_EXIST, value)));
+
+        return acquire.getSuccess();
+    }
+
+    public boolean setNotExist(long trxId, String key, String value) {
+        KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
+            new KanashiCommandDto(key,
+                KanashiCommand.Companion.generator(trxId, TransactionTypeEnum.LONG, CommandTypeEnum.STR, StrApiTypeEnum.SET_NOT_EXIST, value)));
 
         return acquire.getSuccess();
     }
@@ -113,10 +127,40 @@ public class KanashiStrTemplate {
         return acquire.getSuccess();
     }
 
+    public boolean setIf(long trxId, String key, String value, String expect) {
+        KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
+            new KanashiCommandDto(key,
+                KanashiCommand.Companion.generator(trxId, TransactionTypeEnum.LONG, CommandTypeEnum.STR, StrApiTypeEnum.SET_IF, value, expect)));
+
+        return acquire.getSuccess();
+    }
+
     public boolean setIf(String key, String value, String expect) {
         KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
             new KanashiCommandDto(key,
                 KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET_IF, value, expect)));
+
+        return acquire.getSuccess();
+    }
+
+    public long startTransaction() {
+        KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
+            new KanashiCommandDto("",
+                KanashiCommand.Companion.generator(NON_TRX, TransactionTypeEnum.LONG, CommandTypeEnum.COMMON, CommonApiTypeEnum.START_TRX, "")));
+
+        if (acquire.getSuccess()) {
+            return Optional.ofNullable(acquire.getKanashiEntry())
+                           .map(ByteBufferKanashiEntry::getValueLong)
+                           .orElseThrow(RuntimeException::new);
+        } else {
+            throw new RuntimeException();
+        }
+    }
+
+    public boolean commitTransaction(long trxId) {
+        KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
+            new KanashiCommandDto("",
+                KanashiCommand.Companion.generator(trxId, TransactionTypeEnum.LONG, CommandTypeEnum.COMMON, CommonApiTypeEnum.COMMIT_TRX, "")));
 
         return acquire.getSuccess();
     }

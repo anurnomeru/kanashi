@@ -61,7 +61,7 @@ class MemoryMVCCStorageUnCommittedPart {
                 treeMap[it]
                     ?: throw MemoryMVCCStorageUnCommittedPartException("mvcc uc部分出现了奇怪的bug，讲道理holdKeys拥有所有key的值，注意无锁控制是否有问题！"))
         }
-        memoryMVCCStorageCommittedPart.commonOperate(trxId, verAndKanashiEntryWithKeyPairList)
+        memoryMVCCStorageCommittedPart.flushTo(trxId, verAndKanashiEntryWithKeyPairList)
 
         // 必须要先拿出来，存到 commit 的才可以删除，不然查询的时候可能会有疏漏
         holdKeys.forEach { treeMap.remove(it) }

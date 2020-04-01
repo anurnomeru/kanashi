@@ -99,7 +99,6 @@ class LogService {
         logger.info("初始化日志管理器，当前最大进度为 {}", init.toString())
 
         appendLock.switchOff()
-        logger.info("log-service 追加入口关闭~")
 
         initial = init
         currentGAO = init

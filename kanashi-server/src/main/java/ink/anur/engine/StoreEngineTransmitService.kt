@@ -19,6 +19,7 @@ import ink.anur.pojo.log.common.CommandTypeEnum
 import ink.anur.pojo.log.common.CommonApiTypeEnum
 import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.pojo.log.common.StrApiTypeEnum
+import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -106,6 +107,10 @@ class StoreEngineTransmitService {
                 CommandTypeEnum.COMMON -> {
                     when (engineExecutor.getDataHandler().getApi()) {
                         CommonApiTypeEnum.START_TRX -> {
+                            val bb = ByteBuffer.allocate(8)
+                            bb.putLong(trxId)
+                            bb.flip()
+                            engineExecutor.getEngineResult().setKanashiEntry(ByteBufferKanashiEntry(CommandTypeEnum.COMMON, bb))
                             engineExecutor.shotSuccess()
                         }
                         CommonApiTypeEnum.COMMIT_TRX -> {
@@ -122,7 +127,9 @@ class StoreEngineTransmitService {
                     when (engineExecutor.getDataHandler().getApi()) {
                         StrApiTypeEnum.SELECT -> {
                             engineDataQueryer.doQuery(engineExecutor) {
-                                engineExecutor.getEngineResult().setKanashiEntry(it)
+                                if (it != null && !it.isDelete()) {
+                                    engineExecutor.getEngineResult().setKanashiEntry(it)
+                                }
                                 engineExecutor.shotSuccess()
                             }
                         }
