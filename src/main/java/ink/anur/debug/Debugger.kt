@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
  * 主要是调试的时候经常要改 logger 的隔离级别太鸡儿麻烦了！
  */
 class Debugger(clazz: Class<*>) {
-    private val h: Logger = LoggerFactory.getLogger(clazz)
+    val h: Logger = LoggerFactory.getLogger(clazz)
     private var level: DebuggerLevel = DebuggerLevel.NONE
 
     fun level(): DebuggerLevel {

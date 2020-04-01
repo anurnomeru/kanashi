@@ -12,7 +12,7 @@ import ink.anur.inject.NigateBean
 class TransactionAllocator {
 
     companion object {
-        const val StartTrx: Long = Long.MIN_VALUE
+        const val StartTrx: Long = 0L
     }
 
     private var nowTrx: Long = StartTrx

@@ -7,6 +7,7 @@ import ink.anur.engine.queryer.common.QueryerChain
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.pojo.log.ByteBufferKanashiEntry
+import ink.anur.pojo.log.KanashiCommand
 
 /**
  * Created by Anur IjuoKaruKas on 2019/11/27
@@ -22,8 +23,15 @@ class CommittedPartQueryChain : QueryerChain() {
     @NigateInject
     private lateinit var memoryMVCCStorageCommittedPart: MemoryMVCCStorageCommittedPart
 
-    override fun doQuery(engineExecutor: EngineExecutor): ByteBufferKanashiEntry? {
+    override fun doQuery(engineExecutor: EngineExecutor, useCurrencyRead: Boolean): ByteBufferKanashiEntry? {
         val dataHandler = engineExecutor.getDataHandler()
-        return memoryMVCCStorageCommittedPart.queryKeyInTrx(dataHandler.getTrxId(), dataHandler.key, dataHandler.waterMarker)
+
+        val trxId = if (useCurrencyRead) {
+            KanashiCommand.NON_TRX
+        } else {
+            dataHandler.getTrxId()
+        }
+
+        return memoryMVCCStorageCommittedPart.queryKeyInTrx(trxId, dataHandler.key, dataHandler.waterMarker)
     }
 }

@@ -30,9 +30,9 @@ class EngineDataQueryer {
         cChain.next = mChain
     }
 
-    fun doQuery(engineExecutor: EngineExecutor, afterQuery: (ByteBufferKanashiEntry?) -> Unit) =
+    fun doQuery(engineExecutor: EngineExecutor, afterQuery: (ByteBufferKanashiEntry?) -> Unit, useCurrencyRead: Boolean = false) =
         KanashiExecutors.execute(Runnable {
-            val query = ucChain.query(engineExecutor)
+            val query = ucChain.query(engineExecutor, useCurrencyRead)
             afterQuery.invoke(query)
         })
 }

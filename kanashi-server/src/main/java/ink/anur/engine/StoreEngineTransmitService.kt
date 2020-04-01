@@ -126,70 +126,74 @@ class StoreEngineTransmitService {
                 CommandTypeEnum.STR -> {
                     when (engineExecutor.getDataHandler().getApi()) {
                         StrApiTypeEnum.SELECT -> {
-                            engineDataQueryer.doQuery(engineExecutor) {
+                            engineDataQueryer.doQuery(engineExecutor, {
                                 if (it != null && !it.isDelete()) {
                                     engineExecutor.getEngineResult().setKanashiEntry(it)
                                 }
                                 engineExecutor.shotSuccess()
-                            }
+                            }, false)
                         }
+
                         StrApiTypeEnum.DELETE -> {
-                            engineExecutor.getDataHandler().markKanashiEntryAsDeleteBeforeOperate()
-                            doAcquire(engineExecutor)
-                            engineExecutor.shotSuccess()
+                            doAcquire(engineExecutor) {
+                                // 将值设置为被删除
+                                engineExecutor.getDataHandler().markKanashiEntryAsDeleteBeforeOperate()
+                                memoryMVCCStorageUnCommittedPart.commonOperate(engineExecutor.getDataHandler())
+                                engineExecutor.shotSuccess()
+                            }
                         }
+
                         StrApiTypeEnum.SET -> {
-                            doAcquire(engineExecutor)
-                            engineExecutor.shotSuccess()
+                            doAcquire(engineExecutor) {
+                                memoryMVCCStorageUnCommittedPart.commonOperate(engineExecutor.getDataHandler())
+                                engineExecutor.shotSuccess()
+                            }
                         }
+
                         StrApiTypeEnum.SET_EXIST -> {
-                            var result: ByteBufferKanashiEntry? = null
-                            val cdl = CountDownLatch(1)
-                            engineDataQueryer.doQuery(engineExecutor) {
-                                result = it
-                                cdl.countDown()
-                            }
-                            cdl.await()
+                            doAcquire(engineExecutor) {
 
-                            if (result == null || (result != null && result!!.isDelete())) {
-                                engineExecutor.shotFailure()
-                            } else {
-                                doAcquire(engineExecutor)
-                                engineExecutor.shotSuccess()
+                                engineExecutor.getDataHandler().getTrxId()
+                                engineDataQueryer.doQuery(engineExecutor, {
+                                    if (it == null || it.isDelete()) {
+                                        engineExecutor.shotFailure()
+                                    } else {
+                                        memoryMVCCStorageUnCommittedPart.commonOperate(engineExecutor.getDataHandler())
+                                        engineExecutor.shotSuccess()
+                                    }
+                                    // 这里必须使用当前读而不是快照读
+                                }, true)
                             }
                         }
-                        StrApiTypeEnum.SET_NOT_EXIST -> {
-                            var result: ByteBufferKanashiEntry? = null
-                            val cdl = CountDownLatch(1)
-                            engineDataQueryer.doQuery(engineExecutor) {
-                                result = it
-                                cdl.countDown()
-                            }
-                            cdl.await()
 
-                            if (result != null && !result!!.isDelete()) {
-                                engineExecutor.shotFailure()
-                            } else {
-                                doAcquire(engineExecutor)
-                                engineExecutor.shotSuccess()
+                        StrApiTypeEnum.SET_NOT_EXIST -> {
+                            doAcquire(engineExecutor) {
+
+                                engineExecutor.getDataHandler().getTrxId()
+                                engineDataQueryer.doQuery(engineExecutor, {
+                                    if (it != null && !it.isDelete()) {
+                                        engineExecutor.shotFailure()
+                                    } else {
+                                        memoryMVCCStorageUnCommittedPart.commonOperate(engineExecutor.getDataHandler())
+                                        engineExecutor.shotSuccess()
+                                    }
+                                    // 这里必须使用当前读而不是快照读
+                                }, true)
                             }
                         }
                         StrApiTypeEnum.SET_IF -> {
+                            doAcquire(engineExecutor) {
 
-                            var result: ByteBufferKanashiEntry? = null
-                            val cdl = CountDownLatch(1)
-                            engineDataQueryer.doQuery(engineExecutor) {
-                                result = it
-                                cdl.countDown()
-                            }
-                            cdl.await()
-
-                            val expectValue = engineExecutor.getDataHandler().extraParams[0]
-                            if (result == null || result!!.getValueString() != expectValue) {
-                                engineExecutor.shotFailure()
-                            } else {
-                                doAcquire(engineExecutor)
-                                engineExecutor.shotSuccess()
+                                engineExecutor.getDataHandler().getTrxId()
+                                engineDataQueryer.doQuery(engineExecutor, {
+                                    if (it == null || it.getValueString() != engineExecutor.getDataHandler().extraParams[0]) {
+                                        engineExecutor.shotFailure()
+                                    } else {
+                                        memoryMVCCStorageUnCommittedPart.commonOperate(engineExecutor.getDataHandler())
+                                        engineExecutor.shotSuccess()
+                                    }
+                                    // 这里必须使用当前读而不是快照读
+                                }, true)
                             }
                         }
                     }
@@ -209,15 +213,15 @@ class StoreEngineTransmitService {
     /**
      * 进行事务控制与数据流转，通过无锁控制来进行阻塞与唤醒
      *
-     * 如果拿到锁，则调用api，将数据插入 未提交部分(uc)
+     * 如果拿到锁，则调用 whatEverDo
+     *
+     * 否则会“阻塞” 其实不是阻塞，是将任务进行保存，后续才会执行
      */
-    private fun doAcquire(engineExecutor: EngineExecutor) {
+    private fun doAcquire(engineExecutor: EngineExecutor, whatEverDo: () -> Unit) {
         val dataHandler = engineExecutor.getDataHandler()
         val trxId = dataHandler.getTrxId()
 
-        trxFreeQueuedSynchronizer.acquire(trxId, dataHandler.key) {
-            memoryMVCCStorageUnCommittedPart.commonOperate(dataHandler)
-        }
+        trxFreeQueuedSynchronizer.acquire(trxId, dataHandler.key, whatEverDo)
     }
 
     /**
@@ -240,5 +244,4 @@ class StoreEngineTransmitService {
     private fun doRollBack(trxId: Long) {
         // todo 还没写 懒得写
     }
-
 }

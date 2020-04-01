@@ -16,7 +16,7 @@ abstract class QueryerChain {
     /**
      * 本层如何去执行查询
      */
-    abstract fun doQuery(engineExecutor: EngineExecutor): ByteBufferKanashiEntry?
+    abstract fun doQuery(engineExecutor: EngineExecutor, useCurrencyRead: Boolean): ByteBufferKanashiEntry?
 
     /**
      * 如果到了最后一层都找不到，则返回此结果
@@ -28,11 +28,11 @@ abstract class QueryerChain {
     /**
      * shutSuccess 代表在查询到结果后，是否标记为已成功
      */
-    fun query(engineExecutor: EngineExecutor): ByteBufferKanashiEntry? {
+    fun query(engineExecutor: EngineExecutor, useCurrencyRead: Boolean): ByteBufferKanashiEntry? {
         // 优先执行 本层的 doQuery
-        return doQuery(engineExecutor) ?: // 如果结果为空，则有下层执行下层，没有下层直接返回 null
+        return doQuery(engineExecutor, useCurrencyRead) ?: // 如果结果为空，则有下层执行下层，没有下层直接返回 null
         if (next != null) {
-            next!!.query(engineExecutor)
+            next!!.query(engineExecutor, useCurrencyRead)
         } else {
             keyNotFoundTilEnd(engineExecutor)
             null

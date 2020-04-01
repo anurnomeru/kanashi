@@ -19,7 +19,7 @@ class MemoryLSMQueryChain : QueryerChain() {
     @NigateInject
     private lateinit var memoryLSMService: MemoryLSMService
 
-    override fun doQuery(engineExecutor: EngineExecutor): ByteBufferKanashiEntry? {
+    override fun doQuery(engineExecutor: EngineExecutor, ignore: Boolean): ByteBufferKanashiEntry? {
         return memoryLSMService.get(engineExecutor.getDataHandler().key)
     }
 }

@@ -42,7 +42,7 @@ class TrxFreeQueuedSynchronizer {
             // 代表此键无锁
             trxId -> {
                 whatEverDo.invoke()
-//                logger.trace("事务 $trxId 成功获取或重入位于键 $key 上的锁，并成功进行了操作")
+                logger.trace("事务 $trxId 成功获取或重入位于键 $key 上的锁，并成功进行了操作")
             }
 
             // 代表有锁
@@ -50,7 +50,7 @@ class TrxFreeQueuedSynchronizer {
                 trxHolder.undoEvent.compute(key) { _, undoList ->
                     (undoList ?: mutableListOf()).also { it.add(whatEverDo) }
                 }
-//                logger.trace("事务 $trxId 无法获取位于键 $key 上的锁，将等待键上的前一个事务唤醒，且挂起需执行的操作")
+                logger.trace("事务 $trxId 无法获取位于键 $key 上的锁，将等待键上的前一个事务唤醒，且挂起需执行的操作")
             }
         }
     }
@@ -91,14 +91,13 @@ class TrxFreeQueuedSynchronizer {
                 }
             }
 
-//            logger.trace("事务 $trxId 已经成功释放锁")
+            logger.trace("事务 $trxId 已经成功释放锁")
 
             // 3、注销此事务
             trxHolderMap.remove(trxId)
 
             // 4、通知其他事务
             holdKeys.forEach { notify(it) }
-
         }
     }
 

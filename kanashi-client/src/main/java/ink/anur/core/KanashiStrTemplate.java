@@ -79,6 +79,11 @@ public class KanashiStrTemplate {
         return acquire.getSuccess();
     }
 
+    public static void main(String[] args) {
+        new KanashiCommandDto("Anur",
+            KanashiCommand.Companion.generator(1L, TransactionTypeEnum.LONG, CommandTypeEnum.STR, StrApiTypeEnum.SET, "z")).getKanashiCommand();
+    }
+
     public boolean set(long trxId, String key, String value) {
         KanashiCommandResponse acquire = kanashiCommandResponseHandlerService.acquire(
             new KanashiCommandDto(key,
