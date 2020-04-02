@@ -6,6 +6,7 @@ import ink.anur.engine.log.LogService
 import ink.anur.inject.Event
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.inject.NigateListener
 import ink.anur.inject.NigateListenerService
 import ink.anur.inject.NigatePostConstruct
 import ink.anur.pojo.HeartBeat
@@ -144,6 +145,9 @@ class ElectionMetaService {
     fun isCandidate() = raftRole == RaftRole.CANDIDATE
     fun isLeader() = raftRole == RaftRole.LEADER
 
+    @Volatile
+    var clusterValid = false
+
     /**
      * 当集群选举状态变更时调用
      */
@@ -152,8 +156,13 @@ class ElectionMetaService {
 
         if (changed) {
             this.electionCompleted = electionCompleted
-            if (electionCompleted) kanashiListenerService.onEvent(Event.CLUSTER_VALID)
-            else kanashiListenerService.onEvent(Event.CLUSTER_INVALID)
+            if (electionCompleted) {
+                kanashiListenerService.onEvent(Event.CLUSTER_VALID)
+                clusterValid = true
+            } else {
+                kanashiListenerService.onEvent(Event.CLUSTER_INVALID)
+                clusterValid = false
+            }
         }
 
         return changed

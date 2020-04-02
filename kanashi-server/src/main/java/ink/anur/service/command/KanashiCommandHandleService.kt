@@ -1,9 +1,11 @@
 package ink.anur.service.command
 
+import ink.anur.common.struct.KanashiNode
+import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.common.AbstractRequestMapping
 import ink.anur.core.raft.ElectionMetaService
 import ink.anur.core.raft.RaftCenterController
-import ink.anur.engine.StoreEngineFacadeService
+import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.engine.StoreEngineTransmitService
 import ink.anur.engine.log.LogService
 import ink.anur.engine.processor.DataHandler
@@ -14,13 +16,13 @@ import ink.anur.exception.NotLeaderException
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.log.common.EngineProcessEntry
+import ink.anur.pojo.command.KanashiCommandResponse
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.KanashiCommand
 import ink.anur.pojo.log.base.LogItem
 import ink.anur.pojo.log.common.CommandTypeEnum
 import ink.anur.pojo.log.common.CommonApiTypeEnum
 import ink.anur.pojo.log.common.GenerationAndOffset
-import ink.anur.pojo.log.common.StrApiTypeEnum
 import ink.anur.pojo.log.common.TransactionTypeEnum
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
@@ -48,38 +50,71 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
     @NigateInject
     private lateinit var storeEngineTransmitService: StoreEngineTransmitService
 
+    @NigateInject
+    private lateinit var requestProcessCentreService: RequestProcessCentreService
+
+    @NigateInject
+    private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
+
     override fun typeSupport(): RequestTypeEnum {
         return RequestTypeEnum.COMMAND
     }
 
+    // TODO 需要整理 这里太乱了
     override fun handleRequest(fromServer: String, msg: ByteBuffer, channel: Channel) {
         val logItem = LogItem(msg)
         val kanashiCommand = logItem.getKanashiCommand()
 
-        // 如果是查询请求，直接请求存储引擎
-        if (kanashiCommand.isQueryCommand) {
-            val engineExecutor = EngineExecutor(DataHandler(EngineProcessEntry(logItem, GenerationAndOffset.INVALID)), ResponseRegister(logItem.getTimeMillis(), fromServer))
-            storeEngineTransmitService.commandInvoke(engineExecutor)
+        if (!electionMetaService.clusterValid) {
+            // todo 还没选举好 暂时不报错
+            return
         } else {
-            if (!electionMetaService.isLeader()) {
-                // 不是 leader 的话，向对方发送谁才是 leader
+
+            /**
+             * 首先两种请求最特殊，就是查询与获取
+             */
+            if (kanashiCommand.isQueryCommand) {
+                // 如果是查询请求，直接请求存储引擎
+                val engineExecutor = EngineExecutor(DataHandler(EngineProcessEntry(logItem, GenerationAndOffset.INVALID)), ResponseRegister(logItem.getTimeMillis(), fromServer))
+                storeEngineTransmitService.commandInvoke(engineExecutor)
+            } else if (!electionMetaService.isLeader() || kanashiCommand.commandType == CommandTypeEnum.COMMON && kanashiCommand.api == CommonApiTypeEnum.GET_CLUSTER) {
+                // 不是leader 或者 请求获取集群，返回集群信息
+
+                val leader = electionMetaService.leader
+                val leaderNode = inetSocketAddressConfiguration.getNode(leader)
+                val clusters = electionMetaService.clusters?.let { ArrayList(it) }
+                if (leaderNode != KanashiNode.NOT_EXIST && clusters != null) {
+                    // 将 leader 节点放在首位
+                    clusters.removeIf { it == leaderNode }
+                    clusters.add(0, leaderNode)
+                    requestProcessCentreService.send(fromServer,
+                        KanashiCommandResponse.genCluster(logItem.getTimeMillis(), clusters))
+                }
+                return
+
             } else {
 
-                // 如果是其他请求，则在此申请事务 id
-                if (kanashiCommand.transactionType == TransactionTypeEnum.SHORT) {
-                    kanashiCommand.trxId = transactionAllocator.allocate()
-                } else {
-                    if (kanashiCommand.trxId == KanashiCommand.NON_TRX) {
-                        if (kanashiCommand.commandType==CommandTypeEnum.COMMON && kanashiCommand.api==CommonApiTypeEnum.START_TRX){
-                            kanashiCommand.trxId = transactionAllocator.allocate()
-                        }else{
-                            // 不允许长事务不带事务id
-                            // todo 抛出异常告知失败
+                /**
+                 * 除了上述两种请求，其他的请求必须经过 leader
+                 */
+                when (kanashiCommand.transactionType) {
+                    TransactionTypeEnum.SHORT -> {
+                        kanashiCommand.resetTransactionId(transactionAllocator.allocate())
+                        logItem.reComputeCheckSum()
+                    }
+                    TransactionTypeEnum.LONG -> {
+                        if (kanashiCommand.trxId == KanashiCommand.NON_TRX) {
+                            if (kanashiCommand.commandType == CommandTypeEnum.COMMON && kanashiCommand.api == CommonApiTypeEnum.START_TRX) {
+                                kanashiCommand.trxId = transactionAllocator.allocate()
+                            } else {
+                                // 不允许长事务不带事务id
+                                requestProcessCentreService.send(fromServer, KanashiCommandResponse.genError(logItem.getTimeMillis(), "不允许长事务无事务id"))
+                                return
+                            }
                         }
                     }
                 }
 
-                // 如果是普通的请求，则直接存成日志，等待集群commit，返回成功
                 val gao = try {
                     raftCenterController.genGenerationAndOffset()
                 } catch (e: NotLeaderException) {

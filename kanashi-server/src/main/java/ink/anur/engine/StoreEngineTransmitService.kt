@@ -251,6 +251,7 @@ class StoreEngineTransmitService {
                 }
             }
             transactionManageService.releaseTrx(trxId)
+            unCommitGao.remove(trxId)
         }
     }
 

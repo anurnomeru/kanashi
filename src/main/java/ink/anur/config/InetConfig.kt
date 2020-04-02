@@ -10,6 +10,11 @@ import ink.anur.common.struct.KanashiNode
 interface InetConfig {
 
     /**
+     * 只有 client 需要用
+     */
+    fun setClusters(clusters: List<KanashiNode>)
+
+    /**
      * 获取本地服务名
      */
     fun getLocalServerName(): String

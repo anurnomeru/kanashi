@@ -151,6 +151,14 @@ class KanashiCommand(val content: ByteBuffer) {
         }
     }
 
+    /**
+     * 由leader来设置事务id
+     */
+    fun resetTransactionId(trxId: Long) {
+        content.putLong(TrxIdOffset, trxId)
+        this.trxId = trxId
+    }
+
 
     override fun toString(): String {
         return "KanashiEntry{" +

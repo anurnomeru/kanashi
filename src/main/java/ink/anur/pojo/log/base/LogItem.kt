@@ -69,7 +69,7 @@ open class LogItem : AbstractStruct {
             it.putInt(vSize)
             it.put(value.content)
         }
-        setCheckSum()
+        reComputeCheckSum()
     }
 
     constructor(buffer: ByteBuffer) {

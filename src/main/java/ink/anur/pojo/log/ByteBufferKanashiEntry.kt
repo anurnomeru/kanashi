@@ -1,5 +1,6 @@
 package ink.anur.pojo.log
 
+import ink.anur.common.struct.KanashiNode
 import ink.anur.exception.UnSupportStorageTypeException
 import ink.anur.pojo.log.common.CommandTypeEnum
 import java.nio.ByteBuffer
@@ -123,5 +124,20 @@ class ByteBufferKanashiEntry {
         val result = byteBuffer.getLong()
         byteBuffer.reset()
         return result
+    }
+
+    fun getCluster(): List<KanashiNode> {
+        byteBuffer.mark()
+        byteBuffer.position(ValueSizeOffset)
+        val clusters = mutableListOf<KanashiNode>()
+        while (byteBuffer.position() < byteBuffer.limit()) {
+            val size = byteBuffer.getInt()
+            val arr = ByteArray(size)
+            byteBuffer.get(arr)
+            val info = String(arr)
+            val split = info.split(":")
+            clusters.add(KanashiNode(split.get(0), split.get(1), split.get(2).toInt()))
+        }
+        return clusters
     }
 }

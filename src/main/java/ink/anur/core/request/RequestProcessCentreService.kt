@@ -163,9 +163,13 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
         }
     }
 
-    fun sendToServer(msg: AbstractStruct): Boolean {
+    /**
+     * 获取到集群信息之后，可以用这个来发送
+     */
+    fun sendTo(serverName: String, msg: AbstractStruct): Boolean {
         return send(Constant.SERVER, msg, RequestExtProcessor(), false)
     }
+
 
     /**
      * 此发送器保证【一个类型的消息】只能在收到回复前发送一次，类似于仅有 1 容量的Queue

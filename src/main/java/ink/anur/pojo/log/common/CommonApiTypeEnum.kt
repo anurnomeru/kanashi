@@ -16,4 +16,9 @@ object CommonApiTypeEnum {
      * 由于引擎以外的原因报错了，回滚
      */
     const val FORCE_ROLL_BACK: Byte = -125
+
+    /**
+     * 获取集群
+     */
+    const val GET_CLUSTER: Byte = -124
 }

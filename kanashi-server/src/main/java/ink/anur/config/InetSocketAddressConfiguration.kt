@@ -16,6 +16,9 @@ import org.slf4j.LoggerFactory
  */
 @NigateBean
 class InetSocketAddressConfiguration : ConfigHelper(), InetConfig {
+    override fun setClusters(clusters: List<KanashiNode>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
     private lateinit var me: KanashiNode
 

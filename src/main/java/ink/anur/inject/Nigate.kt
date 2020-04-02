@@ -399,9 +399,11 @@ object Nigate {
         if (!beanContainer.over_registry) {
             throw KanashiException("暂时不支持在初始化完成前进行构造注入！")
         }
+        val newArrayList = Lists.newArrayList(injected)
         beanContainer.register(injected, alias)
         beanContainer.inject(injected)
-        beanContainer.postConstruct(Lists.newArrayList(injected), false)
+        beanContainer.postConstruct(newArrayList, false)
+        beanContainer.afterBootStrap(newArrayList)
         getBeanByClass(NigateListenerService::class.java).registerListenEvent(injected)
     }
 

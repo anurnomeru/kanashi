@@ -73,7 +73,7 @@ abstract class AbstractStruct {
         return ByteBufferUtil.crc32(buffer!!.array(), buffer!!.arrayOffset() + TypeOffset, buffer!!.limit() - TypeOffset)
     }
 
-    fun setCheckSum(){
+    fun reComputeCheckSum(){
         val crc = computeChecksum()
         buffer!!.position(0)
         buffer!!.putInt(crc.toInt())
@@ -115,7 +115,7 @@ abstract class AbstractStruct {
         val neo = System.currentTimeMillis()
         val bf = buffer!!
         bf.putLong(TimestampOffset, neo)
-        setCheckSum()
+        reComputeCheckSum()
         return neo
     }
 

@@ -1,11 +1,13 @@
 package ink.anur.config;
 
+import java.util.HashMap;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 import ink.anur.common.Constant;
 import ink.anur.common.struct.KanashiNode;
 import ink.anur.core.SpringContextHolder;
+import ink.anur.exception.NetWorkException;
 import ink.anur.inject.NigateBean;
 
 /**
@@ -14,8 +16,17 @@ import ink.anur.inject.NigateBean;
 @NigateBean
 public class ClientInetConfig implements InetConfig {
 
-    @Autowired
-    private KanashiConfig kanashiConfig;
+    private KanashiNode SERVER = null;
+
+    private HashMap<String, KanashiNode> clusters = null;
+
+    public void setClusters(List<KanashiNode> clusters) {
+        HashMap<String, KanashiNode> m = new HashMap<>();
+        for (KanashiNode cluster : clusters) {
+            m.put(cluster.getServerName(), cluster);
+        }
+        this.clusters = m;
+    }
 
     @NotNull
     @Override
@@ -26,7 +37,23 @@ public class ClientInetConfig implements InetConfig {
     @NotNull
     @Override
     public KanashiNode getNode(@Nullable String serverName) {
-        KanashiConfig bean = SpringContextHolder.getBean(KanashiConfig.class);
-        return new KanashiNode(Constant.INSTANCE.getSERVER(), bean.getHost(), bean.getPort());
+        if (Constant.INSTANCE.getSERVER()
+                             .equals(serverName)) {
+            if (SERVER == null) {
+                KanashiConfig bean = SpringContextHolder.getBean(KanashiConfig.class);
+                SERVER = new KanashiNode(Constant.INSTANCE.getSERVER(), bean.getHost(), bean.getPort());
+            }
+            return SERVER;
+        } else {
+            if (clusters == null) {
+                throw new NetWorkException("还没有获取到集群信息代码却运行到了这里，估计是哪里有bug");
+            } else {
+                KanashiNode kanashiNode = clusters.get(serverName);
+                if (kanashiNode == null) {
+                    throw new NetWorkException("????");
+                }
+                return kanashiNode;
+            }
+        }
     }
 }
