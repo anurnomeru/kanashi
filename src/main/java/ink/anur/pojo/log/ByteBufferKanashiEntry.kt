@@ -86,7 +86,7 @@ class ByteBufferKanashiEntry {
         allocate.put(byteBuffer)
         allocate.flip()
         this.byteBuffer = allocate
-        expectedSize = byteBuffer.limit()
+        expectedSize = allocate.limit()
         this.commandType = commandType
     }
 
@@ -128,7 +128,7 @@ class ByteBufferKanashiEntry {
 
     fun getCluster(): List<KanashiNode> {
         byteBuffer.mark()
-        byteBuffer.position(ValueSizeOffset)
+        byteBuffer.position(ValueSizeOffset + 4)
         val clusters = mutableListOf<KanashiNode>()
         while (byteBuffer.position() < byteBuffer.limit()) {
             val size = byteBuffer.getInt()

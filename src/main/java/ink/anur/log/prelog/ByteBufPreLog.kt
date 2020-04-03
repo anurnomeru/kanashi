@@ -42,7 +42,7 @@ class ByteBufPreLog(val generation: Long) : ReentrantLocker() {
         for (key in discardMap.keys) {
             preLog.remove(key)
         }
-        logger.debug("丢弃世代 {} 小于等于 {} 的共 {} 条预日志", generation, targetOffset, count)
+        logger.debug("丢弃世代 {} 小于等于 {} 的共 {} 条预日志，因其已经提交到数据引擎", generation, targetOffset, count)
         return preLog.size == 0
     }
 

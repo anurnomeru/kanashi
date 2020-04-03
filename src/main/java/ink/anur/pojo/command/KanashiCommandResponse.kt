@@ -1,5 +1,6 @@
 package ink.anur.pojo.command
 
+import com.google.common.collect.Lists
 import ink.anur.common.struct.KanashiNode
 import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
@@ -55,6 +56,13 @@ class KanashiCommandResponse : AbstractStruct {
             return KanashiCommandResponse(msgTime, false, ByteBufferKanashiEntry(CommandTypeEnum.NONE, allocate), error = true, redirect = false)
         }
 
+
+        @JvmStatic
+        fun main(args: Array<String>) {
+            val genCluster = genCluster(11, Lists.newArrayList(KanashiNode("zzz", "111", 3), KanashiNode("112", "2323", 7)))
+            println()
+        }
+
         /**
          * 发送集群当前状态，第一个位置的是 leader
          */
@@ -71,6 +79,7 @@ class KanashiCommandResponse : AbstractStruct {
                 allocate.put(bytes)
             }
             allocate.flip()
+
             return KanashiCommandResponse(msgTime, false, ByteBufferKanashiEntry(CommandTypeEnum.NONE, allocate), error = true, redirect = true)
         }
     }

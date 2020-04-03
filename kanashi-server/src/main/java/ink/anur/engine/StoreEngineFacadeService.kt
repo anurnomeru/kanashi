@@ -56,7 +56,7 @@ class StoreEngineFacadeService : KanashiRunnable() {
         this.start()
     }
 
-//    @NigateListener(Event.RECOVERY_COMPLETE)
+    //    @NigateListener(Event.RECOVERY_COMPLETE)
     private fun afterBootStrap() {
 
 //        // 内存100w数据测试
@@ -112,9 +112,9 @@ class StoreEngineFacadeService : KanashiRunnable() {
         KanashiExecutors.execute(Runnable {
             var currentNum = counter
             while (true) {
-                Thread.sleep(1000)
+                Thread.sleep(10000)
                 val nowNum = counter
-                logger.debug("| - 存储引擎控制中心 - | 每秒流速 ->> ${nowNum - currentNum}")
+                logger.debug("| - 存储引擎控制中心 - | 近 10 秒流速 ->> ${nowNum - currentNum}")
                 currentNum = nowNum
             }
         })
