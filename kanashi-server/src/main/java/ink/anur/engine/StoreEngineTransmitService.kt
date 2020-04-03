@@ -60,7 +60,9 @@ class StoreEngineTransmitService {
          * 用于返回客户端的结果
          */
         EventDriverPool.register(EngineExecutor::class.java, 2, 20, TimeUnit.MILLISECONDS) {
-            it.await()
+            if (!it.await(2,TimeUnit.SECONDS)){
+                println("啊啊啊啊啊啊啊啊啊 怎么肥事")
+            }
             if (it.getDataHandler().shortTransaction) {
                 doCommit(it.getDataHandler().getTrxId())
             }
@@ -75,16 +77,18 @@ class StoreEngineTransmitService {
                     RequestExtProcessor(), keepCurrentSendTask = false, keepError = true)
             }
 
+            val gao = it.getDataHandler().gao
+
             /**
              * 对于 leader 这是非查询操作的回复
              */
-            if (responseMap[it.getDataHandler().gao] != null) {
-                val responseRegister = responseMap[it.getDataHandler().gao]!!
+            if (gao != null && responseMap[gao] != null) {
+                val responseRegister = responseMap[gao]!!
                 val engineResult = it.getEngineResult()
                 requestProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()),
                     RequestExtProcessor(), keepCurrentSendTask = false, keepError = true)
 
-                responseMap.remove(it.getDataHandler().gao)
+                responseMap.remove(gao)
             }
         }
     }
@@ -103,7 +107,6 @@ class StoreEngineTransmitService {
     fun commandInvoke(engineExecutor: EngineExecutor) {
         val trxId = engineExecutor.getDataHandler().getTrxId()
         unCommitGao.putIfAbsent(trxId, true)
-
         try {
 
             when (engineExecutor.getDataHandler().getCommandType()) {
@@ -213,7 +216,6 @@ class StoreEngineTransmitService {
             doRollBack(trxId)
             engineExecutor.exceptionCaught(e)
         }
-
         EventDriverPool.offer(engineExecutor)
     }
 

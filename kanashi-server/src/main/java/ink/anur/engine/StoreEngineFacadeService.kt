@@ -2,15 +2,27 @@ package ink.anur.engine
 
 import ink.anur.common.KanashiExecutors
 import ink.anur.common.KanashiRunnable
+import ink.anur.core.raft.RaftCenterController
 import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.debug.Debugger
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.log.common.EngineProcessEntry
 import ink.anur.engine.log.CommitProcessManageService
+import ink.anur.engine.log.LogService
 import ink.anur.engine.processor.DataHandler
 import ink.anur.engine.processor.EngineExecutor
+import ink.anur.inject.Event
+import ink.anur.inject.NigateAfterBootStrap
+import ink.anur.inject.NigateListener
 import ink.anur.inject.NigatePostConstruct
+import ink.anur.pojo.command.KanashiCommandDto
+import ink.anur.pojo.log.KanashiCommand
+import ink.anur.pojo.log.base.LogItem
+import ink.anur.pojo.log.common.CommandTypeEnum
+import ink.anur.pojo.log.common.StrApiTypeEnum
+import ink.anur.pojo.log.common.TransactionTypeEnum
+import java.util.Random
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.locks.ReentrantLock
 
@@ -28,6 +40,12 @@ class StoreEngineFacadeService : KanashiRunnable() {
     @NigateInject
     private lateinit var storeEngineTransmitService: StoreEngineTransmitService
 
+    @NigateInject
+    private lateinit var logService: LogService
+
+    @NigateInject
+    private lateinit var raftCenterController: RaftCenterController
+
     private val logger = Debugger(this::class.java)
     private val queue = LinkedBlockingQueue<EngineProcessEntry>()
     private val lock = ReentrantLock()
@@ -36,6 +54,55 @@ class StoreEngineFacadeService : KanashiRunnable() {
     @NigatePostConstruct
     private fun init() {
         this.start()
+    }
+
+//    @NigateListener(Event.RECOVERY_COMPLETE)
+    private fun afterBootStrap() {
+
+//        // 内存100w数据测试
+//        val start = System.currentTimeMillis()
+//        for (i in 0 until 1000000) {
+//            val logItem = LogItem("$i",
+//                KanashiCommand.generator(i.toLong(), TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, randomString(10, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")))
+//            storeEngineTransmitService.commandInvoke(EngineExecutor(DataHandler(EngineProcessEntry(logItem))))
+//            if (i % 100000 == 0) {
+//                println(i)
+//            }
+//        }
+//        println("cost:")
+//        println(System.currentTimeMillis() - start)
+
+
+//        // 内存100w数据测试
+//        val start = System.currentTimeMillis()
+//        for (i in 0 until 1000000) {
+//            val logItem = LogItem("$i",
+//                KanashiCommand.generator(i.toLong(), TransactionTypeEnum.SHORT, CommandTypeEnum.STR, StrApiTypeEnum.SET, randomString(10, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")))
+//
+//            logService.appendForLeader(raftCenterController.genGenerationAndOffset(), logItem)
+//            if (i % 100000 == 0) {
+//                println(i)
+//            }
+//        }
+//        println("cost:")
+//        println(System.currentTimeMillis() - start)
+
+    }
+
+    /**
+     * 随机生成一个字符串，内容取自于range内指定的范围
+     */
+    fun randomString(length: Int, range: String): String {
+        val sb = StringBuilder(length)
+        if (range == "") {
+            return ""
+        }
+        val r = Random()
+        for (i in 0 until length) {
+            val ch = range[r.nextInt(range.length)]
+            sb.append(ch)
+        }
+        return sb.toString()
     }
 
     /**

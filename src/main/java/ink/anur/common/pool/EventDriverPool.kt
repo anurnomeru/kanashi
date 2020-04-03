@@ -63,7 +63,7 @@ class EventDriverPool<T> private constructor(private val clazz: Class<T>,
         }
     }
 
-    private val pool = _KanashiExecutors(logger, poolSize, poolSize, 60, TimeUnit.SECONDS, LinkedBlockingDeque(), ThreadFactoryBuilder().setNameFormat("EventDriverPool - $clazz")
+    private val pool = _KanashiExecutors(logger, 0, poolSize, 60, TimeUnit.SECONDS, LinkedBlockingDeque(), ThreadFactoryBuilder().setNameFormat("EventDriverPool - $clazz")
         .build())
 
     private val handlers = mutableListOf<PoolHandler<T>>()

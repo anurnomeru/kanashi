@@ -17,11 +17,17 @@ class TransactionAllocator {
 
     private var nowTrx: Long = StartTrx
 
+    @Synchronized
+    fun resetTrx(trx: Long) {
+        nowTrx = trx
+    }
+
     /**
      * 申请一个递增的事务id
      *
      * TODO 后续再考虑不够用的情况
      */
+    @Synchronized
     internal fun allocate(): Long {
         val trx = nowTrx
         if (trx == Long.MAX_VALUE) {

@@ -20,7 +20,8 @@ class MemoryLSMService {
         /**
          * 一个块 block 为 4Kb，假定平均一个元素为 64 - 128 byte，所以平均一下能存 1024 个 key
          */
-        private const val FullMemoryAccess = (1024 * 4) * 1024 * 16
+        private const val FullMemoryAccess = Int.MAX_VALUE
+//        private const val FullMemoryAccess = (1024 * 4) * 1024 * 16
     }
 
     /**
@@ -39,6 +40,8 @@ class MemoryLSMService {
 
     /**
      * compute，并更新空间
+     *
+     * todo 暂时不启用 lsm 因为还没有写lsm的打算
      */
     fun put(key: String, entry: ByteBufferKanashiEntry) {
         val expectedSizeOverHead = FileKanashiEntryConstant.getExpectedSizeOverHead(key)
@@ -54,7 +57,6 @@ class MemoryLSMService {
                 val memoryLSMChain = MemoryLSMChain()
                 memoryLSMChain.memoryAssess = expectedSize
                 memoryLSMChain.dataKeeper[key] = entry
-
 
                 memoryLSMChain.nextChain = firstChain.nextChain
                 firstChain.nextChain = memoryLSMChain

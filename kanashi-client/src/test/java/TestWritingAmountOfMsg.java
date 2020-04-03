@@ -17,7 +17,7 @@ public class TestWritingAmountOfMsg {
     @Test
     public void test() {
         for (int i = 0; i < 1000000; i++) {
-            kanashiStrTemplate.set(String.valueOf(i), randomString(100, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"));
+            kanashiStrTemplate.set(String.valueOf(i), randomString(10, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"));
             if (i % 100 == 0) {
                 System.out.println(i);
             }

@@ -266,6 +266,12 @@ public class FileLogItemSet extends LogItemSet {
         return this.iterator(Integer.MAX_VALUE);
     }
 
+    public void close() throws IOException {
+        flush();
+        trim();
+        this.fileChannel.close();
+    }
+
     /**
      * 获取某个文件的迭代器
      */

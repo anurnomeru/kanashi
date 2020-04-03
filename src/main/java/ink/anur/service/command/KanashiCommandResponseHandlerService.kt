@@ -172,7 +172,10 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
             acquire(kanashiCommandDto, attemptTimes)
         } else {
             if (requestProcessCentreService.sendTo(sendTo, kanashiCommandDto)) {
-                waitForResponse.await()
+                waitForResponse.await()// todo 这里如果服务端不回复会导致无限等待，如果由于一些问题导致服务端不回复 这里会一直等下去，目前懒得想怎么去解决
+                // 大概的解决是将 cdl 交给我们的连接，当连接出现问题，会触发countDown
+                // 另外一方面，就是避免服务端出现不回复的BUG
+
                 val remove = responseMap.remove(timeMillis)
                 if (remove == null) {
                     return acquire(kanashiCommandDto, attemptTimes - 1)

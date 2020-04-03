@@ -4,6 +4,7 @@ import ink.anur.debug.Debugger
 import ink.anur.debug.DebuggerLevel
 import ink.anur.engine.result.EngineResult
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by Anur IjuoKaruKas on 2019/12/3
@@ -31,6 +32,10 @@ class EngineExecutor(private val dataHandler: DataHandler, val responseRegister:
 
     fun await() {
         finishLatch.await()
+    }
+
+    fun await(time: Long, unit: TimeUnit): Boolean {
+        return finishLatch.await(time, unit)
     }
 
     /**

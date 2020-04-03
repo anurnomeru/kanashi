@@ -144,8 +144,8 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
                     return
                 }
 
-                logService.appendForLeader(gao, logItem)
                 storeEngineTransmitService.waitForResponse(gao, ResponseRegister(logItem.getTimeMillis(), fromServer))
+                logService.appendForLeader(gao, logItem)
             }
         }
     }

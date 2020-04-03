@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -237,7 +237,7 @@ public class OffsetIndex extends ReentrantLocker {
                 mmap.putInt((int) (offset - baseOffset));
                 mmap.putInt(position);
                 entries++;
-//                logger.trace("在索引文件 {} 为 offset 为 {} 的日志添加 position 为 {} 的索引，当前索引个数为 {}", baseOffset + ".index", offset, position, entries);
+                //                logger.trace("在索引文件 {} 为 offset 为 {} 的日志添加 position 为 {} 的索引，当前索引个数为 {}", baseOffset + ".index", offset, position, entries);
                 lastOffset = offset;
 
                 if (entries * 8 != mmap.position()) {
@@ -391,6 +391,10 @@ public class OffsetIndex extends ReentrantLocker {
     public boolean delete() {
         forceUnmap(mmap);
         return file.delete();
+    }
+
+    public void close() {
+        trimToValidSize();
     }
 
     public int getMaxEntries() {

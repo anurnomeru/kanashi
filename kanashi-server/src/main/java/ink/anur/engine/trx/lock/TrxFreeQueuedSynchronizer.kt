@@ -50,7 +50,7 @@ class TrxFreeQueuedSynchronizer {
                 trxHolder.undoEvent.compute(key) { _, undoList ->
                     (undoList ?: mutableListOf()).also { it.add(whatEverDo) }
                 }
-                logger.trace("事务 $trxId 无法获取位于键 $key 上的锁，将等待键上的前一个事务唤醒，且挂起需执行的操作")
+                logger.debug("事务 $trxId 无法获取位于键 $key 上的锁，将等待键上的前一个事务唤醒，且挂起需执行的操作")
             }
         }
     }
