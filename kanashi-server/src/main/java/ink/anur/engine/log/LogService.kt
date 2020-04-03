@@ -38,9 +38,6 @@ class LogService {
     @NigateInject
     private lateinit var electionMetaService: ElectionMetaService
 
-    @NigateInject
-    private lateinit var raftCenterController: RaftCenterController
-
     /** 显式锁 */
     private val appendLock = ReentrantReadWriteLocker()
 

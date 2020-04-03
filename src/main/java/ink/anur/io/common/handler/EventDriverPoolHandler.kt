@@ -29,7 +29,7 @@ class EventDriverPoolHandler : SimpleChannelInboundHandler<ByteBuffer>() {
 
             val typeEnum = RequestTypeEnum.parseByByteSign(sign)
 
-            if (typeEnum!=RequestTypeEnum.HEAT_BEAT){
+            if (typeEnum != RequestTypeEnum.HEAT_BEAT || typeEnum != RequestTypeEnum.FETCH|| typeEnum != RequestTypeEnum.COMMIT_RESPONSE) {
                 logger.trace("<--- 收到了类型为 $typeEnum 的消息")
             }
             EventDriverPool.offer(Request(msg, typeEnum, ctx.channel()))
