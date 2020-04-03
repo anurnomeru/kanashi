@@ -8,6 +8,7 @@ import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.debug.Debugger
 import ink.anur.engine.log.LogService
 import ink.anur.engine.prelog.ByteBufPreLogService
+import ink.anur.engine.trx.manager.TransactionAllocator
 import ink.anur.inject.Event
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
@@ -84,6 +85,9 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
     @NigateInject
     private lateinit var logService: LogService
 
+    @NigateInject
+    private lateinit var transactionAllocator: TransactionAllocator
+
     private val locker = ReentrantReadWriteLocker()
 
     override fun typeSupport(): RequestTypeEnum {
@@ -158,7 +162,7 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
      * 在半数节点上报了 GAO 后，leader 决定去同步消息到这个进度
      */
     @Volatile
-    private var fetchTo: GenerationAndOffset? = null
+    var fetchTo: GenerationAndOffset? = null
 
     fun receive(serverName: String, latestGao: GenerationAndOffset) {
         logger.info("节点 $serverName 提交了其最大进度 $latestGao ")
@@ -178,7 +182,8 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
                 if (latest!!.value == byteBufPreLogService.getCommitGAO()) {
                     val cost = TimeUtil.getTime() - RecoveryTimer
                     logger.info("已有过半节点提交了最大进度，且集群最大进度 ${latest!!.value} 与 Leader 节点相同，集群已恢复，耗时 $cost ms ")
-                    shuttingWhileRecoveryComplete()
+
+                    shuttingWhileRecoveryComplete(latest!!.value)
                 } else {
                     val latestNode = latest!!.key
                     val latestGAO = latest!!.value
@@ -209,10 +214,25 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
      * 触发向各个节点发送 RecoveryComplete，发送完毕后 触发 RECOVERY_COMPLETE
      * // TODO 避免 client 重复触发！！
      */
-    private fun shuttingWhileRecoveryComplete() {
+    fun shuttingWhileRecoveryComplete(latestGao: GenerationAndOffset) {
+        // 获取最新的一个事务
+        val after = logService.getAfter(latestGao)
+        if (after != null) {
+            val iterator = after.fos.iterator()
+            while (iterator.hasNext()) {
+                val next = iterator.next()
+                // 讲道理只会调用一次
+                val trxId = next.logItem.getKanashiCommand().trxId + 1
+                logger.info("已获取到集群最新事务号为 $trxId")
+                transactionAllocator.resetTrx(trxId)
+            }
+        }
+
+
         recoveryComplete = true
         waitShutting.entries.forEach(Consumer { sendRecoveryComplete(it.key, it.value) })
         nigateListenerService.onEvent(Event.RECOVERY_COMPLETE)
+        cancelTask()
     }
 
     /**

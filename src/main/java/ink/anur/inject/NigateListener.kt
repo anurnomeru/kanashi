@@ -23,11 +23,6 @@ enum class Event {
     CLUSTER_INVALID,
 
     /**
-     * leader 已经 fetch 了所有的遗失进度
-     */
-    LEADER_FETCH_COMPLETE,
-
-    /**
      * 当集群日志恢复完毕
      */
     RECOVERY_COMPLETE,

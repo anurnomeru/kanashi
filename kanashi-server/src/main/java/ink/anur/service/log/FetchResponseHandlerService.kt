@@ -32,16 +32,10 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
     private lateinit var logService: LogService
 
     @NigateInject
-    private lateinit var nigateListenerService: NigateListenerService
-
-    @NigateInject
     private lateinit var byteBufPreLogService: ByteBufPreLogService
 
-    /**
-     * 标记 leader 需要 fetch 到什么进度来完成 recovery！
-     */
-    @Volatile
-    private var fetchTo: GenerationAndOffset? = null
+    @NigateInject
+    private lateinit var recoveryReportHandleService: RecoveryReportHandleService
 
     override fun typeSupport(): RequestTypeEnum {
         return RequestTypeEnum.FETCH_RESPONSE
@@ -58,6 +52,9 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
             if (commandContainer.fileLogItemSetSize == 0) return
             byteBufPreLogService.append(commandContainer.generation, commandContainer.read())
         } else {
+
+            val fetchTo = recoveryReportHandleService.fetchTo!!
+
             /**
              * leader 收到了日志，说明集群正在恢复阶段，它做的比较特殊，
              * 它直接将日志追加到了 logService 进行刷盘
@@ -66,7 +63,7 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
             val iterator = read.iterator()
 
             val gen = commandContainer.generation
-            val fetchToGen = fetchTo!!.generation
+            val fetchToGen = fetchTo.generation
 
             var start: Long? = null
             var end: Long? = null
@@ -81,9 +78,10 @@ class FetchResponseHandlerService : AbstractRequestMapping() {
 
                 if (gen == fetchToGen) {
                     val offset = it.offset
-                    val fetchToOffset = fetchTo!!.offset
+                    val fetchToOffset = fetchTo.offset
                     if (offset == fetchToOffset) {// 如果已经同步完毕，则通知集群同步完成
-                        nigateListenerService.onEvent(Event.LEADER_FETCH_COMPLETE)
+                        recoveryReportHandleService.shuttingWhileRecoveryComplete(fetchTo)
+                        recoveryReportHandleService.fetchTo = null
                     }
                 }
             }

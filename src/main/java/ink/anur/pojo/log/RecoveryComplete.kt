@@ -37,7 +37,6 @@ class RecoveryComplete : AbstractStruct {
         return GenerationAndOffset(buffer!!.getLong(OriginMessageOverhead), buffer!!.getLong(CommitedOffsetOffset))
     }
 
-
     override fun writeIntoChannel(channel: Channel) {
         channel.write(Unpooled.wrappedBuffer(buffer))
     }

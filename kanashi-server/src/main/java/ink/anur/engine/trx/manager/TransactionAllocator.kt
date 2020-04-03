@@ -1,6 +1,10 @@
 package ink.anur.engine.trx.manager
 
+import ink.anur.core.raft.ElectionMetaService
+import ink.anur.core.raft.RaftCenterController
+import ink.anur.exception.NotLeaderException
 import ink.anur.inject.NigateBean
+import ink.anur.inject.NigateInject
 
 
 /**
@@ -11,8 +15,11 @@ import ink.anur.inject.NigateBean
 @NigateBean
 class TransactionAllocator {
 
+    @NigateInject
+    private lateinit var metaService: ElectionMetaService
+
     companion object {
-        const val StartTrx: Long = 0L
+        const val StartTrx: Long = Long.MIN_VALUE
     }
 
     private var nowTrx: Long = StartTrx
@@ -29,6 +36,10 @@ class TransactionAllocator {
      */
     @Synchronized
     internal fun allocate(): Long {
+        if (!metaService.isLeader()) {
+            throw NotLeaderException("非 leader 不可以申请事务id")
+        }
+
         val trx = nowTrx
         if (trx == Long.MAX_VALUE) {
             nowTrx = Long.MIN_VALUE
