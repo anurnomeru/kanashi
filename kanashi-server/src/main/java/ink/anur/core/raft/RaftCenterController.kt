@@ -7,9 +7,11 @@ import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.exception.KanashiException
 import ink.anur.exception.NotLeaderException
+import ink.anur.inject.Event
 import ink.anur.mutex.ReentrantLocker
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.inject.NigateListener
 import ink.anur.inject.NigatePostConstruct
 import ink.anur.pojo.coordinate.Canvass
 import ink.anur.pojo.HeartBeat
@@ -58,7 +60,7 @@ class RaftCenterController : KanashiRunnable() {
      */
     private var taskMap = ConcurrentHashMap<TaskEnum, TimedTask>()
 
-    @NigatePostConstruct(dependsOn = "ElectionMetaService") // 因为要获取 metaService 的世代信息
+    @NigateListener(onEvent = Event.LOG_LOAD_COMPLETE) // 因为要获取 metaService 的世代信息
     private fun init() {
         logger.info("初始化选举控制器 ElectOperator，本节点为 {}", inetSocketAddressConfiguration.getLocalServerName())
         this.name = "RaftCenterController"

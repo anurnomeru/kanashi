@@ -4,6 +4,7 @@ import ink.anur.debug.Debugger
 import ink.anur.engine.trx.manager.TransactionAllocator
 import ink.anur.engine.trx.manager.TransactionSegment
 import java.util.*
+import java.util.concurrent.ConcurrentSkipListMap
 import kotlin.Comparator
 import kotlin.math.absoluteValue
 
@@ -33,7 +34,7 @@ class WaterHolder {
         }
     }
 
-    private val waterHolder = TreeMap<Long, TransactionSegment>(Comparator { o1, o2 -> o1.compareTo(o2) })
+    private val waterHolder = ConcurrentSkipListMap<Long, TransactionSegment>(Comparator { o1, o2 -> o1.compareTo(o2) })
 
     /**
      * 为每个事务创建一个未提交的事务的水位快照

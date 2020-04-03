@@ -10,6 +10,7 @@ import ink.anur.inject.NigateInject
 import ink.anur.pojo.log.ByteBufferKanashiEntry
 import ink.anur.pojo.log.common.GenerationAndOffset
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Created by Anur IjuoKaruKas on 2019/10/11
@@ -24,7 +25,7 @@ class MemoryMVCCStorageUnCommittedPart {
     @NigateInject
     private lateinit var memoryMVCCStorageCommittedPart: MemoryMVCCStorageCommittedPart
 
-    private val treeMap = TreeMap<String, VerAndKanashiEntry>()
+    private val treeMap = ConcurrentHashMap<String, VerAndKanashiEntry>()
 
     /**
      * 查找未提交的 kanashiEntry，传入的 trxId 必须为此 key 持有的那个事务id才可以查到，否则

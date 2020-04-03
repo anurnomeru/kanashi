@@ -47,12 +47,12 @@ class StoreEngineFacadeService : KanashiRunnable() {
             while (true) {
                 Thread.sleep(1000)
                 val nowNum = counter
-//                logger.debug("| - 存储引擎控制中心 - | 每秒流速 ->> ${nowNum - currentNum}")
+                logger.debug("| - 存储引擎控制中心 - | 每秒流速 ->> ${nowNum - currentNum}")
                 currentNum = nowNum
             }
         })
 
-        logger.error("| - 存储引擎控制中心 - | 已经启动")
+        logger.info("| - 存储引擎控制中心 - | 已经启动")
         while (true) {
             val take = queue.take()
 

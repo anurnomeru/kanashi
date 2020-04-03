@@ -135,8 +135,6 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
     }
 
     fun acquire(kanashiCommandDto: KanashiCommandDto, attemptTimes: Int): KanashiCommandResponse {
-
-        println("开始 acquire")
         val sendTo: String = if (kanashiCommandDto.getKanashiCommand().isQueryCommand) {
             if (clusters != null) {
                 clusters!![(clusters!!.size - 1) % indexForGettingClusters].serverName

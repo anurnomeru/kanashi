@@ -5,12 +5,16 @@ import ink.anur.core.raft.ElectionMetaService
 import ink.anur.core.raft.RaftCenterController
 import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.debug.Debugger
+import ink.anur.engine.StoreEngineFacadeService
 import ink.anur.exception.LogException
 import ink.anur.inject.Event
+import ink.anur.inject.NigateAfterBootStrap
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigateListener
+import ink.anur.inject.NigateListenerService
 import ink.anur.inject.NigatePostConstruct
+import ink.anur.log.common.EngineProcessEntry
 import ink.anur.log.common.FetchDataInfo
 import ink.anur.log.common.LogUtil
 import ink.anur.log.persistence.LogSegment
@@ -37,6 +41,12 @@ class LogService {
 
     @NigateInject
     private lateinit var electionMetaService: ElectionMetaService
+
+    @NigateInject
+    private lateinit var storeEngineFacadeService: StoreEngineFacadeService
+
+    @NigateInject
+    private lateinit var nigateListenerService: NigateListenerService
 
     /** 显式锁 */
     private val appendLock = ReentrantReadWriteLocker()
@@ -75,6 +85,7 @@ class LogService {
                     latestGeneration = max(latestGeneration, Integer.valueOf(file.name).toLong())
                 }
             }
+
             // 只要创建最新的那个 generation 即可
             try {
                 val latest = Log(latestGeneration, createGenDirIfNEX(latestGeneration))
@@ -99,6 +110,26 @@ class LogService {
 
         initial = init
         currentGAO = init
+    }
+
+    @NigateAfterBootStrap
+    private fun onBootStrap() {
+        var nowRecovery = GenerationAndOffset(0, -1)
+        while (true) {
+            val after = getAfter(nowRecovery.next()) ?: break
+
+            val generation = after.fetchMeta.generation
+            val iterator = after.fos.iterator()
+            while (iterator.hasNext()) {
+                val next = iterator.next()
+                nowRecovery = GenerationAndOffset(generation, next.offset)// todo 这里写的不好
+                storeEngineFacadeService.append(EngineProcessEntry(next.logItem, nowRecovery))
+            }
+            if (nowRecovery == initial) {
+                break
+            }
+        }
+        nigateListenerService.onEvent(Event.LOG_LOAD_COMPLETE)
     }
 
     /**
@@ -139,7 +170,7 @@ class LogService {
     /**
      * 追加操作日志到磁盘，只有当集群可用时，才可以进行追加
      */
-    fun appendForLeader(gao: GenerationAndOffset,logItem: LogItem) {
+    fun appendForLeader(gao: GenerationAndOffset, logItem: LogItem) {
         return appendLock.writeLocker {
             return@writeLocker explicitLock.writeLocker {
                 currentGAO = gao

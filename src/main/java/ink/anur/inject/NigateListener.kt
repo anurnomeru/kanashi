@@ -31,4 +31,9 @@ enum class Event {
      * 当集群日志恢复完毕
      */
     RECOVERY_COMPLETE,
+
+    /**
+     * 日志加载完毕
+     */
+    LOG_LOAD_COMPLETE,
 }
