@@ -40,6 +40,8 @@ class MemoryMVCCStorageUnCommittedPart {
 
     /**
      * 将数据存入 unCommit 部分
+     *
+     * 在 Operate 将 事务下操作的键放入 treeMap
      */
     fun commonOperate(dataHandler: DataHandler) {
         val key = dataHandler.key
@@ -55,14 +57,17 @@ class MemoryMVCCStorageUnCommittedPart {
 
     /**
      * 将数据推入 commit 部分
+     *
+     * 在 flush 则，将事务下的键塞入提交部分
      */
     fun flushToCommittedPart(trxId: Long, holdKeys: MutableSet<String>) {
-        val verAndKanashiEntryWithKeyPairList = holdKeys.map {
-            VerAndKanashiEntryWithKeyPair(it,
-                treeMap[it]
-                    ?: throw MemoryMVCCStorageUnCommittedPartException("mvcc uc部分出现了奇怪的bug，讲道理holdKeys拥有所有key的值，注意无锁控制是否有问题！"))
+        val verAndKanashiEntryWithKeyPairList = mutableListOf<VerAndKanashiEntryWithKeyPair>()
+        for (holdKey in holdKeys) {
+            treeMap[holdKey]?.also { verAndKanashiEntryWithKeyPairList.add(VerAndKanashiEntryWithKeyPair(holdKey, it)) }
         }
-        memoryMVCCStorageCommittedPart.flushTo(trxId, verAndKanashiEntryWithKeyPairList)
+        if (verAndKanashiEntryWithKeyPairList.isNotEmpty()) {
+            memoryMVCCStorageCommittedPart.flushTo(trxId, verAndKanashiEntryWithKeyPairList)
+        }
 
         // 必须要先拿出来，存到 commit 的才可以删除，不然查询的时候可能会有疏漏
         holdKeys.forEach { treeMap.remove(it) }

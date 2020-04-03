@@ -26,6 +26,7 @@ import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.pojo.log.common.TransactionTypeEnum
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
+import javax.smartcardio.CommandAPDU
 
 /**
  * Created by Anur IjuoKaruKas on 2020/3/26
@@ -58,6 +59,26 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
 
     override fun typeSupport(): RequestTypeEnum {
         return RequestTypeEnum.COMMAND
+    }
+
+    companion object{
+        @JvmStatic
+        fun main(args: Array<String>) {
+            val logItem00 = LogItem("Anur", KanashiCommand.generator(1, TransactionTypeEnum.LONG, CommandTypeEnum.COMMON, CommonApiTypeEnum.GET_CLUSTER, ""))
+            val logItem = LogItem(LogItem("Anur", KanashiCommand.generator(1, TransactionTypeEnum.LONG, CommandTypeEnum.COMMON, CommonApiTypeEnum.GET_CLUSTER, "")).getByteBuffer()!!)
+            logItem.getKanashiCommand().resetTransactionId(2)
+            logItem.reComputeCheckSum()
+
+            println()
+
+            val byteBuffer = logItem00.getByteBuffer()!!
+            val limit = byteBuffer.limit()
+
+            while (byteBuffer.position()<limit){
+                println(byteBuffer.get())
+                println(logItem.getByteBuffer()!!.get())
+            }
+        }
     }
 
     // TODO 需要整理 这里太乱了
@@ -105,7 +126,8 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
                     TransactionTypeEnum.LONG -> {
                         if (kanashiCommand.trxId == KanashiCommand.NON_TRX) {
                             if (kanashiCommand.commandType == CommandTypeEnum.COMMON && kanashiCommand.api == CommonApiTypeEnum.START_TRX) {
-                                kanashiCommand.trxId = transactionAllocator.allocate()
+                                kanashiCommand.resetTransactionId(transactionAllocator.allocate())
+                                logItem.reComputeCheckSum()
                             } else {
                                 // 不允许长事务不带事务id
                                 requestProcessCentreService.send(fromServer, KanashiCommandResponse.genError(logItem.getTimeMillis(), "不允许长事务无事务id"))

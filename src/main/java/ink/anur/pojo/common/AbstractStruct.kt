@@ -73,10 +73,9 @@ abstract class AbstractStruct {
         return ByteBufferUtil.crc32(buffer!!.array(), buffer!!.arrayOffset() + TypeOffset, buffer!!.limit() - TypeOffset)
     }
 
-    fun reComputeCheckSum(){
+    fun reComputeCheckSum() {
         val crc = computeChecksum()
-        buffer!!.position(0)
-        buffer!!.putInt(crc.toInt())
+        buffer!!.putInt(CrcOffset, crc.toInt())
     }
 
 

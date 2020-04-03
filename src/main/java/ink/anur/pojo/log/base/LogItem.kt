@@ -3,6 +3,8 @@ package ink.anur.pojo.log.base
 import ink.anur.pojo.common.AbstractStruct
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.KanashiCommand
+import ink.anur.pojo.log.common.CommandTypeEnum
+import ink.anur.pojo.log.common.TransactionTypeEnum
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
@@ -48,6 +50,7 @@ open class LogItem : AbstractStruct {
         val BaseMessageOverhead = KeyOffset + ValueSizeLength
 
         // =================================================================
+
     }
 
     private var key: String? = null
