@@ -87,6 +87,23 @@ open class ConfigHelper {
         }
 
         /**
+         * 根据key获取某个配置，如果出现问题直接返回 null
+         */
+        fun getConfigSwallow(configEnum: ConfigurationEnum, transfer: (String) -> Any?): Any? {
+
+            val result = try {
+                lockSupplier(configEnum) {
+                    transfer.invoke(resourceBundle!!.getString(configEnum.key))
+                        ?: throw ApplicationConfigException("读取application.properties配置异常，异常项目：${configEnum.key}，建议：${configEnum.adv}")
+                }
+            } catch (e: Exception) {
+                return null
+            }
+
+            return result
+        }
+
+        /**
          * 根据key模糊得获取某些配置，匹配规则为 key%
          */
         fun getConfigSimilar(configEnum: ConfigurationEnum, transfer: (Pair<String, String>) -> Any?): Any {

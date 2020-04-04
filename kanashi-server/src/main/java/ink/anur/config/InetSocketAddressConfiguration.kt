@@ -1,5 +1,6 @@
 package ink.anur.config
 
+import ink.anur.common.Constant
 import ink.anur.common.struct.KanashiNode
 import ink.anur.config.common.ConfigHelper
 import ink.anur.config.common.ConfigurationEnum
@@ -26,10 +27,10 @@ class InetSocketAddressConfiguration : ConfigHelper(), InetConfig {
 
     @NigatePostConstruct
     private fun init() {
-        val nameFromConfig: String = getConfig(ConfigurationEnum.SERVER_NAME) { it } as String
+        val nameFromConfig: String? = getConfigSwallow(ConfigurationEnum.SERVER_NAME) { it } as String?
         val name = BootstrapConfiguration.get(BootstrapConfiguration.SERVER_NAME) ?: nameFromConfig
-        if (name == ChannelService.COORDINATE_LEADE_SIGN) {
-            throw ApplicationConfigException(" 'LEADER' 为关键词，节点不能命名为这个关键词")
+        if (name == null || name == ChannelService.COORDINATE_LEADE_SIGN || name == Constant.SERVER) {
+            throw ApplicationConfigException(" 'LEADER', 'SERVER' 为关键词，节点不能命名为这个关键词，且不能命名为空")
         }
         me = getNode(name)
 
