@@ -22,6 +22,13 @@ public class TestWritingAmountOfMsg {
                 System.out.println(i);
             }
         }
+//
+//        for (int i = 0; i < 1000000; i++) {
+//            System.out.println(kanashiStrTemplate.get(String.valueOf(i)));
+//            if (i % 100 == 0) {
+//                System.out.println(i);
+//            }
+//        }
     }
 
     /**
