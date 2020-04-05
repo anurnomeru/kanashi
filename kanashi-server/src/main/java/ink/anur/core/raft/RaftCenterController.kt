@@ -100,9 +100,7 @@ class RaftCenterController : KanashiRunnable() {
                 this.cancelAllTask()
 
                 // 3、新增成为Candidate的定时任务
-                if (!extraConfiguration.isDebug()) {
-                    this.becomeCandidateAndBeginElectTask(generation)
-                }
+                this.becomeCandidateAndBeginElectTask(generation)
                 return@lockSupplierCompel true
             } else {
                 return@lockSupplierCompel false

@@ -60,8 +60,8 @@ class StoreEngineTransmitService {
          * 用于返回客户端的结果
          */
         EventDriverPool.register(EngineExecutor::class.java, 2, 20, TimeUnit.MILLISECONDS) {
-            if (!it.await(2,TimeUnit.SECONDS)){
-                println("啊啊啊啊啊啊啊啊啊 怎么肥事")
+            if (!it.await(2, TimeUnit.SECONDS)) {
+                println("阻塞过久~~")
             }
             if (it.getDataHandler().shortTransaction) {
                 doCommit(it.getDataHandler().getTrxId())

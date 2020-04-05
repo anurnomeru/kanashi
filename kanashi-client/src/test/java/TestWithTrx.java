@@ -15,7 +15,7 @@ public class TestWithTrx {
 
     @Test
     public void test() {
-        String key = "-Anur-";
+        String key = "--Anur--";
 
         kanashiStrTemplate.delete(key);
         assert (kanashiStrTemplate.get(key) == null);
