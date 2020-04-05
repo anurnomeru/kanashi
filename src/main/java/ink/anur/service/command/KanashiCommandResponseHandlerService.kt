@@ -119,7 +119,7 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
             setCluster(responseMap.remove(timeMillis)!!.kanashiEntry!!.getCluster())
 
         } else {
-            logger.error("向配置节点请求集群信息失败，正在重试...")
+            logger.trace("向配置节点请求集群信息失败，正在重试...")
             Thread.sleep(500)
             getCluster()
         }
@@ -180,15 +180,15 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
                 if (remove == null) {
                     return acquire(kanashiCommandDto, attemptTimes - 1)
                 } else {
-                    if (remove.error) {
-                        throw KanashiDatabaseException(remove.kanashiEntry?.getValueString() ?: "发送 command 请求后，服务端返回了未知错误")
-                    }
-
                     if (remove.redirect) {
                         synchronized(this) {
                             clusters = remove.kanashiEntry!!.getCluster()
                         }
                         return acquire(kanashiCommandDto, attemptTimes - 1)
+                    }
+
+                    if (remove.error) {
+                        throw KanashiDatabaseException(remove.kanashiEntry?.getValueString() ?: "发送 command 请求后，服务端返回了未知错误")
                     }
                 }
                 remove

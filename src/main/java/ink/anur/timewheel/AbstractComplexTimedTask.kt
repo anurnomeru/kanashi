@@ -19,7 +19,7 @@ abstract class AbstractComplexTimedTask {
      * 内置的一个任务
      */
     @Volatile
-    private var taskInner: RebuildTask? = null
+    private var taskInner: RebuildableTask? = null
 
     /**
      * 直接取消这个定时任务
@@ -31,15 +31,14 @@ abstract class AbstractComplexTimedTask {
     /**
      * 取消上次的任务，重新开始新一轮任务
      */
-    protected fun rebuildTask(doSomeThing: () -> Unit) {
+    protected fun rebuildableTask(doSomeThing: () -> Unit) {
         cancelTask()
-        RebuildTask(doSomeThing).start()
+        RebuildableTask(doSomeThing).start()
     }
 
     abstract fun internal(): Long
 
-
-    inner class RebuildTask(val doSomething: () -> Unit) : KanashiRunnable() {
+    inner class RebuildableTask(val doSomething: () -> Unit) : KanashiRunnable() {
 
         override fun run() {
             val nowVersion = cvc

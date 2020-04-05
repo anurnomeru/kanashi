@@ -18,17 +18,15 @@ public class TestWritingAmountOfMsg {
     public void test() {
         for (int i = 0; i < 1000000; i++) {
             kanashiStrTemplate.set(String.valueOf(i), randomString(10, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"));
-            if (i % 100 == 0) {
-                System.out.println(i);
-            }
+            System.out.println(i);
         }
-//
-//        for (int i = 0; i < 1000000; i++) {
-//            System.out.println(kanashiStrTemplate.get(String.valueOf(i)));
-//            if (i % 100 == 0) {
-//                System.out.println(i);
-//            }
-//        }
+        //
+        //        for (int i = 0; i < 1000000; i++) {
+        //            System.out.println(kanashiStrTemplate.get(String.valueOf(i)));
+        //            if (i % 100 == 0) {
+        //                System.out.println(i);
+        //            }
+        //        }
     }
 
     /**

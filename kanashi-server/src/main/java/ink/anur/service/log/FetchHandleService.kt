@@ -1,8 +1,10 @@
 package ink.anur.service.log
 
+import ink.anur.common.KanashiExecutors
 import ink.anur.common.Resetable
-import ink.anur.config.CoordinateConfiguration
-import ink.anur.core.common.AbstractTimedRequestMapping
+import ink.anur.core.common.AbstractRequestMapping
+import ink.anur.core.common.RequestExtProcessor
+import ink.anur.core.common.RequestProcessType
 import ink.anur.core.raft.ElectionMetaService
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.debug.Debugger
@@ -14,6 +16,7 @@ import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigateListener
 import ink.anur.inject.NigateListenerService
+import ink.anur.mutex.ReentrantLocker
 import ink.anur.mutex.ReentrantReadWriteLocker
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.RecoveryComplete
@@ -63,12 +66,9 @@ import java.util.function.Consumer
  * 需要检查当前世代 的last Offset，进行check，如果与leader不符，则需要truncate后恢复可用。
  */
 @NigateBean
-class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
+class FetchHandleService : AbstractRequestMapping(), Resetable {
 
     private val logger = Debugger(this::class.java)
-
-    @NigateInject
-    private lateinit var coordinateConfiguration: CoordinateConfiguration
 
     @NigateInject
     private lateinit var electionMetaService: ElectionMetaService
@@ -110,17 +110,17 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
 
         // 当集群可用时， leader节点会受到一个来自自己的 recovery Report
         if (electionMetaService.isLeader()) {
-            this.receive(electionMetaService.leader!!, byteBufPreLogService.getCommitGAO())
+            this.receive(electionMetaService.getLeader()!!, byteBufPreLogService.getCommitGAO())
         } else {
             // 如果不是 leader，则需要各个节点汇报自己的 log 进度，给 leader 发送  recovery Report
-            requestProcessCentreService.send(electionMetaService.leader!!, RecoveryReporter(byteBufPreLogService.getCommitGAO()))
+            requestProcessCentreService.send(electionMetaService.getLeader()!!, RecoveryReporter(byteBufPreLogService.getCommitGAO()))
         }
     }
 
     @NigateListener(onEvent = Event.RECOVERY_COMPLETE)
     private fun whileRecoveryComplete() {
         if (!electionMetaService.isLeader()) {
-            startToFetchFrom(electionMetaService.leader!!)
+            startToFetchFrom(electionMetaService.getLeader()!!)
         }
     }
 
@@ -128,7 +128,7 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
     override fun reset() {
         logger.debug("RecoveryReportHandlerService RESET is triggered")
         locker.writeLocker {
-            super.cancelTask()
+            cancelFetchTask()
             RecoveryMap.clear()
             recoveryComplete = false
             RecoveryTimer = TimeUtil.getTime()
@@ -200,14 +200,38 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
         sendRecoveryComplete(serverName, latestGao)
     }
 
+    @Volatile
+    private var version: Long = Long.MIN_VALUE
+
+    private var fetchLock = ReentrantLocker()
+
     /**
-     * 主要负责定时 Fetch 消息
-     *
      * 新建一个 Fetcher 用于拉取消息，将其发送给 Leader，并在收到回调后，调用 CONSUME_FETCH_RESPONSE 消费回调，且重启拉取定时任务
      */
     private fun startToFetchFrom(fetchFrom: String) {
+        cancelFetchTask()
         logger.info("开始向 $fetchFrom fetch 消息 -->")
-        rebuildTask { requestProcessCentreService.send(fetchFrom, Fetch(byteBufPreLogService.getPreLogGAO())) }
+
+        fetchFromTask(fetchFrom, version)
+    }
+
+    fun fetchFromTask(fetchFrom: String, version: Long) {
+        KanashiExecutors.execute(Runnable {
+            while (version == this.version) {
+                fetchMutex {
+                    requestProcessCentreService.send(fetchFrom, Fetch(byteBufPreLogService.getPreLogGAO()))
+                }
+                Thread.sleep(75)
+            }
+        })
+    }
+
+    fun fetchMutex(whatEver: () -> Unit) {
+        fetchLock.lockSupplier(whatEver)
+    }
+
+    private fun cancelFetchTask() {
+        version++
     }
 
     /**
@@ -215,6 +239,7 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
      * // TODO 避免 client 重复触发！！
      */
     fun shuttingWhileRecoveryComplete(latestGao: GenerationAndOffset) {
+        cancelFetchTask()
         // 获取最新的一个事务
         val after = logService.getAfter(latestGao)
         if (after != null) {
@@ -223,7 +248,7 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
                 val next = iterator.next()
                 // 讲道理只会调用一次
                 val trxId = next.logItem.getKanashiCommand().trxId + 1
-                logger.info("已获取到集群最新事务号为 $trxId")
+                logger.info("| - 存储引擎控制中心 - | 已获取到集群最新事务号为 $trxId")
                 transactionAllocator.resetTrx(trxId)
             }
         }
@@ -232,7 +257,6 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
         recoveryComplete = true
         waitShutting.entries.forEach(Consumer { sendRecoveryComplete(it.key, it.value) })
         nigateListenerService.onEvent(Event.RECOVERY_COMPLETE)
-        cancelTask()
     }
 
     /**
@@ -248,9 +272,5 @@ class RecoveryReportHandleService : AbstractTimedRequestMapping(), Resetable {
         } else {
             waitShutting[serverName] = latestGao
         }
-    }
-
-    override fun internal(): Long {
-        return coordinateConfiguration.getReSendBackOfMs()
     }
 }

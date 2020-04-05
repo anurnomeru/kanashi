@@ -75,7 +75,7 @@ class ElectionMetaService {
      * 现在集群的leader是哪个节点
      */
     @Volatile
-    var leader: String? = null
+    private var leader: String? = null
 
     /**
      * 流水号，用于生成 id，集群内每一次由 Leader 发起的关键操作都会生成一个id [.genGenerationAndOffset] ()}，其中就需要自增 offset 号
@@ -148,6 +148,14 @@ class ElectionMetaService {
     @Volatile
     var clusterValid = false
 
+    fun setLeader(leader: String) {
+        this.leader = leader
+    }
+
+    fun getLeader(): String? {
+        return this.leader
+    }
+
     /**
      * 当集群选举状态变更时调用
      */
@@ -156,12 +164,12 @@ class ElectionMetaService {
 
         if (changed) {
             this.electionCompleted = electionCompleted
-            if (electionCompleted) {
+            clusterValid = if (electionCompleted) {
                 kanashiListenerService.onEvent(Event.CLUSTER_VALID)
-                clusterValid = true
+                true
             } else {
                 kanashiListenerService.onEvent(Event.CLUSTER_INVALID)
-                clusterValid = false
+                false
             }
         }
 
@@ -174,7 +182,7 @@ class ElectionMetaService {
     @Synchronized
     fun becomeCandidate(): Boolean {
         return if (raftRole == RaftRole.FOLLOWER) {
-            logger.info("本节点角色由 {} 变更为 {}", raftRole, RaftRole.CANDIDATE)
+            logger.debug("本节点角色由 {} 变更为 {}", raftRole, RaftRole.CANDIDATE)
             raftRole = RaftRole.CANDIDATE
             this.electionStateChanged(false)
             true
@@ -190,7 +198,7 @@ class ElectionMetaService {
     @Synchronized
     fun becomeFollower() {
         if (raftRole !== RaftRole.FOLLOWER) {
-            logger.info("本节点角色由 {} 变更为 {}", raftRole, RaftRole.FOLLOWER)
+            logger.debug("本节点角色由 {} 变更为 {}", raftRole, RaftRole.FOLLOWER)
             raftRole = RaftRole.FOLLOWER
         }
     }

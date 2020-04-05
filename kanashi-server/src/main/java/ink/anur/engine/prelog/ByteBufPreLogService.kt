@@ -96,7 +96,9 @@ class ByteBufPreLogService : ReentrantReadWriteLocker() {
 
                 val oaoOffset = oao.offset
 
-                if (GenerationAndOffset(generation, oaoOffset) <= preLogOffset!!) {
+                val thisGao = GenerationAndOffset(generation, oaoOffset)
+
+                if (thisGao <= preLogOffset!!) {
                     logger.error("追加到预日志的日志 offset $oaoOffset 小于当前预日志 offset ${preLogOffset!!.offset}，追加失败！！")
                     break
                 }
@@ -108,7 +110,7 @@ class ByteBufPreLogService : ReentrantReadWriteLocker() {
             if (lastOffset != -1L) {
                 val before = preLogOffset
                 preLogOffset = GenerationAndOffset(generation, lastOffset)
-                logger.debug("本地追加了预日志，由 {} 更新至 {}", before.toString(), preLogOffset.toString())
+                logger.info("本地追加了预日志，由 {} 更新至 {}", before.toString(), preLogOffset.toString())
             }
         }
     }

@@ -101,7 +101,7 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
             } else if (!electionMetaService.isLeader() || kanashiCommand.commandType == CommandTypeEnum.COMMON && kanashiCommand.api == CommonApiTypeEnum.GET_CLUSTER) {
                 // 不是leader 或者 请求获取集群，返回集群信息
 
-                val leader = electionMetaService.leader
+                val leader = electionMetaService.getLeader()
                 val leaderNode = inetSocketAddressConfiguration.getNode(leader)
                 val clusters = electionMetaService.clusters?.let { ArrayList(it) }
                 if (leaderNode != KanashiNode.NOT_EXIST && clusters != null) {

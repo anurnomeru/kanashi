@@ -2,6 +2,7 @@ package ink.anur.core.raft
 
 import ink.anur.common.KanashiRunnable
 import ink.anur.config.ElectConfiguration
+import ink.anur.config.ExtraConfiguration
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.core.request.RequestProcessCentreService
@@ -42,6 +43,9 @@ class RaftCenterController : KanashiRunnable() {
 
     @NigateInject
     private lateinit var msgCenterService: RequestProcessCentreService
+
+    @NigateInject
+    private lateinit var extraConfiguration: ExtraConfiguration
 
     private var ELECTION_TIMEOUT_MS: Long = -1L
 
@@ -96,7 +100,9 @@ class RaftCenterController : KanashiRunnable() {
                 this.cancelAllTask()
 
                 // 3、新增成为Candidate的定时任务
-                this.becomeCandidateAndBeginElectTask(generation)
+                if (!extraConfiguration.isDebug()) {
+                    this.becomeCandidateAndBeginElectTask(generation)
+                }
                 return@lockSupplierCompel true
             } else {
                 return@lockSupplierCompel false
@@ -192,11 +198,11 @@ class RaftCenterController : KanashiRunnable() {
                 electionMetaService.beginElectTime = TimeUtil.getTime()
             }
 
-            logger.info("Election Timeout 到期，可能期间内未收到来自 Leader 的心跳包或上一轮选举没有在期间内选出 Leader，故本节点即将发起选举")
+            logger.debug("Election Timeout 到期，可能期间内未收到来自 Leader 的心跳包或上一轮选举没有在期间内选出 Leader，故本节点即将发起选举")
             updateGeneration("本节点发起了选举")// meta.getGeneration() ++
 
             // 成为候选者
-            logger.info("本节点正式开始世代 {} 的选举", electionMetaService.generation)
+            logger.debug("本节点正式开始世代 {} 的选举", electionMetaService.generation)
             this.becomeCandidate()
             val votes = Voting(true, false, electionMetaService.generation, electionMetaService.generation)
 
@@ -265,18 +271,18 @@ class RaftCenterController : KanashiRunnable() {
             }
             val voteSelf = serverName == inetSocketAddressConfiguration.getLocalServerName()
             if (voteSelf) {
-                logger.info("本节点在世代 {} 转变为候选者，给自己先投一票", electionMetaService.generation)
+                logger.debug("本节点在世代 {} 转变为候选者，给自己先投一票", electionMetaService.generation)
             } else {
-                logger.info("收到来自节点 {} 的投票应答，其世代为 {}", serverName, voting.generation)
+                logger.debug("收到来自节点 {} 的投票应答，其世代为 {}", serverName, voting.generation)
             }
 
             if (voting.fromLeaderNode) {
-                logger.info("来自节点 {} 的投票应答表明其身份为 Leader，本轮拉票结束。", serverName)
+                logger.debug("来自节点 {} 的投票应答表明其身份为 Leader，本轮拉票结束。", serverName)
                 this.receiveHeatBeat(serverName, voting.generation)
             }
 
             if (electionMetaService.generation > voting.askVoteGeneration) {// 如果选票的世代小于当前世代，投票无效
-                logger.info("来自节点 {} 的投票应答世代是以前世代 {} 的选票，选票无效", serverName, voting.askVoteGeneration)
+                logger.debug("来自节点 {} 的投票应答世代是以前世代 {} 的选票，选票无效", serverName, voting.askVoteGeneration)
                 return@lockSupplier
             }
 
@@ -285,21 +291,21 @@ class RaftCenterController : KanashiRunnable() {
 
             if (voting.agreed) {
                 if (!voteSelf) {
-                    logger.info("来自节点 {} 的投票应答有效，投票箱 + 1", serverName)
+                    logger.debug("来自节点 {} 的投票应答有效，投票箱 + 1", serverName)
                 }
 
                 val kanashiNodeList = electionMetaService.clusters!!
                 val voteCount = electionMetaService.box.values.filter { it }.count()
 
-                logger.info("集群中共 {} 个节点，本节点当前投票箱进度 {}/{}", kanashiNodeList.size, voteCount, electionMetaService.quorum)
+                logger.debug("集群中共 {} 个节点，本节点当前投票箱进度 {}/{}", kanashiNodeList.size, voteCount, electionMetaService.quorum)
 
                 // 如果获得的选票已经大于了集群数量的一半以上，则成为leader
                 if (voteCount == electionMetaService.quorum) {
-                    logger.info("选票过半，本节点将上位成为 leader 节点")
+                    logger.debug("选票过半，本节点将上位成为 leader 节点")
                     this.becomeLeader()
                 }
             } else {
-                logger.info("节点 {} 在世代 {} 的投票应答为：拒绝给本节点在世代 {} 的选举投票（当前世代 {}）", serverName, voting.generation, voting.askVoteGeneration,
+                logger.debug("节点 {} 在世代 {} 的投票应答为：拒绝给本节点在世代 {} 的选举投票（当前世代 {}）", serverName, voting.generation, voting.askVoteGeneration,
                     electionMetaService.generation)
             }
         }
@@ -312,10 +318,9 @@ class RaftCenterController : KanashiRunnable() {
             if (generation >= electionMetaService.generation) {
                 needToSendHeartBeatInfection = false
 
-                if (electionMetaService.leader == null) {
+                if (electionMetaService.getLeader() == null) {
                     eden(generation, "收到了来自 $leaderServerName 世代更高的请求 [$generation]，故触发 EDEN")
-                    logger.info("集群中，节点 {} 已经成功在世代 {} 上位成为 Leader，本节点将成为 Follower，直到与 Leader 的网络通讯出现问题", leaderServerName, generation)
-
+                    logger.info("集群中，其他节点 {} 已经成功在世代 {} 上位成为 Leader，本节点将成为 Follower，直到与 Leader 的网络通讯出现问题", leaderServerName, generation)
 
                     // 如果是leader。则先触发集群无效
                     if (electionMetaService.isLeader()) {
@@ -326,7 +331,7 @@ class RaftCenterController : KanashiRunnable() {
                     electionMetaService.becomeFollower()
 
                     // 将那个节点设为leader节点
-                    electionMetaService.leader = leaderServerName
+                    electionMetaService.setLeader(leaderServerName)
                     electionMetaService.beginElectTime = 0L
                     electionMetaService.electionStateChanged(true)
                 }

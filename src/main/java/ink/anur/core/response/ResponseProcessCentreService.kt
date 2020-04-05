@@ -71,7 +71,7 @@ class ResponseProcessCentreService {
             if (channel == null) {
                 return NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
             }
-            if (body.getRequestType() != RequestTypeEnum.HEAT_BEAT || body.getRequestType() != RequestTypeEnum.COMMIT) {
+            if (body.getRequestType() != RequestTypeEnum.HEAT_BEAT) {
                 logger.trace("---> 发送了类型为 ${body.getRequestType()} 的消息")
             }
             channel.write(Unpooled.copyInt(body.totalSize()))

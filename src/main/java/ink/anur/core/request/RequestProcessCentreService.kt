@@ -130,12 +130,6 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
 
                 } -> try {
                     val requestMapping = requestMappingRegister[requestTypeEnum]
-                    if (requestMapping != null) {
-                        requestMapping.handleRequest(serverName, msg, channel)// 收到正常的请求
-                    } else {
-                        logger.error("类型 $requestTypeEnum 消息没有定制化 requestMapping ！！！")
-                    }
-
                     responseCallback[requestTypeEnum]?.also {
                         writeLocker {
                             val iterator = it.iterator()
@@ -149,6 +143,12 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                                 iterator.remove()
                             }
                         }
+                    }
+
+                    if (requestMapping != null) {
+                        requestMapping.handleRequest(serverName, msg, channel)// 收到正常的请求
+                    } else {
+                        logger.error("类型 $requestTypeEnum 消息没有定制化 requestMapping ！！！")
                     }
 
                 } catch (e: Exception) {
@@ -236,6 +236,7 @@ class RequestProcessCentreService : ReentrantReadWriteLocker(), Resetable {
                     }
 
                     writeLocker {
+                        command.resetTimeMillis()
                         val task = TimedTask(coordinateConfig.getReSendBackOfMs()) { sendImpl(serverName, command, requestTypeEnum, requestProcessor) }
                         computing(inFlight, serverName, requestTypeEnum, requestProcessor)
                         computing(reSendTask, serverName, requestTypeEnum, task)

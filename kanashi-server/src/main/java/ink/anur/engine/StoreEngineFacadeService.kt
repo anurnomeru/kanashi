@@ -152,9 +152,9 @@ class StoreEngineFacadeService : KanashiRunnable() {
         val latestCommitted = commitProcessManageService.load()
         if (latestCommitted != GenerationAndOffset.INVALID && Gao > latestCommitted) {
             lock.lock()
-            logger.error("| - 存储引擎控制中心 - | 已经消费到最新的提交进度 ${latestCommitted}，存储引擎将暂停等待唤醒")
+            logger.trace("| - 存储引擎控制中心 - | 已经消费到最新的提交进度 ${latestCommitted}，存储引擎将暂停等待唤醒")
             pauseLatch.await()
-            logger.error("| - 存储引擎控制中心 - | 存储引擎被唤醒，将继续将消息存入存储引擎")
+            logger.trace("| - 存储引擎控制中心 - | 存储引擎被唤醒，将继续将消息存入存储引擎")
             lock.unlock()
             blockCheckIter(Gao)
         } else {
