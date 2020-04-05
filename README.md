@@ -40,7 +40,7 @@ client.addr.kanashi.3=127.0.0.1:11003
 
 `server.name` 则声明本机为哪个节点。但不一定要写在配置文件中，可在启动时指定 server_name:kanashi.1 来声明本节点。
 
-![pic1-server](http://anur.ink/upload/2020/4/pic1-server-d523debf405e488aa1dffe97ff8d2c2c.png)
+![pic1-server](https://images.gitee.com/uploads/images/2020/0405/161140_99d42315_1460144.png)
 
 #### 1.2 客户端
 
@@ -205,6 +205,14 @@ fun acquire(trxId: Long, key: String, whatEverDo: () -> Unit) {
 
 ### 四、其他
 
-对项目有兴趣，或者想一起折腾这些乱七八糟事情的可以加群：1035435027
+对项目有兴趣，或者想一起折腾这些乱七八糟事情的可以加群，目前基本没人：1035435027
+
+![kanashi](https://images.gitee.com/uploads/images/2020/0405/161140_9dd61ee4_1460144.png)
 
 讨论Java相关技术可以加群：767271344
+
+![二维码](https://images.gitee.com/uploads/images/2020/0405/161207_31fb2c55_1460144.png)
+
+另外找工作中 = =，3年-Java后端，简历如下：
+
+http://anur.ink/upload/2020/4/JAVA%E5%90%8E%E7%AB%AF-3%E5%B9%B4-%E7%BD%91%E7%BB%9C%E7%89%88-4ea872fb596f4553aa9f04cefcb65a84.pdf
