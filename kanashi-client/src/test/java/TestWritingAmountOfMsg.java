@@ -18,7 +18,10 @@ public class TestWritingAmountOfMsg {
     public void test() {
         for (int i = 0; i < 1000000; i++) {
             kanashiStrTemplate.set(String.valueOf(i), randomString(10, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"));
-            System.out.println(i);
+            if (i % 10 == 0) {
+                // 这个打印是为了避免服务端死锁或者客户端出现问题导致过久等待而没法察觉
+                System.out.println(i);
+            }
         }
         //
         //        for (int i = 0; i < 1000000; i++) {

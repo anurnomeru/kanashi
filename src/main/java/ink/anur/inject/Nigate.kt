@@ -74,6 +74,7 @@ object Nigate {
          */
         private val INIT_DUPLICATE_CLEANER = mutableSetOf<String>()
 
+
         fun autoRegister(path: String, clazz: Class<*>, anno: NigateBean, fromJar: Boolean) {
             if (INIT_DUPLICATE_CLEANER.add(path)) {
                 val name = register(clazz.newInstance(), anno.name)
@@ -349,6 +350,15 @@ object Nigate {
 
     init {
         try {
+            logger.info("\n __  _   ____  ____    ____  _____ __ __  ____ \n" +
+                "|  |/ ] /    ||    \\  /    |/ ___/|  |  ||    |\n" +
+                "|  ' / |  o  ||  _  ||  o  (   \\_ |  |  | |  | \n" +
+                "|    \\ |     ||  |  ||     |\\__  ||  _  | |  | \n" +
+                "|     ||  _  ||  |  ||  _  |/  \\ ||  |  | |  | \n" +
+                "|  .  ||  |  ||  |  ||  |  |\\    ||  |  | |  | \n" +
+                "|__|\\_||__|__||__|__||__|__| \\___||__|__||____|\n\n" +
+                "                                          Ver: 0.0.1 Alpha\n")
+
             val start = System.currentTimeMillis()
             logger.info("Nigate ==> Registering..")
             beanContainer.doScan()

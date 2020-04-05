@@ -3,6 +3,8 @@ package ink.anur.engine.trx.lock.common
 
 /**
  * Created by Anur IjuoKaruKas on 2019/9/24
+ *
+ * 持有当前事务快照
  */
 class TrxHolder(val trxId: Long) {
 
