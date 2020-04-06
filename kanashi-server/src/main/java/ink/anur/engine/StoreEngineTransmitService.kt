@@ -59,7 +59,7 @@ class StoreEngineTransmitService {
         /**
          * 用于返回客户端的结果
          */
-        EventDriverPool.register(EngineExecutor::class.java, 2, 20, TimeUnit.MILLISECONDS) {
+        EventDriverPool.register(EngineExecutor::class.java, 2, 200, TimeUnit.MILLISECONDS) {
             if (!it.await(2, TimeUnit.SECONDS)) {
                 println("阻塞过久~~")
             }
@@ -73,8 +73,7 @@ class StoreEngineTransmitService {
             if (it.responseRegister != null) {
                 val responseRegister = it.responseRegister
                 val engineResult = it.getEngineResult()
-                requestProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()),
-                    RequestExtProcessor(), keepCurrentSendTask = false, keepError = true)
+                requestProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()))
             }
 
             val gao = it.getDataHandler().gao
@@ -85,8 +84,7 @@ class StoreEngineTransmitService {
             if (gao != null && responseMap[gao] != null) {
                 val responseRegister = responseMap[gao]!!
                 val engineResult = it.getEngineResult()
-                requestProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()),
-                    RequestExtProcessor(), keepCurrentSendTask = false, keepError = true)
+                requestProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()))
 
                 responseMap.remove(gao)
             }

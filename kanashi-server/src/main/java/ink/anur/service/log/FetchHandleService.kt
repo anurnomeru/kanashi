@@ -3,8 +3,6 @@ package ink.anur.service.log
 import ink.anur.common.KanashiExecutors
 import ink.anur.common.Resetable
 import ink.anur.core.common.AbstractRequestMapping
-import ink.anur.core.common.RequestExtProcessor
-import ink.anur.core.common.RequestProcessType
 import ink.anur.core.raft.ElectionMetaService
 import ink.anur.core.request.RequestProcessCentreService
 import ink.anur.debug.Debugger

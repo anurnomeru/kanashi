@@ -1,26 +1,16 @@
 package ink.anur.io.common.handler
 
-import ink.anur.common.Constant
 import ink.anur.common.struct.KanashiNode
 import ink.anur.config.InetConfig
 import ink.anur.core.common.RequestExtProcessor
-import ink.anur.core.common.RequestProcessType
 import ink.anur.core.request.RequestProcessCentreService
-import ink.anur.exception.NetWorkException
-import ink.anur.inject.Event
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
-import ink.anur.inject.NigateListener
-import ink.anur.inject.NigateListenerService
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.pojo.Register
-import ink.anur.timewheel.TimedTask
-import ink.anur.timewheel.Timer
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import org.slf4j.LoggerFactory
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/25
@@ -52,7 +42,7 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
 
         val register = Register(inetConfig.getLocalServerName())
         // TODO 这里可能有bug 如果server处理失败这里将无法连接
-        msgCenterService.send(node.serverName, register, RequestExtProcessor(), false)
+        msgCenterService.send(node.serverName, register)
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {
