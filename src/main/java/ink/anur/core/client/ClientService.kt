@@ -17,11 +17,15 @@ class ClientService {
     private val CONNECT_MAPPING: MutableMap<KanashiNode, ClientOperateHandler> = mutableMapOf()
 
     @Synchronized
-    fun connect(kanashiNode: KanashiNode): ClientOperateHandler {
+    fun connect(kanashiNode: KanashiNode,
+                /**
+                 * 当受到对方的注册回调后，触发此函数，注意 它可能会被多次调用
+                 */
+                doAfterConnectToServer: (() -> Unit)? = null): ClientOperateHandler {
         var coordinateClientOperator = CONNECT_MAPPING[kanashiNode]
         if (coordinateClientOperator == null) {
             logger.info("正在发起与协调节点 $kanashiNode 的连接...")
-            coordinateClientOperator = ClientOperateHandler(kanashiNode)
+            coordinateClientOperator = ClientOperateHandler(kanashiNode, doAfterConnectToServer)
             CONNECT_MAPPING[kanashiNode] = coordinateClientOperator
             coordinateClientOperator.start()
         }

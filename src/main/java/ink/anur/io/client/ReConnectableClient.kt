@@ -12,6 +12,8 @@ import ink.anur.io.common.handler.KanashiDecoder
 import ink.anur.io.common.handler.ReconnectHandler
 import ink.anur.service.RegisterResponseHandleService
 import io.netty.bootstrap.Bootstrap
+import io.netty.channel.Channel
+import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.nio.NioEventLoopGroup
@@ -26,6 +28,8 @@ import java.util.concurrent.CountDownLatch
  * 可重连的客户端
  */
 class ReConnectableClient(private val node: KanashiNode, private val shutDownHooker: ShutDownHooker,
+
+                          private val injectChannel: (Channel) -> Unit,
 
                           /**
                            * 当受到对方的注册回调后，触发此函数，注意 它可能会被多次调用
@@ -59,7 +63,7 @@ class ReConnectableClient(private val node: KanashiNode, private val shutDownHoo
                 logger.debug("与节点 $node 的连接已被终止，无需再进行重连")
             } else {
                 logger.trace("正在重新连接节点 $node ...")
-                ReConnectableClient(node, shutDownHooker).start()
+                ReConnectableClient(node, shutDownHooker, injectChannel, doAfterConnectToServer, doAfterDisConnectToServer).start()
             }
         }
         KanashiExecutors.execute(restartMission)
@@ -76,7 +80,7 @@ class ReConnectableClient(private val node: KanashiNode, private val shutDownHoo
                     @Throws(Exception::class)
                     override fun initChannel(socketChannel: SocketChannel) {
                         socketChannel.pipeline()
-                            .addFirst(AutoRegistryHandler(node, registrySign)) // 自动注册到管道管理服务
+                            .addFirst(AutoRegistryHandler(node, registrySign, injectChannel)) // 自动注册到管道管理服务
                             .addLast(KanashiDecoder())// 解码处理器
                             .addLast(EventDriverPoolHandler())// 消息事件驱动
                             .addFirst(ChannelInboundHandlerAdapter())

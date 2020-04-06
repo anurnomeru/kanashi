@@ -11,8 +11,12 @@ import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import io.netty.buffer.Unpooled
+import io.netty.channel.Channel
+import io.netty.channel.ChannelHandlerContext
 import org.slf4j.LoggerFactory
 import java.util.HashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -50,27 +54,31 @@ class ResponseProcessCentreService {
     /**
      * 向某个服务发送东西~
      */
-    fun doSend(serverName: String, body: AbstractStruct): Throwable? {
+    fun doSend(serverName: String?, body: AbstractStruct, c: Channel? = null): Throwable? {
         if (inetConfig.getLocalServerName() == serverName) {
             return null
         }
 
-        val lock = getLock(serverName)
+        val lock = getLock((serverName ?: c?.toString()) ?: throw NetWorkException("发送时必须指定哪个管道或哪个服务"))
         try {
             lock.lock()
-            val channel = channelService.getChannel(serverName)
-
-            if (channel == null) {
-                val node = inetConfig.getNode(serverName)
-                if (node == KanashiNode.NOT_EXIST) {
-                    return UnKnownNodeException("无法在配置文件中找到节点 $serverName，故无法主动连接该节点")
+            val channel = (if (c != null) {
+                c
+            } else {
+                var channelFromCS = channelService.getChannel(serverName!!)
+                if (channelFromCS == null) {
+                    val node = inetConfig.getNode(serverName)
+                    if (node == KanashiNode.NOT_EXIST) {
+                        return UnKnownNodeException("无法在配置文件中找到节点 $serverName，故无法主动连接该节点")
+                    }
+                    val connectLatch = CountDownLatch(1)
+                    clientService.connect(node) { connectLatch.countDown() }
+                    connectLatch.await(5, TimeUnit.SECONDS)
+                    channelFromCS = channelService.getChannel(serverName)
                 }
-                clientService.connect(node)
-            }
+                channelFromCS
+            }) ?: return NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
 
-            if (channel == null) {
-                return NetWorkException("还未与节点 [$serverName] 建立连接，无法发送！")
-            }
             if (body.getRequestType() != RequestTypeEnum.HEAT_BEAT) {
                 logger.trace("---> 发送了类型为 ${body.getRequestType()} 的消息")
             }

@@ -2,7 +2,12 @@ package ink.anur.client
 
 import ink.anur.common.struct.KanashiNode
 import ink.anur.core.client.ClientOperateHandler
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.inject.NigateBean
+import ink.anur.inject.NigateInject
+import io.netty.channel.ConnectTimeoutException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by Anur IjuoKaruKas on 2020/4/6
@@ -14,6 +19,9 @@ import ink.anur.inject.NigateBean
 @NigateBean
 class ClientMsgProcessCentreService {
 
+    @NigateInject
+    private lateinit var msgProcessCentreService: MsgProcessCentreService
+
     /**
      * 代表当前节点持有的集群信息，第零个代表是 leader
      */
@@ -21,8 +29,19 @@ class ClientMsgProcessCentreService {
 
     private var connections = mutableListOf<ClientOperateHandler>()
 
+    /**
+     * 发起向某服务的连接，如果5秒内没有成功，则抛出异常
+     */
     private fun connectTo(kanashiNode: KanashiNode) {
-        val clientOperateHandler = ClientOperateHandler(kanashiNode)
+
+        val connectLatch = CountDownLatch(1)
+        val clientOperateHandler = ClientOperateHandler(kanashiNode, { connectLatch.countDown() })
         clientOperateHandler.start()
+        if (!connectLatch.await(5, TimeUnit.SECONDS)) {
+            clientOperateHandler.shutDown()
+            throw ConnectTimeoutException()
+        } else {
+            connections.add(clientOperateHandler)
+        }
     }
 }

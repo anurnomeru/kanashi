@@ -7,6 +7,7 @@ import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
 import ink.anur.pojo.Register
+import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import org.slf4j.LoggerFactory
@@ -16,7 +17,9 @@ import org.slf4j.LoggerFactory
  *
  * 自动注册的处理器
  */
-class AutoRegistryHandler(private val node: KanashiNode, private val registrySign: Long) : ChannelInboundHandlerAdapter() {
+class AutoRegistryHandler(private val node: KanashiNode, private val registrySign: Long,
+                          private val injectChannel: (Channel) -> Unit
+) : ChannelInboundHandlerAdapter() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -35,9 +38,9 @@ class AutoRegistryHandler(private val node: KanashiNode, private val registrySig
 
     override fun channelActive(ctx: ChannelHandlerContext?) {
         super.channelActive(ctx)
-
+        injectChannel.invoke(ctx!!.channel())
         logger.info("正在向节点 $node 发送注册请求")
-        channelService.register(node, ctx!!.channel())
+        channelService.register(node, ctx.channel())
 
         val register = Register(inetConfig.getLocalServerName(), registrySign)
         // TODO 这里可能有bug 如果server处理失败这里将无法连接

@@ -5,6 +5,8 @@ import ink.anur.common.Shutdownable
 import ink.anur.common.struct.KanashiNode
 import ink.anur.io.client.ReConnectableClient
 import ink.anur.io.common.ShutDownHooker
+import io.netty.channel.Channel
+import io.netty.channel.ChannelHandlerContext
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/23
@@ -30,7 +32,15 @@ class ClientOperateHandler(kanashiNode: KanashiNode,
 
     private val serverShutDownHooker = ShutDownHooker("终止与协调节点 $kanashiNode 的连接")
 
-    private val coordinateClient = ReConnectableClient(kanashiNode, this.serverShutDownHooker, doAfterConnectToServer, doAfterDisConnectToServer)
+    private var ctx: Channel? = null
+
+    private val coordinateClient = ReConnectableClient(kanashiNode, this.serverShutDownHooker, { synchronized(this) { ctx = it } }, doAfterConnectToServer, doAfterDisConnectToServer)
+
+    private fun getChannel(): Channel {
+        synchronized(this) {
+            return ctx!!
+        }
+    }
 
     override fun run() {
         if (serverShutDownHooker.isShutDown()) {
