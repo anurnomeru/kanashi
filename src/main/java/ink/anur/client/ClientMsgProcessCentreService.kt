@@ -5,6 +5,7 @@ import ink.anur.core.client.ClientOperateHandler
 import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
+import ink.anur.inject.NigatePostConstruct
 import io.netty.channel.ConnectTimeoutException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -21,6 +22,11 @@ class ClientMsgProcessCentreService {
 
     @NigateInject
     private lateinit var msgProcessCentreService: MsgProcessCentreService
+
+    @NigatePostConstruct
+    private fun init(){
+        // todo 注入配置
+    }
 
     /**
      * 代表当前节点持有的集群信息，第零个代表是 leader
