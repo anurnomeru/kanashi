@@ -22,10 +22,6 @@ class ReconnectHandler(private val reconnectLatch: CountDownLatch) : ChannelInbo
     override fun channelInactive(ctx: ChannelHandlerContext) {
         super.channelInactive(ctx)
 
-        if (reconnectLatch.count == 1L) {
-            logger.debug("与节点 [{}] 的连接断开，准备进行重连 ...", ctx.channel()
-                .remoteAddress())
-        }
         ctx.close()
         reconnectLatch.countDown()
     }

@@ -19,7 +19,10 @@ class TransactionAllocator {
     private lateinit var metaService: ElectionMetaService
 
     companion object {
-        const val StartTrx: Long = Long.MIN_VALUE
+//        const val StartTrx: Long = Long.MIN_VALUE
+
+        // 暂时设置为0方便调试问题
+        const val StartTrx: Long = 0L
     }
 
     private var nowTrx: Long = StartTrx

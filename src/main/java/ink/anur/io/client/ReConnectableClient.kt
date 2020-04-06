@@ -4,11 +4,14 @@ import ink.anur.common.KanashiExecutors
 import ink.anur.common.struct.KanashiNode
 import ink.anur.io.common.ShutDownHooker
 import ink.anur.io.common.handler.AutoRegistryHandler
+import ink.anur.io.common.handler.ChannelInactiveHandler
 import ink.anur.io.common.handler.EventDriverPoolHandler
 import ink.anur.io.common.handler.ErrorHandler
 import ink.anur.io.common.handler.KanashiDecoder
 import ink.anur.io.common.handler.ReconnectHandler
 import io.netty.bootstrap.Bootstrap
+import io.netty.channel.ChannelInboundHandler
+import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
@@ -60,6 +63,8 @@ class ReConnectableClient(private val node: KanashiNode, private val shutDownHoo
                             .addFirst(AutoRegistryHandler(node)) // 自动注册到管道管理服务
                             .addLast(KanashiDecoder())// 解码处理器
                             .addLast(EventDriverPoolHandler())// 消息事件驱动
+                            .addFirst(ChannelInboundHandlerAdapter())
+                            .addLast(ChannelInactiveHandler { false })
                             .addLast(ReconnectHandler(reconnectLatch))// 重连控制器
                             .addLast(ErrorHandler())// 错误处理
                     }

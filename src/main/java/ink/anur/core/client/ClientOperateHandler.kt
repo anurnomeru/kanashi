@@ -11,7 +11,7 @@ import ink.anur.io.common.ShutDownHooker
  *
  * 连接某客户端的 client
  */
-class ClientOperateHandler(kanashiNode: KanashiNode) : KanashiRunnable(), Shutdownable {
+class ClientOperateHandler(kanashiNode: KanashiNode, doAfterConnectToServer: (() -> Unit)? = null, doAfterDisConnectToServer: (() -> Unit)? = null) : KanashiRunnable(), Shutdownable {
 
     private val serverShutDownHooker = ShutDownHooker("终止与协调节点 $kanashiNode 的连接")
 
@@ -20,12 +20,9 @@ class ClientOperateHandler(kanashiNode: KanashiNode) : KanashiRunnable(), Shutdo
     override fun run() {
         if (serverShutDownHooker.isShutDown()) {
             println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
-            println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
-            println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
-            println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
-            println("zzzzzzzz??????????????zzzzzzzzzzzzzzzzzzzzzzzz")
+        } else {
+            coordinateClient.start()
         }
-        coordinateClient.start()
     }
 
     override fun shutDown() {

@@ -180,7 +180,11 @@ public class FileLogItemSet extends LogItemSet {
         // 没有越界之前，可以无限搜索
         while (position + LogOverhead < size) {
             buffer.rewind(); // 重置一下buffer指针
-            fileChannel.read(buffer, position); // 读取文件的offset值
+            try {
+                fileChannel.read(buffer, position); // 读取文件的offset值
+            } catch (IOException e) {
+                System.out.println();
+            }
 
             if (buffer.hasRemaining()) {
                 throw new IllegalStateException(String.format("Failed to read complete buffer for targetOffset %d startPosition %d in %s", targetOffset, startingPosition, file.getAbsolutePath()));
