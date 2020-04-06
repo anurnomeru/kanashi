@@ -27,6 +27,9 @@ import java.util.concurrent.CountDownLatch
  */
 class ReConnectableClient(private val node: KanashiNode, private val shutDownHooker: ShutDownHooker,
 
+                          /**
+                           * 当受到对方的注册回调后，触发此函数，注意 它可能会被多次调用
+                           */
                           private val doAfterConnectToServer: (() -> Unit)? = null,
 
                           /**

@@ -40,7 +40,7 @@ class RegisterResponseHandleService : AbstractRequestMapping() {
         }
 
         logger.info("与节点 $fromServer 的连接已建立")
-        callbackMapping[RegisterResponse(msg).getRegistrySign()]?.invoke() ?: logger.debug("??????可能有问题")
+        callbackMapping[RegisterResponse(msg).getRegistrySign()]?.invoke()
     }
 
     fun registerCallBack(doAfterConnectToServer: (() -> Unit)?): Long {
@@ -48,7 +48,7 @@ class RegisterResponseHandleService : AbstractRequestMapping() {
         return if (callbackMapping.contains(nextLong)) {
             registerCallBack(doAfterConnectToServer)
         } else {
-            callbackMapping[nextLong] = doAfterConnectToServer
+            doAfterConnectToServer?.also { callbackMapping[nextLong] = it }
             nextLong
         }
     }
