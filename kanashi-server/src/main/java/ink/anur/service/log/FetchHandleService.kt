@@ -4,7 +4,7 @@ import ink.anur.common.KanashiExecutors
 import ink.anur.common.Resetable
 import ink.anur.core.common.AbstractRequestMapping
 import ink.anur.core.raft.ElectionMetaService
-import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.debug.Debugger
 import ink.anur.engine.log.LogService
 import ink.anur.engine.prelog.ByteBufPreLogService
@@ -72,7 +72,7 @@ class FetchHandleService : AbstractRequestMapping(), Resetable {
     private lateinit var electionMetaService: ElectionMetaService
 
     @NigateInject
-    private lateinit var requestProcessCentreService: RequestProcessCentreService
+    private lateinit var msgProcessCentreService: MsgProcessCentreService
 
     @NigateInject
     private lateinit var byteBufPreLogService: ByteBufPreLogService
@@ -111,7 +111,7 @@ class FetchHandleService : AbstractRequestMapping(), Resetable {
             this.receive(electionMetaService.getLeader()!!, byteBufPreLogService.getCommitGAO())
         } else {
             // 如果不是 leader，则需要各个节点汇报自己的 log 进度，给 leader 发送  recovery Report
-            requestProcessCentreService.send(electionMetaService.getLeader()!!, RecoveryReporter(byteBufPreLogService.getCommitGAO()))
+            msgProcessCentreService.send(electionMetaService.getLeader()!!, RecoveryReporter(byteBufPreLogService.getCommitGAO()))
         }
     }
 
@@ -217,7 +217,7 @@ class FetchHandleService : AbstractRequestMapping(), Resetable {
         KanashiExecutors.execute(Runnable {
             while (version == this.version) {
                 fetchMutex {
-                    requestProcessCentreService.send(fetchFrom, Fetch(byteBufPreLogService.getPreLogGAO()))
+                    msgProcessCentreService.send(fetchFrom, Fetch(byteBufPreLogService.getPreLogGAO()))
                 }
                 Thread.sleep(75)
             }
@@ -264,7 +264,7 @@ class FetchHandleService : AbstractRequestMapping(), Resetable {
      */
     private fun sendRecoveryComplete(serverName: String, latestGao: GenerationAndOffset) {
         if (recoveryComplete) {
-            requestProcessCentreService.send(serverName, RecoveryComplete(
+            msgProcessCentreService.send(serverName, RecoveryComplete(
                 GenerationAndOffset(latestGao.generation, logService.loadGenLog(latestGao.generation)!!.currentOffset)
             ))
         } else {

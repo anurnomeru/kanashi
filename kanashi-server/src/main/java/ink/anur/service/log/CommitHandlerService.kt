@@ -1,8 +1,7 @@
 package ink.anur.service.log
 
 import ink.anur.core.common.AbstractRequestMapping
-import ink.anur.core.request.RequestProcessCentreService
-import ink.anur.debug.Debugger
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.engine.prelog.ByteBufPreLogService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
@@ -26,7 +25,7 @@ class CommitHandlerService : AbstractRequestMapping() {
     private lateinit var byteBufPreLogService: ByteBufPreLogService
 
     @NigateInject
-    private lateinit var requestProcessCentreService: RequestProcessCentreService
+    private lateinit var msgProcessCentreService: MsgProcessCentreService
 
     override fun typeSupport(): RequestTypeEnum {
         return RequestTypeEnum.COMMIT
@@ -37,6 +36,6 @@ class CommitHandlerService : AbstractRequestMapping() {
         byteBufPreLogService.commit(commit.canCommitGAO)
 
         val commitGAO = byteBufPreLogService.getCommitGAO()
-        requestProcessCentreService.send(fromServer, CommitResponse(commitGAO))
+        msgProcessCentreService.send(fromServer, CommitResponse(commitGAO))
     }
 }

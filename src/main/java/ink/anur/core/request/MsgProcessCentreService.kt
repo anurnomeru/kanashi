@@ -24,11 +24,10 @@ import java.util.concurrent.TimeUnit
  * 消息控制中心，负责收发信息
  */
 @NigateBean
-class RequestProcessCentreService : ReentrantReadWriteLocker() {
+class MsgProcessCentreService : ReentrantReadWriteLocker() {
 
     @NigateInject
     private lateinit var channelService: ChannelService
-
 
     @NigateInject
     private lateinit var msgSendService: ResponseProcessCentreService

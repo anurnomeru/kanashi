@@ -4,7 +4,7 @@ import ink.anur.common.Constant
 import ink.anur.common.struct.KanashiNode
 import ink.anur.config.InetConfig
 import ink.anur.core.common.AbstractRequestMapping
-import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.debug.Debugger
 import ink.anur.exception.KanashiDatabaseException
 import ink.anur.exception.MaxAttemptTimesException
@@ -17,12 +17,10 @@ import ink.anur.pojo.enumerate.RequestTypeEnum
 import ink.anur.pojo.log.KanashiCommand
 import ink.anur.pojo.log.common.CommandTypeEnum
 import ink.anur.pojo.log.common.CommonApiTypeEnum
-import ink.anur.pojo.log.common.StrApiTypeEnum
 import ink.anur.pojo.log.common.TransactionTypeEnum
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 /**
@@ -34,7 +32,7 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
     private val logger = Debugger(this.javaClass)
 
     @NigateInject
-    private lateinit var requestProcessCentreService: RequestProcessCentreService
+    private lateinit var msgProcessCentreService: MsgProcessCentreService
 
     @NigateInject(useLocalFirst = true)
     private lateinit var inetConfig: InetConfig
@@ -114,7 +112,7 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
             return
         }
 
-        if (requestProcessCentreService.sendTo(Constant.SERVER, kanashiCommandDto)) {
+        if (msgProcessCentreService.sendTo(Constant.SERVER, kanashiCommandDto)) {
             waitForResponse.await()
             setCluster(responseMap.remove(timeMillis)!!.kanashiEntry!!.getCluster())
 
@@ -171,7 +169,7 @@ class KanashiCommandResponseHandlerService : AbstractRequestMapping() {
         return if (reCall) {// 针对时间重复的要重新递归请求一次
             acquire(kanashiCommandDto, attemptTimes)
         } else {
-            if (requestProcessCentreService.sendTo(sendTo, kanashiCommandDto)) {
+            if (msgProcessCentreService.sendTo(sendTo, kanashiCommandDto)) {
                 waitForResponse.await()// todo 这里如果服务端不回复会导致无限等待，如果由于一些问题导致服务端不回复 这里会一直等下去，目前懒得想怎么去解决
                 // 大概的解决是将 cdl 交给我们的连接，当连接出现问题，会触发countDown
                 // 另外一方面，就是避免服务端出现不回复的BUG

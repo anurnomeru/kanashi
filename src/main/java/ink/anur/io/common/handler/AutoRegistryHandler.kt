@@ -2,8 +2,7 @@ package ink.anur.io.common.handler
 
 import ink.anur.common.struct.KanashiNode
 import ink.anur.config.InetConfig
-import ink.anur.core.common.RequestExtProcessor
-import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
@@ -28,7 +27,7 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
     private lateinit var channelService: ChannelService
 
     @NigateInject
-    private lateinit var msgCenterService: RequestProcessCentreService
+    private lateinit var msgCenterService: MsgProcessCentreService
 
     init {
         Nigate.injectOnly(this)

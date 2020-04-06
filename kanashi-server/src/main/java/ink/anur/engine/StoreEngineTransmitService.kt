@@ -1,8 +1,7 @@
 package ink.anur.engine
 
 import ink.anur.common.pool.EventDriverPool
-import ink.anur.core.common.RequestExtProcessor
-import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.debug.Debugger
 import ink.anur.engine.memory.MemoryMVCCStorageUnCommittedPart
 import ink.anur.engine.processor.EngineExecutor
@@ -21,8 +20,6 @@ import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.pojo.log.common.StrApiTypeEnum
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentSkipListSet
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
@@ -48,7 +45,7 @@ class StoreEngineTransmitService {
     private lateinit var memoryMVCCStorageUnCommittedPart: MemoryMVCCStorageUnCommittedPart
 
     @NigateInject
-    private lateinit var requestProcessCentreService: RequestProcessCentreService
+    private lateinit var msgProcessCentreService: MsgProcessCentreService
 
     /**
      * 一切未提交的事务都在这里有一个存档
@@ -73,7 +70,7 @@ class StoreEngineTransmitService {
             if (it.responseRegister != null) {
                 val responseRegister = it.responseRegister
                 val engineResult = it.getEngineResult()
-                requestProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()))
+                msgProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()))
             }
 
             val gao = it.getDataHandler().gao
@@ -84,7 +81,7 @@ class StoreEngineTransmitService {
             if (gao != null && responseMap[gao] != null) {
                 val responseRegister = responseMap[gao]!!
                 val engineResult = it.getEngineResult()
-                requestProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()))
+                msgProcessCentreService.send(responseRegister.fromClient, KanashiCommandResponse(responseRegister.msgTime, engineResult.success, engineResult.getKanashiEntry()))
 
                 responseMap.remove(gao)
             }

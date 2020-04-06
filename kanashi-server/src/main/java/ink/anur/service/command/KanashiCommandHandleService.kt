@@ -5,7 +5,7 @@ import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.core.common.AbstractRequestMapping
 import ink.anur.core.raft.ElectionMetaService
 import ink.anur.core.raft.RaftCenterController
-import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.engine.StoreEngineTransmitService
 import ink.anur.engine.log.LogService
 import ink.anur.engine.processor.DataHandler
@@ -26,7 +26,6 @@ import ink.anur.pojo.log.common.GenerationAndOffset
 import ink.anur.pojo.log.common.TransactionTypeEnum
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
-import javax.smartcardio.CommandAPDU
 
 /**
  * Created by Anur IjuoKaruKas on 2020/3/26
@@ -52,7 +51,7 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
     private lateinit var storeEngineTransmitService: StoreEngineTransmitService
 
     @NigateInject
-    private lateinit var requestProcessCentreService: RequestProcessCentreService
+    private lateinit var msgProcessCentreService: MsgProcessCentreService
 
     @NigateInject
     private lateinit var inetSocketAddressConfiguration: InetSocketAddressConfiguration
@@ -108,7 +107,7 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
                     // 将 leader 节点放在首位
                     clusters.removeIf { it == leaderNode }
                     clusters.add(0, leaderNode)
-                    requestProcessCentreService.send(fromServer,
+                    msgProcessCentreService.send(fromServer,
                         KanashiCommandResponse.genCluster(logItem.getTimeMillis(), clusters))
                 }
                 return
@@ -130,7 +129,7 @@ class KanashiCommandHandleService : AbstractRequestMapping() {
                                 logItem.reComputeCheckSum()
                             } else {
                                 // 不允许长事务不带事务id
-                                requestProcessCentreService.send(fromServer, KanashiCommandResponse.genError(logItem.getTimeMillis(), "不允许长事务无事务id"))
+                                msgProcessCentreService.send(fromServer, KanashiCommandResponse.genError(logItem.getTimeMillis(), "不允许长事务无事务id"))
                                 return
                             }
                         }

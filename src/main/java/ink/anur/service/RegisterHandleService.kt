@@ -2,7 +2,7 @@ package ink.anur.service
 
 import ink.anur.common.struct.KanashiNode
 import ink.anur.core.common.AbstractRequestMapping
-import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.io.common.channel.ChannelService
@@ -14,7 +14,6 @@ import io.netty.channel.Channel
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
 import kotlin.random.Random
-import com.sun.deploy.util.URLUtil.getPort
 import java.net.InetSocketAddress
 
 /**
@@ -33,7 +32,7 @@ class RegisterHandleService : AbstractRequestMapping() {
     private lateinit var channelService: ChannelService
 
     @NigateInject
-    private lateinit var msgCenterService: RequestProcessCentreService
+    private lateinit var msgCenterService: MsgProcessCentreService
 
     override fun typeSupport(): RequestTypeEnum = RequestTypeEnum.REGISTER
 

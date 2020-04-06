@@ -2,7 +2,7 @@ package ink.anur.service.log
 
 import ink.anur.core.common.AbstractRequestMapping
 import ink.anur.core.raft.ElectionMetaService
-import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.debug.Debugger
 import ink.anur.engine.log.LogService
 import ink.anur.engine.log.CommitProcessManageService
@@ -39,7 +39,7 @@ class FetchHandlerService : AbstractRequestMapping() {
     private lateinit var logService: LogService
 
     @NigateInject
-    private lateinit var requestProcessCentreService: RequestProcessCentreService
+    private lateinit var msgProcessCentreService: MsgProcessCentreService
 
     @NigateInject
     private lateinit var commitProcessManageService: CommitProcessManageService
@@ -106,13 +106,13 @@ class FetchHandlerService : AbstractRequestMapping() {
                 }
             }
 
-            requestProcessCentreService.send(fromServer, Commit(canCommit))
+            msgProcessCentreService.send(fromServer, Commit(canCommit))
         }
 
         // 为什么要。next，因为 fetch 过来的是客户端最新的 GAO 进度，而获取的要从 GAO + 1开始
         val fetchDataInfo = logService.getAfter(fetcher.fetchGAO.next())
         if (fetchDataInfo != null) {
-            requestProcessCentreService.send(fromServer, KanashiCommandBatchDto(fetchDataInfo))
+            msgProcessCentreService.send(fromServer, KanashiCommandBatchDto(fetchDataInfo))
         }
     }
 }

@@ -1,6 +1,6 @@
 package ink.anur.core.common
 
-import ink.anur.core.request.RequestProcessCentreService
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.inject.Nigate
 import ink.anur.inject.NigatePostConstruct
 
@@ -13,7 +13,7 @@ abstract class AbstractRequestMapping : RequestMapping {
 
     @NigatePostConstruct
     fun init() {
-        val msgCenterService = Nigate.getBeanByClass(RequestProcessCentreService::class.java)
+        val msgCenterService = Nigate.getBeanByClass(MsgProcessCentreService::class.java)
         msgCenterService.registerRequestMapping(this.typeSupport(), this)
     }
 }

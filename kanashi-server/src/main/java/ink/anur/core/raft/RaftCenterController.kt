@@ -5,15 +5,13 @@ import ink.anur.config.ElectConfiguration
 import ink.anur.config.ExtraConfiguration
 import ink.anur.config.InetSocketAddressConfiguration
 import ink.anur.pojo.log.common.GenerationAndOffset
-import ink.anur.core.request.RequestProcessCentreService
-import ink.anur.exception.KanashiException
+import ink.anur.core.request.MsgProcessCentreService
 import ink.anur.exception.NotLeaderException
 import ink.anur.inject.Event
 import ink.anur.mutex.ReentrantLocker
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigateListener
-import ink.anur.inject.NigatePostConstruct
 import ink.anur.pojo.coordinate.Canvass
 import ink.anur.pojo.HeartBeat
 import ink.anur.pojo.coordinate.Voting
@@ -42,7 +40,7 @@ class RaftCenterController : KanashiRunnable() {
     private lateinit var electionMetaService: ElectionMetaService
 
     @NigateInject
-    private lateinit var msgCenterService: RequestProcessCentreService
+    private lateinit var msgCenterService: MsgProcessCentreService
 
     @NigateInject
     private lateinit var extraConfiguration: ExtraConfiguration
