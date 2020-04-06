@@ -14,13 +14,19 @@ import java.nio.ByteBuffer
 open class RegisterResponse : AbstractStruct {
 
     companion object {
-        val SizeOffset = OriginMessageOverhead
+        val RegistrySignOffset = OriginMessageOverhead
+        val RegistrySignLength = 8
+        val Capacity = RegistrySignOffset + RegistrySignLength
     }
 
-    constructor() {
-        val byteBuffer = ByteBuffer.allocate(SizeOffset)
-        init(byteBuffer, RequestTypeEnum.REGISTER_RESPONSE)
-        byteBuffer.flip()
+    constructor(registrySign: Long) {
+        init(Capacity, RequestTypeEnum.REGISTER_RESPONSE) {
+            it.putLong(registrySign)
+        }
+    }
+
+    fun getRegistrySign(): Long {
+        return buffer!!.getLong(Register.RegistrySignOffset)
     }
 
     constructor(byteBuffer: ByteBuffer) {

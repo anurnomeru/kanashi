@@ -15,24 +15,26 @@ import java.nio.charset.Charset
 open class Register : AbstractStruct {
 
     companion object {
-        val SizeOffset = OriginMessageOverhead
+        val RegistrySignOffset = OriginMessageOverhead
+        val RegistrySignLength = 8
+        val SizeOffset = RegistrySignOffset + RegistrySignLength
         val SizeLength = 4
         val ContentOffset = SizeOffset + SizeLength
     }
 
     private var serverName: String
 
-    constructor(serverName: String) {
+    constructor(serverName: String, registrySign: Long) {
         this.serverName = serverName
 
         val bytes = serverName.toByteArray(Charset.defaultCharset())
         val size = bytes.size
-        val byteBuffer = ByteBuffer.allocate(ContentOffset + size)
-        init(byteBuffer, RequestTypeEnum.REGISTER)
 
-        byteBuffer.putInt(size)
-        byteBuffer.put(bytes)
-        byteBuffer.flip()
+        init(ContentOffset + size, RequestTypeEnum.REGISTER) {
+            it.putLong(registrySign)
+            it.putInt(size)
+            it.put(bytes)
+        }
     }
 
     constructor(byteBuffer: ByteBuffer) {
@@ -49,6 +51,10 @@ open class Register : AbstractStruct {
 
     fun getServerName(): String {
         return serverName
+    }
+
+    fun getRegistrySign(): Long {
+        return buffer!!.getLong(RegistrySignOffset)
     }
 
     override fun writeIntoChannel(channel: Channel) {

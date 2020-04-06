@@ -2,6 +2,7 @@ package ink.anur.io.client
 
 import ink.anur.common.KanashiExecutors
 import ink.anur.common.struct.KanashiNode
+import ink.anur.inject.Nigate
 import ink.anur.io.common.ShutDownHooker
 import ink.anur.io.common.handler.AutoRegistryHandler
 import ink.anur.io.common.handler.ChannelInactiveHandler
@@ -9,8 +10,8 @@ import ink.anur.io.common.handler.EventDriverPoolHandler
 import ink.anur.io.common.handler.ErrorHandler
 import ink.anur.io.common.handler.KanashiDecoder
 import ink.anur.io.common.handler.ReconnectHandler
+import ink.anur.service.RegisterResponseHandleService
 import io.netty.bootstrap.Bootstrap
-import io.netty.channel.ChannelInboundHandler
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.nio.NioEventLoopGroup
@@ -24,11 +25,23 @@ import java.util.concurrent.CountDownLatch
  *
  * 可重连的客户端
  */
-class ReConnectableClient(private val node: KanashiNode, private val shutDownHooker: ShutDownHooker) {
+class ReConnectableClient(private val node: KanashiNode, private val shutDownHooker: ShutDownHooker,
+
+                          private val doAfterConnectToServer: (() -> Unit)? = null,
+
+                          /**
+                           * 当连接上对方后，如果断开了连接，做什么处理
+                           *
+                           * 返回 true 代表继续重连
+                           * 返回 false 则不再重连
+                           */
+                          private val doAfterDisConnectToServer: (() -> Boolean)? = null) {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     private val reconnectLatch = CountDownLatch(1)
+
+    val registrySign: Long = Nigate.getBeanByClass(RegisterResponseHandleService::class.java).registerCallBack { doAfterConnectToServer }
 
     fun start() {
 
@@ -60,11 +73,11 @@ class ReConnectableClient(private val node: KanashiNode, private val shutDownHoo
                     @Throws(Exception::class)
                     override fun initChannel(socketChannel: SocketChannel) {
                         socketChannel.pipeline()
-                            .addFirst(AutoRegistryHandler(node)) // 自动注册到管道管理服务
+                            .addFirst(AutoRegistryHandler(node, registrySign)) // 自动注册到管道管理服务
                             .addLast(KanashiDecoder())// 解码处理器
                             .addLast(EventDriverPoolHandler())// 消息事件驱动
                             .addFirst(ChannelInboundHandlerAdapter())
-                            .addLast(ChannelInactiveHandler { false })
+                            .addLast(ChannelInactiveHandler(shutDownHooker, doAfterDisConnectToServer))
                             .addLast(ReconnectHandler(reconnectLatch))// 重连控制器
                             .addLast(ErrorHandler())// 错误处理
                     }

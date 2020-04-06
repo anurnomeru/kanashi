@@ -52,6 +52,7 @@ class RegisterHandleService : AbstractRequestMapping() {
         val register = Register(msg)
 
         var serverName = register.getServerName()
+        register.getRegistrySign()
         if (serverName == CLIENT_SIGN) {
             serverName = randomName()
             logger.info("客户端节点 {} 已注册到本节点", serverName)
@@ -63,7 +64,7 @@ class RegisterHandleService : AbstractRequestMapping() {
 
         channelService
             .register(KanashiNode(serverName, inetSocket.address.hostAddress, inetSocket.port), channel)
-        msgCenterService.send(serverName, RegisterResponse())
+        msgCenterService.send(serverName, RegisterResponse(register.getRegistrySign()))
     }
 
     private val random = Random(100)

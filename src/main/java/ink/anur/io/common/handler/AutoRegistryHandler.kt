@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
  *
  * 自动注册的处理器
  */
-class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandlerAdapter() {
+class AutoRegistryHandler(private val node: KanashiNode, private val registrySign: Long) : ChannelInboundHandlerAdapter() {
 
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -39,7 +39,7 @@ class AutoRegistryHandler(private val node: KanashiNode) : ChannelInboundHandler
         logger.info("正在向节点 $node 发送注册请求")
         channelService.register(node, ctx!!.channel())
 
-        val register = Register(inetConfig.getLocalServerName())
+        val register = Register(inetConfig.getLocalServerName(), registrySign)
         // TODO 这里可能有bug 如果server处理失败这里将无法连接
         msgCenterService.send(node.serverName, register)
     }

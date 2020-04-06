@@ -7,9 +7,12 @@ import ink.anur.inject.Event
 import ink.anur.inject.NigateBean
 import ink.anur.inject.NigateInject
 import ink.anur.inject.NigateListenerService
+import ink.anur.pojo.RegisterResponse
 import ink.anur.pojo.enumerate.RequestTypeEnum
 import io.netty.channel.Channel
 import java.nio.ByteBuffer
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.random.Random
 
 /**
  * Created by Anur IjuoKaruKas on 2020/2/25
@@ -21,6 +24,11 @@ class RegisterResponseHandleService : AbstractRequestMapping() {
 
     private val logger = Debugger(this.javaClass)
 
+    private val ramdon = Random(100)
+
+    // todo 可能存在内存泄露问题
+    private val callbackMapping = ConcurrentHashMap<Long, (() -> Unit)?>()
+
     @NigateInject
     private lateinit var nigateListenerService: NigateListenerService
 
@@ -30,6 +38,18 @@ class RegisterResponseHandleService : AbstractRequestMapping() {
         if (fromServer == Constant.SERVER) {
             nigateListenerService.onEvent(Event.REGISTER_TO_SERVER)
         }
+
         logger.info("与节点 $fromServer 的连接已建立")
+        callbackMapping[RegisterResponse(msg).getRegistrySign()]?.invoke() ?: logger.debug("??????可能有问题")
+    }
+
+    fun registerCallBack(doAfterConnectToServer: (() -> Unit)?): Long {
+        val nextLong = ramdon.nextLong()
+        return if (callbackMapping.contains(nextLong)) {
+            registerCallBack(doAfterConnectToServer)
+        } else {
+            callbackMapping[nextLong] = doAfterConnectToServer
+            nextLong
+        }
     }
 }
