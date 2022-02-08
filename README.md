@@ -212,7 +212,3 @@ fun acquire(trxId: Long, key: String, whatEverDo: () -> Unit) {
 讨论Java相关技术可以加群：767271344
 
 ![二维码](https://images.gitee.com/uploads/images/2020/0405/161207_31fb2c55_1460144.png)
-
-另外找工作中 = =，3年-Java后端，简历如下：
-
-http://anur.ink/upload/2020/4/JAVA%E5%90%8E%E7%AB%AF-3%E5%B9%B4-%E7%BD%91%E7%BB%9C%E7%89%88-4ea872fb596f4553aa9f04cefcb65a84.pdf
