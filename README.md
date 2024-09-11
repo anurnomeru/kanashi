@@ -203,12 +203,6 @@ fun acquire(trxId: Long, key: String, whatEverDo: () -> Unit) {
  -  需要一个事务超时强制提交或回滚的机制
  -  `TrxHolder` 事务快照可能有并发问题，出现的概率很低，比较难复现
 
-### 四、其他
-
-对项目有兴趣，或者想一起折腾这些乱七八糟事情的可以加群，目前基本没人：1035435027
-
-![kanashi](https://images.gitee.com/uploads/images/2020/0405/161140_9dd61ee4_1460144.png)
-
 讨论Java相关技术可以加群：767271344
 
 ![二维码](https://images.gitee.com/uploads/images/2020/0405/161207_31fb2c55_1460144.png)
